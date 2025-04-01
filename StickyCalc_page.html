@@ -412,6 +412,26 @@
                         </template>
                         <!-- 頂欄 -->
 
+                        <!-- 圖表便利貼（基本版本） -->
+                        <template v-if="node.type === 'chart'">
+                            <rect :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
+                                :width="node.chartWidth" :height="node.chartHeight" fill="#f9f9f9" stroke="#ccc"
+                                stroke-width="1" rx="5" ry="5"
+                                style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));"></rect>
+                            <!-- Chart 圖表區域 -->
+                            <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 10"
+                                :width="node.chartWidth - 20" :height="node.chartHeight - 40">
+                                <canvas :id="'chart-' + node.id"></canvas>
+                            </foreignObject>
+                            <!-- 右下角縮放點 -->
+                            <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
+                                height="15" fill="grey" stroke="black" stroke-width="1" style="cursor: se-resize;"
+                                @mousedown.stop="startResize(node, $event)" />
+                            <!-- 選取邊框 -->
+                            <rect v-if="node.selected" :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
+                                :width="node.chartWidth" :height="node.chartHeight" fill="none" stroke="blue"
+                                stroke-width="2" rx="5" ry="5" />
+                        </template>
 
                         <!-- 雙擊文字進入編輯模式，利用 v-model 雙向綁定輸入值存入 node.label -->
                         <template v-if="node.editing">
@@ -469,7 +489,8 @@
             <div v-if="contextMenu.visible" class="context-menu"
                 :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
                 <template v-if="contextMenu.type === 'blank'">
-                    <button @click="addNodeAtContext">新增節點</button>
+                    <button @click="addNodeAtContext">新增 便利貼</button>
+                    <button @click="addChartNode">新增 圖表便利貼</button>
                 </template>
                 <template v-else-if="contextMenu.type === 'node'">
                     <button @click="startConnection(contextMenu.node)">開始連線</button>
@@ -492,11 +513,14 @@
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- 載入 Vue 3 全域版 -->
     <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
     <script src="js/vue.global.js"></script>
     <script>
+
+
         const app = Vue.createApp({
             data() {
                 return {
@@ -552,6 +576,11 @@
                     startLocalStorage: false,
 
                     editName: false,
+
+                    // Chart用變量
+                    resizingNode: null,
+                    resizeStartX: 0,
+                    resizeStartY: 0
                 }
             },
             // 生命週期 : 起始
@@ -594,9 +623,10 @@
                 const vm = this;
                 vm.checkuid();
 
+                window.addEventListener('keydown', this.handleKeyDown);
+                this.addChartNode(); //鍵盤監測在這之後會失效，應該是這裡面就報錯了
                 //儲存狀態
                 this.saveState()
-                window.addEventListener('keydown', this.handleKeyDown);
 
             },
             beforeUnmount() {
@@ -655,6 +685,67 @@
 
             // 方法函式
             methods: {
+                /* ================ 圖表便利貼 ==================== */
+                // 新增圖表便利貼
+                addChartNode() {
+                    const vm = this;
+                    const svgElement = document.getElementById('mindmapSvg');
+                    const rect = svgElement.getBoundingClientRect();
+                    const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
+                    const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
+                    const newNode = {
+                        id: 'chart-' + Date.now(), // 唯一 ID
+                        type: 'chart',
+                        x: x,
+                        y: y,
+                        chartWidth: 600, // 初始寬度
+                        chartHeight: 500, // 初始高度
+                        selected: false,
+                        connectionsIn: [],
+                        connectionsOut: []
+                    };
+                    this.nodes.push(newNode);
+                    this.$nextTick(() => this.initChart(newNode));
+
+                },
+                // 初始化 Chart.js（空白圖表）
+                initChart(node) {
+                    const canvas = document.getElementById('chart-' + node.id);
+                    if (!canvas) return;
+
+                    new Chart(canvas, {
+                        type: 'line', // 預設折線圖
+                        data: {
+                            labels: ['範例1', '範例2', '範例3'], // 預設數據
+                            datasets: [{
+                                label: '數據',
+                                data: [10, 20, 30],
+                                borderColor: 'red',
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { title: { display: true, text: 'X 軸' } },
+                                y: { title: { display: true, text: 'Y 軸' } }
+                            }
+                        }
+                    });
+                },
+                // 開始縮放
+                startResize(node, event) {
+                    this.resizingNode = node;
+                    this.resizeStartX = event.clientX;
+                    this.resizeStartY = event.clientY;
+                    event.stopPropagation();
+                },
+
+
+                /* ================ 圖表便利貼 ==================== */
+
+
                 deleteBoard() {
 
                     const vm = this;
@@ -1225,6 +1316,21 @@
                 },
                 // 拖曳中：若正進行群組移動，則更新所有拖曳便利貼的位置；否則更新框選矩形
                 dragMove(event) {
+                    /* ================ 圖表便利貼 ==================== */
+                    if (this.resizingNode) {
+                        const dx = event.clientX - this.resizeStartX;
+                        const dy = event.clientY - this.resizeStartY;
+                        this.resizingNode.chartWidth = Math.max(300, this.resizingNode.chartWidth + dx); // 最小寬度 300px
+                        this.resizingNode.chartHeight = Math.max(200, this.resizingNode.chartHeight + dy); // 最小高度 200px
+                        this.resizeStartX = event.clientX;
+                        this.resizeStartY = event.clientY;
+
+                        // 更新圖表
+                        this.$nextTick(() => this.initChart(this.resizingNode));
+                    };
+                    /* ================ 圖表便利貼 ==================== */
+
+
                     if (this.draggingNodes.length > 0) {
                         // 群組移動的邏輯保持不變
                         let dx = event.offsetX - this.dragStart.x;
@@ -1255,6 +1361,7 @@
                 },
                 // 結束拖曳或框選，若處於框選狀態則根據選取框更新各便利貼選取狀態
                 endDrag(event) {  // 注意：這裡需要加上 event 參數
+                    this.resizingNode = null; //圖表便利貼
                     if (event.button === 0) {
                         if (this.draggingNodes.length > 0) {
                             this.draggingNodes = [];
@@ -1467,9 +1574,10 @@
                 },
 
 
-                // DELETE 按鍵：刪除所有已選取的便利貼與連線
                 handleKeyDown(event) {
+                    // DELETE 按鍵：刪除所有已選取的便利貼與連線
                     if (event.key === 'Delete') {
+
                         // 記錄所有被選取的節點 ID
                         const deletedIds = this.nodes.filter(node => node.selected).map(node => node.id);
 
