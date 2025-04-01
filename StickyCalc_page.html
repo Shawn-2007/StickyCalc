@@ -495,6 +495,7 @@
                 <template v-else-if="contextMenu.type === 'node'">
                     <button @click="startConnection(contextMenu.node)">開始連線</button>
                     <button @click="deleteNode(contextMenu.node)">刪除此便利貼</button>
+                    <button @click="initChart(contextMenu.node)">重整圖表</button>
                     <div>
                         更換顏色：
                         <button @click="changeNodeColor(contextMenu.node, '#ffc0cb', '#FCAFAA')">粉紅</button>
@@ -577,10 +578,16 @@
 
                     editName: false,
 
-                    // Chart用變量
+                    // Chart圖表用變量
                     resizingNode: null,
                     resizeStartX: 0,
-                    resizeStartY: 0
+                    resizeStartY: 0,
+
+                    // chart 測試用變量
+                    ChartName: ['範例1', '範例2', '範例3'],
+                    ChartValue: [20, 50, 30],
+
+
                 }
             },
             // 生命週期 : 起始
@@ -624,7 +631,7 @@
                 vm.checkuid();
 
                 window.addEventListener('keydown', this.handleKeyDown);
-                this.addChartNode(); //鍵盤監測在這之後會失效，應該是這裡面就報錯了
+
                 //儲存狀態
                 this.saveState()
 
@@ -691,6 +698,8 @@
                     const vm = this;
                     const svgElement = document.getElementById('mindmapSvg');
                     const rect = svgElement.getBoundingClientRect();
+                    // const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
+                    // const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
                     const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
                     const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
                     const newNode = {
@@ -710,16 +719,26 @@
                 },
                 // 初始化 Chart.js（空白圖表）
                 initChart(node) {
+                    console.log("重整圖表")
+
+                    const vm = this;
+
+                    var ChartName1 = []
+                    var ChartValue1 = []
+                    ChartName1 = vm.ChartName;
+                    ChartValue1 = vm.ChartValue;
                     const canvas = document.getElementById('chart-' + node.id);
                     if (!canvas) return;
 
                     new Chart(canvas, {
                         type: 'line', // 預設折線圖
                         data: {
-                            labels: ['範例1', '範例2', '範例3'], // 預設數據
+                            // labels: ['範例1', '範例2', '範例3'], // 預設數據
+                            labels: ChartName1, // 預設數據
                             datasets: [{
                                 label: '數據',
-                                data: [10, 20, 30],
+                                // data: [10, 20, 30],
+                                data: ChartValue1,
                                 borderColor: 'red',
                                 fill: false
                             }]
