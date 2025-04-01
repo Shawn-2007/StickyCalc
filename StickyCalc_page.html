@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StickyCalc 便利貼計算板</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/my.css">
+
+    <meta charset="UTF-8">
+    <title>Vue 3 多選、刪除與更換顏色示範</title>
+    <style>
+        .leftMenu a {
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .mind-map-container {
+            width: 100vw;
+            height: 100vh;
+
+            overflow: hidden;
+            position: relative;
+            background: #f9f9f9;
+            user-select: none;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            /* cursor 預設 auto，可由各狀態動態變更 */
+            cursor: auto;
+        }
+
+        .context-menu {
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            padding: 5px;
+            z-index: 1000;
+            position: absolute;
+        }
+
+        .context-menu button {
+            display: block;
+            width: 100%;
+            border: none;
+            background: none;
+            padding: 5px;
+            text-align: left;
+        }
+
+        .context-menu button:hover {
+            background: #eee;
+        }
+
+        .context-menu001 button:hover {
+            background: #e7c795;
+        }
+
+
+        .edit-input {
+            width: 100%;
+            font-size: 12px;
+            border: none;
+            outline: none;
+            background: transparent;
+        }
+
+        .mind-map-container {
+            position: relative;
+            /* 確保工具列相對於容器定位 */
+        }
+
+        /* 通用工具列樣式 */
+        .toolbar {
+            position: absolute;
+            height: 40px;
+            background-color: #f0f0f0;
+            /* 淺灰色背景，可自行調整 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            /* 陰影效果 */
+        }
+
+        /* 左上工具列 */
+        .toolbar-left {
+            top: 0;
+            left: 0;
+            width: 300px;
+            border-bottom-right-radius: 10px;
+            /* 右下角為圓角 */
+        }
+
+        /* 右上工具列 */
+        .toolbar-right {
+            top: 0;
+            right: 0;
+            width: 200px;
+            border-bottom-left-radius: 10px;
+            /* 左下角為圓角 */
+        }
+
+        /* 中間水滴狀工具列 */
+        .toolbar-center {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            /* 水平置中 */
+            width: 300px;
+            border-bottom-left-radius: 10px;
+            /* 左下圓角 */
+            border-bottom-right-radius: 10px;
+            /* 右下圓角 */
+            clip-path: polygon(0% 0%,
+                    /* 左上角 */
+                    0% 0%,
+
+                    100% 0%,
+                    /* 右上角 */
+                    100% 100%,
+                    /* 右下角 */
+                    10% 100%,
+                    /* 左下角 */
+                );
+            /* 水滴狀上緣弧形 */
+            background-color: #f0f0f0;
+
+        }
+
+        /* 中間欄位，物件置中 */
+        .toolbar-center .d-flex {
+            justify-content: center;
+            /* 讓所有 icon 從中間開始 */
+            align-items: center;
+            /* 垂直置中 */
+        }
+
+
+        .title-container {
+            max-width: 100px;
+            /* 限制最大寬度 */
+            overflow: hidden;
+            /* 超出範圍的內容隱藏 */
+            text-overflow: ellipsis;
+            /* 顯示省略號 */
+            white-space: nowrap;
+            /* 不換行 */
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- 外層容器，點擊時隱藏右鍵選單 -->
+        <div class="mind-map-container" @click="hideContextMenu">
+            <!-- 左上工具列 -->
+            <div class="toolbar toolbar-left">
+                <div class="mt-2 d-flex">
+                    <div class="ms-2 me-2">
+                        <a href="#" @click="pageNodesupload" class="nav-link">
+                            <!-- 前往上一頁 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="28" viewBox="0 0 19 28"
+                                transform="scale(0.8)" fill="none">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M0.685302 14L16.278 0.733192L18.2221 3.01807L5.31482 14L18.2221 24.9819L16.278 27.2668L0.685302 14Z"
+                                    fill="#505050" />
+                            </svg>
+                        </a>
+                    </div>
+                    <!-- 雙擊執行 -->
+                    <label v-if="!editName" for="" class="form-check-label" @dblclick="edittodo()">{{boardName}}</label>
+                    <div v-if="editName" class="">
+                        <input type="text" class="form-control" v-model="boardName" name="" id=""
+                            @keyup.enter="edittodo()" @keyup.esc="edittodo()" placeholder="編輯檔名">
+                    </div>
+                    <!-- <div class="title-container">{{boardName}}</div> -->
+                    <div class="">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="2" height="27" fill="none">
+                            <path
+                                d="M0 0.999999C0 0.447715 0.447715 0 1 0C1.55228 0 2 0.447715 2 1V26C2 26.5523 1.55228 27 1 27C0.447715 27 0 26.5523 0 26V0.999999Z"
+                                fill="#D9D9D9" />
+                        </svg>
+                    </div>
+                    <div class="ms-1">
+                        <a href="#" @click="nodes_upload" class="nav-link">
+                            <!-- 存檔 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="28" viewBox="0 0 35 28"
+                                transform="scale(0.8)" fill="none">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M15.5762 8.00193C16.0275 5.18599 18.5438 2.98696 21.6283 2.98696C25.0434 2.98696 27.7534 5.67576 27.7534 8.92151C27.7534 10.142 27.3744 11.275 26.721 12.2198L25.1418 14.5031L27.9079 14.2665C28.0152 14.2573 28.1243 14.2526 28.2352 14.2526C30.2817 14.2526 31.8827 15.8606 31.8827 17.773C31.8827 19.6855 30.2817 21.2935 28.2352 21.2935V23.9088C31.6615 23.9088 34.4979 21.1936 34.4979 17.773C34.4979 14.9068 32.5063 12.5358 29.8448 11.8427C30.1835 10.9313 30.3686 9.94727 30.3686 8.92151C30.3686 4.16781 26.4233 0.371735 21.6283 0.371735C17.838 0.371735 14.5845 2.73906 13.3825 6.07945C13.1101 6.03021 12.8297 6.00453 12.5438 6.00453C10.7877 6.00453 9.2422 6.97276 8.46453 8.41874L8.4145 8.41858C4.0755 8.41858 0.5 11.8544 0.5 16.1637C0.5 20.473 4.0755 23.9088 8.4145 23.9088V21.2935C5.45544 21.2935 3.11523 18.965 3.11523 16.1637C3.11523 13.3623 5.45544 11.0338 8.4145 11.0338C8.6661 11.0338 8.91334 11.0507 9.15421 11.0832L10.3219 11.2408L10.5998 10.0957C10.8001 9.27046 11.5776 8.61976 12.5438 8.61976C12.9388 8.61976 13.3021 8.72851 13.6079 8.91364L15.2689 9.91911L15.5762 8.00193ZM17.989 10.3968L24.2063 19.627H20.0399V27.8316H15.9376V19.627H11.7718L17.989 10.3968Z"
+                                    fill="#505050" />
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="ms-2">
+                        <a href="#" @click="get_nodes" class="nav-link">
+                            <!-- 讀檔 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="34" height="28" fill="none"
+                                transform="scale(0.8)" viewBox="0 0 34 28">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M15.0762 8.00193C15.5275 5.18599 18.0438 2.98696 21.1283 2.98696C24.5434 2.98696 27.2534 5.67576 27.2534 8.92151C27.2534 10.142 26.8744 11.275 26.221 12.2198L24.6418 14.5031L27.4079 14.2665C27.5152 14.2573 27.6243 14.2526 27.7352 14.2526C29.7817 14.2526 31.3827 15.8606 31.3827 17.773C31.3827 19.6855 29.7817 21.2935 27.7352 21.2935V23.9088C31.1615 23.9088 33.9979 21.1936 33.9979 17.773C33.9979 14.9068 32.0063 12.5358 29.3448 11.8427C29.6835 10.9313 29.8686 9.94727 29.8686 8.92151C29.8686 4.16781 25.9233 0.371735 21.1283 0.371735C17.338 0.371735 14.0845 2.73906 12.8825 6.07945C12.6101 6.03021 12.3297 6.00453 12.0438 6.00453C10.2877 6.00453 8.7422 6.97276 7.96453 8.41874L7.9145 8.41858C3.5755 8.41858 0 11.8544 0 16.1637C0 20.473 3.5755 23.9088 7.9145 23.9088V21.2935C4.95544 21.2935 2.61523 18.965 2.61523 16.1637C2.61523 13.3623 4.95544 11.0338 7.9145 11.0338C8.1661 11.0338 8.41334 11.0507 8.65421 11.0832L9.82195 11.2408L10.0998 10.0957C10.3001 9.27046 11.0776 8.61976 12.0438 8.61976C12.4388 8.61976 12.8021 8.72851 13.1079 8.91364L14.7689 9.91911L15.0762 8.00193ZM17.4892 27.8316L11.272 18.6014H15.4383L15.4383 10.3968H19.5407L19.5407 18.6014H23.7065L17.4892 27.8316Z"
+                                    fill="#505050" />
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="ms-auto me-2" @click="undo">
+                        <!-- 上一步 -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="25" fill="none" viewBox="0 0 20 25"
+                            transform="scale(0.8)">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M7.03085 0L7.9652 1.98877H8.6247L8.62557 3.28822L8.62552 4.58768H7.96578L7.03085 6.57645L0 3.28822L7.03085 0ZM8.62557 3.28822L8.62552 4.58768C13.4499 4.58768 17.3952 8.55628 17.3952 13.4944C17.3952 18.4325 13.4499 22.4011 8.62557 22.4011H6.5417V25H8.62557C14.9265 25 20 19.8297 20 13.4944C20 7.15907 14.9256 1.98877 8.6247 1.98877L8.62557 3.28822Z"
+                                fill="#505050" />
+                        </svg>
+                    </div>
+                    <div class="me-2">
+                        <a href="#" @click="redo" class="nav-link  disabled">
+                            <!-- 下一步 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="25" viewBox="0 0 20 25"
+                                transform="scale(0.8)" fill="none">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M12.9692 0L12.0348 1.98877H11.3753L11.3744 3.28822L11.3745 4.58768H12.0342L12.9692 6.57645L20 3.28822L12.9692 0ZM11.3744 3.28822L11.3745 4.58768C6.55013 4.58768 2.60483 8.55628 2.60483 13.4944C2.60483 18.4325 6.55008 22.4011 11.3744 22.4011H13.4583V25H11.3744C5.07354 25 1.33681e-07 19.8297 1.33681e-07 13.4944C1.33681e-07 7.15907 5.07441 1.98877 11.3753 1.98877L11.3744 3.28822Z"
+                                    fill="#505050" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+
+            </div>
+            <!-- 中間工具列 -->
+            <div class="toolbar toolbar-center">
+                <div class="d-flex mt-1">
+                    <div class="mx-2" data-title="新增" @click="addNodeAtContext">
+                        <!-- 新增便利貼 -->
+                        <!-- 縮放: transform="scale(3)" -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M4 0C1.79086 0 0 1.79086 0 4V24C0 26.2091 1.79086 28 4 28H26C28.2091 28 30 26.2091 30 24V4C30 1.79086 28.2091 0 26 0H4ZM2 4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4V24C28 25.1046 27.1046 26 26 26H4C2.89543 26 2 25.1046 2 24V4ZM5 5H25V3H5V5ZM14 17H8V15H14V9H16V15H22V17H16V23H14V17Z"
+                                fill="#505050" />
+                        </svg>
+                    </div>
+                    <div class="mx-2" data-title="連線">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M0 3C0 1.34315 1.34315 0 3 0H9C10.6569 0 12 1.34315 12 3V7C12 8.65685 10.6569 10 9 10H3C1.34315 10 0 8.65685 0 7V3ZM3 2C2.44772 2 2 2.44772 2 3V7C2 7.55228 2.44772 8 3 8H9C9.55228 8 10 7.55228 10 7V3C10 2.44772 9.55229 2 9 2H3Z"
+                                fill="#A7A7A7" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M19 19C19 17.3431 20.3431 16 22 16H28C29.6569 16 31 17.3431 31 19V23C31 24.6569 29.6569 26 28 26H22C20.3431 26 19 24.6569 19 23V19ZM22 18C21.4477 18 21 18.4477 21 19V23C21 23.5523 21.4477 24 22 24H28C28.5523 24 29 23.5523 29 23V19C29 18.4477 28.5523 18 28 18H22Z"
+                                fill="#A7A7A7" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M12.0826 5.74546C12.0827 5.74544 12.0829 5.74542 12.0001 5.00001C11.9172 4.25459 11.9175 4.25457 11.9178 4.25453L11.9206 4.25422L11.9273 4.25351L11.9502 4.25113C11.9697 4.24915 11.9976 4.24643 12.0331 4.2432C12.1042 4.23674 12.2064 4.22821 12.3351 4.21949C12.5923 4.20207 12.9567 4.18379 13.3915 4.17973C14.2563 4.17164 15.4218 4.2195 16.5847 4.45207C17.7352 4.68217 18.9621 5.10827 19.878 5.91319C20.8326 6.75208 21.3935 7.95596 21.247 9.56791C21.0964 11.2246 20.2362 12.242 19.0794 12.8764C18.0091 13.4633 16.6641 13.7322 15.4623 13.9724C15.4405 13.9768 15.4188 13.9811 15.3971 13.9854C14.1152 14.2418 12.9897 14.474 12.1419 14.9389C11.3612 15.367 10.8463 15.9746 10.7469 17.0679C10.6499 18.1354 11.0845 18.8606 11.8628 19.4111C12.6857 19.9932 13.8806 20.3602 15.183 20.5723C16.4699 20.7818 17.7834 20.828 18.7834 20.8204C19.2814 20.8166 19.697 20.7995 19.9869 20.7834C20.1318 20.7754 20.245 20.7676 20.321 20.762C20.3591 20.7592 20.3878 20.7569 20.4066 20.7553L20.4271 20.7536L20.4316 20.7532C20.4315 20.7532 20.4322 20.7531 20.5001 21.5C20.568 22.247 20.5677 22.247 20.5675 22.247L20.5645 22.2473L20.5571 22.2479L20.5305 22.2502C20.5076 22.2521 20.4747 22.2547 20.4323 22.2579C20.3474 22.2642 20.2248 22.2725 20.0698 22.2811C19.7601 22.2983 19.3203 22.3163 18.7948 22.3203C17.7479 22.3283 16.3427 22.2808 14.942 22.0528C13.5569 21.8273 12.0956 21.4131 10.9966 20.6358C9.85304 19.8269 9.10014 18.6146 9.25309 16.9321C9.4037 15.2754 10.2639 14.258 11.4206 13.6236C12.491 13.0367 13.8359 12.7678 15.0377 12.5276C15.0595 12.5233 15.0812 12.5189 15.1029 12.5146C16.3848 12.2582 17.5104 12.0261 18.3582 11.5611C19.1389 11.133 19.6537 10.5254 19.7531 9.43209C19.8566 8.29405 19.4801 7.56043 18.8878 7.03994C18.2569 6.48549 17.3275 6.13033 16.2905 5.92294C15.2659 5.71801 14.2126 5.67212 13.4055 5.67966C13.0044 5.68341 12.6695 5.70028 12.4365 5.71607C12.3201 5.72395 12.2294 5.73154 12.1689 5.73704C12.1387 5.73979 12.116 5.74201 12.1015 5.74348L12.0859 5.7451L12.0826 5.74546Z"
+                                fill="#A7A7A7" />
+                        </svg>
+                    </div>
+                    <div class="mx-2" data-title="群組">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="31" height="28" viewBox="0 0 31 28" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M6 3C4.34315 3 3 4.34315 3 6V15C3 16.3062 3.83481 17.4175 5 17.8293V15V7V6C5 5.44772 5.44772 5 6 5H7H18H20.8293C20.4175 3.83481 19.3062 3 18 3H6Z"
+                                fill="#A7A7A7" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M9 6C7.34315 6 6 7.34315 6 9V19C6 20.3062 6.83481 21.4175 8 21.8293V19V10V9C8 8.44772 8.44772 8 9 8H10H22H24.8293C24.4175 6.83481 23.3062 6 22 6H9Z"
+                                fill="#A7A7A7" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M9 12C9 10.3431 10.3431 9 12 9H25C26.6569 9 28 10.3431 28 12V22C28 23.6569 26.6569 25 25 25H12C10.3431 25 9 23.6569 9 22V12ZM12 11C11.4477 11 11 11.4477 11 12V22C11 22.5523 11.4477 23 12 23H25C25.5523 23 26 22.5523 26 22V12C26 11.4477 25.5523 11 25 11H12Z"
+                                fill="#A7A7A7" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M10 0H2C0.895447 0 0 0.895432 0 2V10H2V2H10V0ZM29 10V2H21V0H29C30.1046 0 31 0.89543 31 2V10H29ZM21 26H29V18H31V26C31 27.1046 30.1046 28 29 28H21V26ZM2 18V26H10V28H2C0.895447 28 0 27.1046 0 26V18H2Z"
+                                fill="#A7A7A7" />
+                        </svg>
+                    </div>
+                    <div class="mx-2" data-title="刪除" @click="deleteBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M0 4C0 1.79086 1.79086 0 4 0H26C28.2091 0 30 1.79086 30 4V10V11.5V12V19H28V12H26V14H24V12H22V18H20V14.5H16V16V17H15H14V25H12V17H10V22H8V17H6.5V19.5V20.5H5.5H2V23H0V20.5V20V18.5V4ZM28 4V10H20H19V11V12.5H15H14V13.5V15H5.5H4.5V16V18.5H2V4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4ZM5 5H25V3H5V5ZM0 24V26H2V24H0ZM16 18V20H18V18H16ZM28 21.5V25.5H30V21.5H28ZM24 20H26V16H24V20ZM20 24H22V20H20V24ZM4 22V28H6V22H4ZM16 22V28H18V22H16ZM24 22V27H26V22H24ZM8 24V27H10V24H8Z"
+                                fill="#505050" />
+                        </svg>
+                    </div>
+
+                </div>
+            </div>
+            <!-- 右上工具列 -->
+            <div class="toolbar toolbar-right">
+                <div class="d-flex">
+                    <div class="ms-3" data-title="LOGO">
+                        <a href="#" @click="goIndex">
+                            <!-- LOGO -->
+                            <svg width="55" height="50" xmlns="http://www.w3.org/2000/svg">
+                                <!-- 主體 -->
+                                <defs>
+                                    <linearGradient id="grad10" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0%" stop-color="#FFF9C4" />
+                                        <stop offset="100%" stop-color="#FFEB3B" />
+                                    </linearGradient>
+                                    <linearGradient id="grad12" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0%" stop-color="#FFF9C4" />
+                                        <stop offset="100%" stop-color="#FFEB3B" />
+                                    </linearGradient>
+                                    <linearGradient id="grad11" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0%" stop-color="#FFEB3B" />
+                                        <stop offset="100%" stop-color="#FFEB3B" />
+                                    </linearGradient>
+                                </defs>
+                                <!-- 整合圖形符號 -->
+                                <g transform="scale(0.3)">
+                                    <rect x="20" y="20" rx="2" ry="2" width="100" height="100" fill="url(#grad10)"
+                                        stroke="#FBC02D" stroke-width="2" />
+                                    <rect x="20" y="20" rx="2" ry="2" width="100" height="100" fill="url(#grad12)"
+                                        stroke="#FBC02D" stroke-width="0" />
+                                    <rect x="20" y="20" rx="2" width="100" height="20" fill="url(#grad11)"
+                                        stroke="#FBC02D" stroke-width="0" />
+                                    <!-- 節點沿邊排列 -->
+
+                                    <circle cx="70" cy="20" r="5" fill="#F57F17" />
+                                    <circle cx="120" cy="70" r="5" fill="#F57F17" />
+                                    <circle cx="70" cy="120" r="5" fill="#F57F17" />
+                                    <!-- 連線 -->
+                                    <line x1="70" y1="20" x2="120" y2="70" stroke="#F57F17" stroke-width="2" />
+                                    <line x1="120" y1="70" x2="70" y2="120" stroke="#F57F17" stroke-width="2" />
+                                </g>
+                            </svg>
+                            <!-- LOGO -->
+                        </a>
+                    </div>
+                    <div class="mx-3" data-title="下載" style="margin-top: -10px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M14 0V10V18.5858L10.7071 15.2929L9.29289 16.7071L14.2929 21.7071L15 22.4142L15.7071 21.7071L20.7071 16.7071L19.2929 15.2929L16 18.5858V10V0H14ZM2 13.5C2 11.8431 3.34315 10.5 5 10.5H8V8.5H5C2.23858 8.5 0 10.7386 0 13.5V23C0 25.7614 2.23858 28 5 28H25C27.7614 28 30 25.7614 30 23V13.5C30 10.7386 27.7614 8.5 25 8.5H22V10.5H25C26.6569 10.5 28 11.8431 28 13.5V23C28 24.6569 26.6569 26 25 26H5C3.34315 26 2 24.6569 2 23V13.5Z"
+                                fill="#A7A7A7" />
+                        </svg>
+                    </div>
+                    <div class="mx-3 " data-title="更多">
+                        <div class="dropdown">
+                            <button class="btn btn-link" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="5" viewBox="0 0 26 5"
+                                    fill="none">
+                                    <path fill-rule="evenodd" clip-rule="evenodd"
+                                        d="M0 2C0 0.895432 0.895386 0 2 0H4C5.10461 0 6 0.895432 6 2V3C6 4.10457 5.10461 5 4 5H2C0.895386 5 0 4.10457 0 3V2ZM10 2C10 0.895432 10.8954 0 12 0H14C15.1046 0 16 0.895432 16 2V3C16 4.10457 15.1046 5 14 5H12C10.8954 5 10 4.10457 10 3V2ZM22 0C20.8954 0 20 0.895432 20 2V3C20 4.10457 20.8954 5 22 5H24C25.1046 5 26 4.10457 26 3V2C26 0.895432 25.1046 0 24 0H22Z"
+                                        fill="#505050" />
+                                </svg>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" @click="shareBoard()">共用</a></li>
+                                <li><a class="dropdown-item" href="#" @click="sendBoard()">分享</a></li>
+                                <li><a class="dropdown-item" href="#" @click="deleteBoard()">刪除</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <svg id="mindmapSvg" :width="width" :height="height" @mousedown="handleSvgMouseDown" @mousemove="dragMove"
+                @wheel.prevent="handleWheel" @mouseup="endDrag" @mouseleave="endDrag"
+                @contextmenu.prevent="handleSvgContextMenu($event)">
+                <!-- 定義 SVG 內部資源：格紋背景與箭頭 marker -->
+                <defs>
+                    <!-- 格紋背景，每格 20x20 -->
+                    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 L 0 20" fill="none" stroke="#ddd" stroke-width="0.5"></path>
+                    </pattern>
+                    <!-- 箭頭 marker -->
+                    <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="3" orient="auto"
+                        markerUnits="strokeWidth">
+                        <path d="M0,0 L0,6 L9,3 z" fill="red"></path>
+                    </marker>
+                </defs>
+                <!-- 使用格紋背景覆蓋整個 SVG -->
+                <rect width="100%" height="100%" fill="url(#grid)" @dblclick="addNodeAtContext"
+                    @mousedown="handleBackgroundMouseDown"></rect>
+                <!-- 將畫板內容包在 <g> 中，可統一進行平移與縮放 -->
+                <g :transform="boardTransform">
+                    <!-- 連線：以二次貝茲曲線呈現，虛線且末端帶箭頭；點擊/右鍵可選取與刪除 -->
+                    <path v-for="(conn, index) in connections" :key="'conn-' + index" :d="getConnectionPath(conn)"
+                        :stroke="conn.selected ? 'blue' : 'red'" fill="none" stroke-dasharray="5,5"
+                        marker-end="url(#arrow)" @click.stop="toggleConnectionSelection(conn, $event)"
+                        @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
+
+
+                    <!-- 可拖動的便利貼 -->
+                    <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
+                        @click.stop="nodeClick(node, $event)" @contextmenu.prevent="handleNodeContextMenu(node, $event)"
+                        style="cursor: move;">
+                        <!-- 便利貼背景，使用 node.color，預設 lightyellow -->
+                        <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth"
+                            :height="noteHeight" :fill="node.color" stroke="#ccc" stroke-width="0" rx="1" ry="5"
+                            style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));"></rect>
+                        <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth" :height="26"
+                            :fill="node.colorTop" rx="0" ry="0"></rect>
+                        <!-- 頂欄 -->
+                        <template v-if=" node.connectionsIn.length == 2">
+                            <!-- 當連結進來的數量 ≥ 2 時，顯示 Select 選單 -->
+                            <!-- 隱藏選中框 outline: none; -->
+                            <foreignObject :x="node.x -50 " :y="node.y - noteHeight / 2 - 4" width="100" height="32">
+                                <select v-model="node.operation" @change="updateTotal(node)"
+                                    style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
+                                    <option value="sum">+ 加法</option>
+                                    <option value="subtractAB">- 減法(A/B)</option>
+                                    <option value="subtractBA">- 減法(B/A)</option>
+                                    <option value="multiply">× 乘法</option>
+                                    <option value="divideAB">÷ 除法(A/B)</option>
+                                    <option value="divideBA">÷ 除法(B/A)</option>
+                                    <option value="modulusAB">% 餘數(A/B)</option>
+                                    <option value="modulusBA">% 餘數(B/A)</option>
+                                </select>
+                            </foreignObject>
+                        </template>
+                        <template v-else>
+                            <!-- 顯示總額（放在便利貼右上角，向左延伸）-->
+                            <text :x="node.x + noteWidth / 2 - 5" :y="node.y - noteHeight / 2 + 15" text-anchor="end"
+                                font-size="12" fill="grey" font-weight="bold">
+                                {{ node.total }}
+                            </text>
+                        </template>
+                        <!-- 頂欄 -->
+
+
+                        <!-- 雙擊文字進入編輯模式，利用 v-model 雙向綁定輸入值存入 node.label -->
+                        <template v-if="node.editing">
+                            <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
+                                :width="noteWidth - 10" :height="noteHeight - 10" style="overflow: hidden;">
+                                <!-- <input class="edit-input" type="text" v-model="node.label" @blur="finishEdit(node)"
+                                @keyup.enter="finishEdit(node)" /> -->
+                                <textarea class="form-control bg-white bg-opacity-25" name="" id="" type="text"
+                                    v-model="node.label" @blur="finishEdit(node)" @keyup.enter="finishEdit(node)"
+                                    style="height: 86px;">
+
+                            </textarea>
+                            </foreignObject>
+                        </template>
+
+
+                        <template v-else>
+                            <foreignObject :x="node.x- noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
+                                :width="noteWidth - 10" :height="noteHeight - 30">
+
+                                <text :x="node.x" :y="node.y" text-anchor="middle" font-size="12"
+                                    @dblclick="editNode(node)"
+                                    style="width: 100%; height: 100%; word-break: break-all;">
+                                    {{ node.label }}
+                                </text>
+
+                            </foreignObject>
+
+                        </template>
+                        <!-- 若便利貼被選取，畫一層藍色邊框提示 -->
+                        <rect v-if=" node.selected" :x="node.x - noteWidth/2" :y="node.y - noteHeight/2"
+                            :width="noteWidth" :height="noteHeight" fill="none" stroke="blue" stroke-width="2" rx="1"
+                            ry="5" />
+                    </g>
+
+                    <!-- 畫板邊緣浮動箭頭（若有便條紙超出可見範圍則顯示） -->
+                    <g>
+                        <text v-if="showLeftArrow" class="floating-arrow" x="10" :y="height/2" fill="blue"
+                            @click="scrollTo('left')">&#9664;</text>
+                        <text v-if="showRightArrow" class="floating-arrow" :x="width - 20" :y="height/2" fill="blue"
+                            @click="scrollTo('right')">&#9654;</text>
+                        <text v-if="showTopArrow" class="floating-arrow" :x="width/2" y="20" fill="blue"
+                            @click="scrollTo('top')">&#9650;</text>
+                        <text v-if="showBottomArrow" class="floating-arrow" :x="width/2" :y="height - 10" fill="blue"
+                            @click="scrollTo('bottom')">&#9660;</text>
+                    </g>
+                    <!-- 框選的選取框 -->
+                    <rect v-if="selectionBox.active" :x="selectionBox.x" :y="selectionBox.y" :width="selectionBox.width"
+                        :height="selectionBox.height" stroke="blue" stroke-dasharray="4,4" fill="none" />
+                </g>
+            </svg>
+
+
+            <!-- 右鍵選單 -->
+            <div v-if="contextMenu.visible" class="context-menu"
+                :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
+                <template v-if="contextMenu.type === 'blank'">
+                    <button @click="addNodeAtContext">新增節點</button>
+                </template>
+                <template v-else-if="contextMenu.type === 'node'">
+                    <button @click="startConnection(contextMenu.node)">開始連線</button>
+                    <button @click="deleteNode(contextMenu.node)">刪除此便利貼</button>
+                    <div>
+                        更換顏色：
+                        <button @click="changeNodeColor(contextMenu.node, '#ffc0cb', '#FCAFAA')">粉紅</button>
+                        <button @click="changeNodeColor(contextMenu.node, '#D3ED7F', '#C7DF7A')">粉綠</button>
+                        <button @click="changeNodeColor(contextMenu.node, '#CEEBFD', '#ADD8E6')">粉藍</button>
+                        <button @click="changeNodeColor(contextMenu.node, '#FFF8CA', '#FFF4B2')">粉黃</button>
+                    </div>
+                </template>
+                <template v-else-if="contextMenu.type === 'curve'">
+                    <button @click="deleteConnection(contextMenu.connection)">刪除此連線</button>
+                </template>
+            </div>
+        </div>
+    </div>
+    <!-- --------------程 式 區 載 入 區-------------- -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- 載入 Vue 3 全域版 -->
+    <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
+    <script src="js/vue.global.js"></script>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    noteWidth: 130,
+                    noteHeight: 120,
+                    center: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+                    // 初始便利貼，預設顏色為 lightyellow，並加入 selected 屬性
+                    nodes: [],
+                    // 連線資料，加入 selected 屬性
+                    connections: [],
+                    contextMenu: {
+                        visible: false,
+                        x: 0,
+                        y: 0,
+                        type: '', // 'blank'、'node'、'curve'
+                        node: null,
+                        connection: null
+                    },
+                    connectionStartNode: null,
+                    nextNodeId: 6,
+                    // 框選用的選取框資料
+                    selectionBox: {
+                        active: false,
+                        startX: 0,
+                        startY: 0,
+                        x: 0,
+                        y: 0,
+                        width: 0,
+                        height: 0,
+                    },
+                    // 群組拖曳用：記錄目前正在拖曳的便利貼集合及起始點
+                    draggingNodes: [],
+                    dragStart: { x: 0, y: 0 },
+
+                    // 新增歷史記錄相關屬性
+                    history: [], // 存放歷史狀態
+                    currentIndex: -1, // 當前狀態指針
+
+                    /* 畫板平移與縮放 */
+                    boardOffset: { x: 0, y: 0 },
+                    scale: 1,
+                    /* 右鍵平移狀態 */
+                    isRightPanning: false,
+                    rightPanStart: { x: 0, y: 0 },
+                    rightPanMoved: false,
+
+                    /* 使用者與畫板ID */
+                    userId: '',
+                    boardId: '',
+                    boardName: '',
+                    startLocalStorage: false,
+
+                    editName: false,
+                }
+            },
+            // 生命週期 : 起始
+            created() {
+                const vm = this;
+
+                vm.boardId = localStorage.getItem('boardId');
+                vm.boardName = localStorage.getItem('boardName');
+
+                if (vm.boardId == "newBoard") {
+                    vm.boardId = Math.random().toString(36).substring(2, 12);
+                    localStorage.setItem('boardId', vm.boardId)
+
+                    vm.nodes = [
+                        { boardId: vm.boardId, id: 1, count: 1, label: '便條紙 1', angle: 0, color: '#FFF8CA', colorTop: '#FFF4B2', selected: false, total: 1, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, id: 2, count: 2, label: '便條紙 2', angle: 90, color: '#D3ED7F', colorTop: '#C7DF7A', selected: false, total: 2, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, id: 3, count: 3, label: '便條紙 3', angle: 180, color: '#ffc0cb', colorTop: '#FCAFAA', selected: false, total: 3, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, id: 4, count: 4, label: '便條紙 4', angle: 270, color: '#CEEBFD', colorTop: '#ADD8E6', selected: false, total: 4, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                    ];
+
+                    // 根據角度初始化便利貼的位置
+                    const radius = 200;
+                    this.nodes.forEach(node => {
+                        const radian = (node.angle * Math.PI) / 180;
+                        node.x = this.center.x + radius * Math.cos(radian);
+                        node.y = this.center.y + radius * Math.sin(radian);
+                        node.editing = false;
+                        this.computeTotal(node);
+                    });
+                } else {
+                    vm.nodes = [];
+                    vm.connections = [];
+
+                }
+
+
+
+            },
+            mounted() {
+                const vm = this;
+                vm.checkuid();
+
+                //儲存狀態
+                this.saveState()
+                window.addEventListener('keydown', this.handleKeyDown);
+
+            },
+            beforeUnmount() {
+                window.removeEventListener('keydown', this.handleKeyDown);
+            },
+            // 監視
+            watch: {
+                nodes: {
+                    // 深層監聽，保留方法handler與deep是搭配使用的
+                    handler(newNodes) {
+                        if (this.startLocalStorage) {
+                            localStorage.setItem('nodes', JSON.stringify(newNodes));
+                        }
+                    },
+                    deep: true,
+                },
+                connections: {
+                    // 深層監聽，保留方法handler與deep是搭配使用的
+                    handler(newConnections) {
+                        if (this.startLocalStorage) {
+                            localStorage.setItem('connections', JSON.stringify(newConnections));
+                        }
+                    },
+                    deep: true,
+                },
+            },
+            // 計算、運算
+            computed: {
+                /* 畫板 transform */
+                boardTransform() {
+                    return `translate(${this.boardOffset.x}, ${this.boardOffset.y}) scale(${this.scale})`;
+                },
+                /* 計算可見範圍（畫板座標） */
+                visibleRect() {
+                    const left = -this.boardOffset.x / this.scale;
+                    const top = -this.boardOffset.y / this.scale;
+                    const right = left + this.width / this.scale;
+                    const bottom = top + this.height / this.scale;
+                    return { left, top, right, bottom };
+                },
+                /* 若有便條紙超出可見範圍則顯示浮動箭頭 */
+                showLeftArrow() {
+                    return this.nodes.some(n => n.x + this.noteWidth / 2 < this.visibleRect.left);
+                },
+                showRightArrow() {
+                    return this.nodes.some(n => n.x - this.noteWidth / 2 > this.visibleRect.right);
+                },
+                showTopArrow() {
+                    return this.nodes.some(n => n.y + this.noteHeight / 2 < this.visibleRect.top);
+                },
+                showBottomArrow() {
+                    return this.nodes.some(n => n.y - this.noteHeight / 2 > this.visibleRect.bottom);
+                }
+            },
+
+
+            // 方法函式
+            methods: {
+                deleteBoard() {
+
+                    const vm = this;
+
+                    Swal.fire({
+                        title: "是否刪除此畫板?",
+                        showDenyButton: true,
+                        icon: "error",
+                        // showCancelButton: true,
+                        confirmButtonText: "確認",
+                        denyButtonText: `取消`
+                    }).then((result) => {
+                        /* Read more about isConfirmed, isDenied below */
+                        if (result.isConfirmed) {
+                            var JSONdata = {};
+
+                            JSONdata["userId"] = vm.userId;
+                            JSONdata["boardId"] = vm.boardId;
+                            // 渲染帳號資料
+                            $.ajax({
+                                type: "POST",
+                                url: "member_control_api_v1.php?action=deleteBoard",
+                                // url: "member_control_api_v1.php?action=advanceDeleteBoard",
+                                data: JSON.stringify(JSONdata),
+                                dataType: "json",
+                                async: false,
+                                success: function (data) {
+                                    console.log(data.state);
+                                    location.href = "StickyCalc_board.html";
+                                },
+                                error: function () {
+                                    alert("發生錯誤"); //練習階段，一切皆用sweetalert
+                                }
+                            });
+                        } else if (result.isDenied) {
+                            // Swal.fire("Changes are not saved", "", "info");
+                        }
+                    });
+                },
+                edittodo() {
+                    // this.cacheTitle = title;
+                    this.editName = !this.editName;
+                },
+                checkuid() {
+                    //確認UID是否存在
+                    const vm = this;
+                    if (vm.getCookie("Uid01")) {
+                        // 將Uid01傳遞至後端API執行驗證
+                        // input {"uid01" : "owne132fd2"}
+                        var JSONdata = {};
+                        JSONdata["uid01"] = vm.getCookie("Uid01");
+                        $.ajax({
+                            type: "POST",
+                            url: "member_control_api_v1.php?action=checkuid",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: vm.showdata_checkuid,
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_register_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        })
+                    } else {
+
+                    }
+                },
+                showdata_checkuid(data) {
+                    const vm = this;
+                    console.log(data)
+                    if (data.state) {
+                        // $("#username_showtext").removeClass("d-none");
+                        // $("#username_text").text(data.data.Username);
+                        // $("#reg_btn").addClass("d-none");
+                        // $("#login_btn").addClass("d-none");
+                        // $("#logout_btn").removeClass("d-none");
+                        // memberLevel = data.data.Level;
+                        // chageLevel(data.data.Level);
+                        vm.userId = data.data.Username;
+
+                        // 後端取得
+                        vm.get_nodes()
+
+                        // 從localStorage取得
+                        if (vm.nodes == "") {
+                            if (localStorage.getItem('nodes')) {
+                                try {
+                                    vm.nodes = JSON.parse(localStorage.getItem('nodes'));
+                                } catch (e) {
+                                    localStorage.removeItem('nodes');
+                                }
+                            }
+                            if (localStorage.getItem('connections')) {
+                                try {
+                                    vm.connections = JSON.parse(localStorage.getItem('connections'));
+                                } catch (e) {
+                                    localStorage.removeItem('connections');
+                                }
+                            }
+                        }
+
+                        vm.startLocalStorage = true;
+                    }
+                },
+
+                get_nodes() {
+                    const vm = this;
+                    var JSONdata = {};
+                    console.log("name: " + vm.userId + "board: " + vm.boardId)
+                    if (vm.userId && vm.boardId) {
+                        JSONdata["userId"] = vm.userId;
+                        JSONdata["boardId"] = vm.boardId;
+                        $.ajax({
+                            type: "POST",
+                            url: "member_control_api_v1.php?action=get_nodes",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: vm.showNodes,
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_register_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        })
+                    }
+                    vm.getConnections();
+                },
+                showNodes(data) {
+                    const vm = this;
+                    if (data.data) {
+                        vm.nodes = [];
+                        for (i = 0; i < data.data.length; i++) {
+                            var newData = [];
+                            newData.push({
+                                "id": data.data[i].Id,
+                                "label": data.data[i].Label,
+                                "x": data.data[i].X,
+                                "y": data.data[i].Y,
+                                "color": data.data[i].Color,
+                                "colorTop": data.data[i].ColorTop,
+                                "editing": false,
+                                "selected": false,
+                                "operation": data.data[i].Operation,
+                                "connectionsOut": data.data[i].ConnectionsOut,
+                                "connectionsIn": data.data[i].ConnectionsIn,
+                                "connections": data.data[i].Connections,
+                                "total": data.data[i].Total,
+                                "count": data.data[i].Count,
+                                "startX": data.data[i].StartX,
+                                "startY": data.data[i].StartY,
+                                "userId": data.data[i].UserId,
+                                "boardId": data.data[i].BoardId,
+                            })
+                            vm.nodes.push(newData[0]);
+                            // this.computeTotal(vm.nodes[i])
+                        }
+                    }
+                },
+                getConnections() {
+                    //取得後端的連線資料      
+                    const vm = this;
+                    var JSONdata = {};
+
+                    if (vm.userId && vm.boardId) {
+                        JSONdata["userId"] = vm.userId;
+                        JSONdata["boardId"] = vm.boardId;
+                        $.ajax({
+                            type: "POST",
+                            url: "member_control_api_v1.php?action=get_Connections",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: vm.showConnections,
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_register_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        })
+                    }
+                },
+                showConnections(data) {
+                    const vm = this;
+                    if (data.data) {
+                        vm.connections = [];
+                        for (i = 0; i < data.data.length; i++) {
+                            var newData = [];
+                            newData.push({
+                                "connectionsId": data.data[i].connectionsId,
+                                "from": data.data[i].C_from,
+                                "to": data.data[i].C_to,
+                                "userId": data.data[i].UserId,
+                                "boardId": data.data[i].BoardId,
+                            })
+                            vm.connections.push(newData[0]);
+                        }
+                    }
+                },
+                goIndex() {
+                    const vm = this;
+                    vm.nodes_upload();
+                    vm.connections_upload();
+                    vm.board_upload();
+
+                    location.href = "StickyCalc_index.html";
+                },
+                pageNodesupload() {
+                    const vm = this;
+                    vm.nodes_upload();
+                    vm.connections_upload();
+                    vm.board_upload();
+
+                    location.href = "StickyCalc_board.html";
+                },
+                nodes_upload() {
+                    const vm = this;
+                    if (vm.userId != "") {
+                        // 構建傳遞的資料物件
+                        var JSONdata = {
+                            nodes: vm.nodes,       // 便利貼陣列
+                            userId: vm.userId,     // 用戶 ID
+                            boardId: vm.boardId    // 白板 ID
+                        };
+
+                        $.ajax({
+                            type: "POST",
+                            url: "member_control_api_v1.php?action=nodes_upload",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: function (data) {
+                                console.log("便利貼" + data.state + data.message);
+                            },
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_control_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        });
+                        vm.connections_upload();
+                        vm.board_upload();
+                    }
+                },
+
+                connections_upload() {
+                    const vm = this;
+                    var JSONdata01 = [];
+                    //傳遞至後端API執行上傳行為
+                    // JSONdata01 = vm.connections;
+                    if (vm.connections.length >= 1) {
+                        for (i = 0; i < vm.connections.length; i++) {
+                            JSONdata01.push({
+                                boardId: vm.boardId,
+                                userId: vm.userId,
+                                from: vm.connections[i].from,
+                                to: vm.connections[i].to,
+                                connectionsId: vm.connections[i].connectionsId
+                            })
+                        }
+                    }
+                    // 構建傳遞的資料物件
+                    var JSONdata = {
+                        connections: JSONdata01,       // 便利貼陣列
+                        userId: vm.userId,     // 用戶 ID
+                        boardId: vm.boardId    // 白板 ID
+                    };
+
+                    $.ajax({
+                        type: "POST",
+                        url: "member_control_api_v1.php?action=connections_upload",
+                        data: JSON.stringify(JSONdata),
+                        dataType: "json",
+                        success: function (data) {
+                            console.log("線段" + data.state + data.message);
+                        },
+                        error: function () {
+                            Swal.fire({
+                                title: "API串接錯誤",
+                                text: "member_register_api_v1.php",
+                                icon: "error"
+                            });
+                        }
+                    })
+
+                },
+
+                board_upload() {
+                    const vm = this;
+                    var alterTime = vm.getCurrentTime();
+                    var JSONdata02 = {};
+                    // 
+                    //傳遞至後端API執行上傳行為
+                    JSONdata02 = {
+                        userId: vm.userId,
+                        boardId: vm.boardId,
+                        alterTime: alterTime,
+                        boardName: vm.boardName,
+                    }
+
+                    console.log(JSONdata02);
+                    $.ajax({
+                        type: "POST",
+                        url: "member_control_api_v1.php?action=board_upload",
+                        data: JSON.stringify(JSONdata02),
+                        dataType: "json",
+                        success: function (data) {
+                            console.log("畫板名稱" + data.state);
+                        },
+                        error: function () {
+                            Swal.fire({
+                                title: "畫板上傳API串接錯誤",
+                                text: "member_register_api_v1.php",
+                                icon: "error"
+                            });
+                        }
+                    })
+                },
+                getCurrentTime() {
+                    return new Date().toLocaleString("zh-TW", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false,
+                    }).replace(/\//g, "-").replace(",", "");
+                },
+
+                /* ===== 右鍵平移：背景 mousedown ===== */
+                handleBackgroundMouseDown(event) {
+                    // 僅在右鍵（button===2）觸發
+                    if (event.button === 1) {
+                        this.isRightPanning = true;
+                        this.rightPanStart = { x: event.clientX, y: event.clientY };
+                        this.rightPanMoved = false;
+                    }
+                },
+                /* ===== 右鍵平移與一般 mousemove ===== */
+                handleMouseMove(event) {
+                    // 若正在右鍵平移，更新 boardOffset
+                    if (this.isRightPanning) {
+                        const dx = event.clientX - this.rightPanStart.x;
+                        const dy = event.clientY - this.rightPanStart.y;
+                        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                            this.rightPanMoved = true;
+                        }
+                        this.boardOffset.x += dx;
+                        this.boardOffset.y += dy;
+                        this.rightPanStart = { x: event.clientX, y: event.clientY };
+                    }
+                },
+                /* ===== mouseup 處理 ===== */
+                handleMouseUp(event) {
+                    if (event.button === 1) {
+                        if (this.isRightPanning) {
+                            // 若未拖曳則顯示背景右鍵選單
+                            if (!this.rightPanMoved && event.button === 2) {
+                                this.contextMenu.visible = true;
+                                this.contextMenu.x = event.clientX;
+                                this.contextMenu.y = event.clientY;
+                                this.contextMenu.type = 'blank';
+                                this.contextMenu.node = null;
+                                this.contextMenu.connection = null;
+                            }
+                            this.isRightPanning = false;
+                        };
+                    }
+
+                },
+                /* ===== 滾輪縮放 ===== */
+                handleWheel(event) {
+                    const zoomFactor = 1 - event.deltaY * 0.001;
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const mouseX = event.clientX - rect.left;
+                    const mouseY = event.clientY - rect.top;
+                    const prevScale = this.scale;
+                    this.scale *= zoomFactor;
+                    this.scale = Math.max(0.5, Math.min(2, this.scale));
+                    // 使縮放以滑鼠位置為中心
+                    this.boardOffset.x -= (mouseX / prevScale - mouseX / this.scale);
+                    this.boardOffset.y -= (mouseY / prevScale - mouseY / this.scale);
+                },
+
+                // 狀態快照 系統，記錄每次操作的變更，然後可以回溯或前進。
+                saveState() {
+                    // 深拷貝 nodes 和 connections
+                    const state = {
+                        nodes: JSON.parse(JSON.stringify(this.nodes)),
+                        connections: JSON.parse(JSON.stringify(this.connections))
+                    };
+                    // 移除指針之後的歷史（若有），並加入新狀態
+                    this.history = this.history.slice(0, this.currentIndex + 1);
+                    if (this.history.length >= 60) { // 限制最多 60 步
+                        this.history.shift();
+                        this.currentIndex--;
+                    }
+                    this.history.push(state);
+                    this.currentIndex++;
+                },
+                undo() {
+                    if (this.currentIndex > 0) { // 確保有前一個狀態可回退
+                        this.currentIndex--;
+                        const state = this.history[this.currentIndex];
+                        this.nodes = state.nodes;
+                        this.connections = state.connections;
+                    }
+                },
+                redo() {
+                    if (this.currentIndex < this.history.length - 1) { // 確保有下一個狀態可前進
+                        this.currentIndex++;
+                        const state = this.history[this.currentIndex];
+                        this.nodes = state.nodes;
+                        this.connections = state.connections;
+                    }
+                },
+
+                /* ========便利貼文字部分========= */
+
+                // formatText: 自動換行並截斷超過指定字數（30字）的部分
+                formatText(text) {
+                    const maxChars = 30;
+                    if (!text) return '';
+                    return text.length > maxChars ? text.substring(0, maxChars) + "....." : text;
+                },
+
+                // 雙擊文字進入編輯模式
+                editNode(node) {
+                    node.editing = true;
+                },
+
+                // computeTotal: 提取所有數字（含負號）並加總後存入 node.total
+                computeTotal(node) {
+                    const matches = node.label.match(/-?\d+/g);
+                    let total = 0;
+                    if (matches) {
+                        matches.forEach(numStr => {
+                            total += parseFloat(numStr);
+                        });
+                    }
+                    node.total = total;
+                    node.count = total;
+                    return total;
+                },
+
+                // 結束編輯，v-model 自動將輸入值存入 node.label；可直接透過 node.label 讀取文字
+                finishEdit(node) {
+                    const vm = this;
+                    node.editing = false;
+                    const newTotal = this.computeTotal(node);
+                    node.total = newTotal;
+                    node.count = newTotal;
+
+                    this.calculateTotal()
+                },
+
+                /* ========便利貼文字部分========= */
+                // 算式
+                /*
+                我需要的算式:
+                單連(in == 2 ):純加法 加總本數值與連線數值 僅左上顯示總計。
+                雙連(in == 3 ):複合算法 顯示select、加總數值，可自由選擇運算符做算式
+                多連(in >= 4 ):全加總 左上顯示總計 加總數值。
+                */
+                updateTotal(node) {
+
+                    console.log("測試")
+                    let values = 0;
+                    this.nodes.forEach(item => {
+                        if (item.connectionsIn.length == 1) {
+                            values = 0
+
+                            a = this.getNodeById(item.connectionsIn[0]).total;
+                            b = item.count;
+                            values = a + b;
+                            item.label = item.label;
+                            item.total = values;
+                        } else if (item.connectionsIn.length >= 3) {
+                            values = 0
+                            for (let i = 0; i < item.connectionsIn.length; i++) {
+                                a = this.getNodeById(item.connectionsIn[i]).total;
+                                values = values + a;
+                            }
+                            item.label = values;
+                            item.total = values;
+                        }
+                    })
+
+                    if (node.connectionsIn.length == 2) {
+                        values = 0
+
+                        a = this.getNodeById(node.connectionsIn[0]).total;
+                        b = this.getNodeById(node.connectionsIn[1]).total;
+                        switch (node.operation) {
+                            case "sum":
+                                values = a + b;
+                                break;
+                            case "subtractAB":
+                                values = a - b;
+                                break;
+                            case "subtractBA":
+                                values = b - a;
+                                break;
+                            case "multiply":
+                                values = a * b;
+                                break;
+                            case "divideAB":
+                                values = a / b;
+                                break;
+                            case "divideBA":
+                                values = b / a;
+                                break;
+                            case "modulusAB":
+                                values = a % b;
+                                break;
+                            case "modulusBA":
+                                values = b % a;
+                                break;
+                            default:
+                                values = 0; // 預設值
+                        }
+
+
+                        node.label = values;
+                        node.total = values;
+                    }
+
+                    return values; // 回傳計算結果
+                },
+
+
+                // 若在空白處按下滑鼠左鍵，開始框選
+                handleSvgMouseDown(event) {
+                    if (event.button === 0) {
+                        if (event.target.id === 'mindmapSvg' ||
+                            (event.target.tagName === 'rect' && event.target.getAttribute('fill') === 'url(#grid)')) {
+                            // 如果未按 Shift 則清除先前的選取
+                            if (!event.shiftKey) {
+                                this.nodes.forEach(n => n.selected = false);
+                                this.connections.forEach(n => n.selected = false);
+                            }
+                            this.selectionBox.active = true;
+
+                            // 獲取當前平移和縮放值
+                            const tx = this.boardOffset.x;
+                            const ty = this.boardOffset.y;
+                            const s = this.scale;
+
+                            // 將視窗座標轉換為 SVG 座標
+                            const svgStartX = (event.offsetX - tx) / s;
+                            const svgStartY = (event.offsetY - ty) / s;
+
+                            this.selectionBox.startX = svgStartX;
+                            this.selectionBox.startY = svgStartY;
+                            this.selectionBox.x = svgStartX;
+                            this.selectionBox.y = svgStartY;
+                            this.selectionBox.width = 0;
+                            this.selectionBox.height = 0;
+                            this.draggingNodes = [];
+                        }
+                    }
+                },
+                // 拖曳中：若正進行群組移動，則更新所有拖曳便利貼的位置；否則更新框選矩形
+                dragMove(event) {
+                    if (this.draggingNodes.length > 0) {
+                        // 群組移動的邏輯保持不變
+                        let dx = event.offsetX - this.dragStart.x;
+                        let dy = event.offsetY - this.dragStart.y;
+                        this.draggingNodes.forEach(n => {
+                            n.x = n.initialX + dx;
+                            n.y = n.initialY + dy;
+                        });
+                    } else if (this.selectionBox.active) {
+                        // 獲取當前平移和縮放值
+                        const tx = this.boardOffset.x;
+                        const ty = this.boardOffset.y;
+                        const s = this.scale;
+
+                        // 將視窗座標轉換為 SVG 座標
+                        const svgCurrentX = (event.offsetX - tx) / s;
+                        const svgCurrentY = (event.offsetY - ty) / s;
+
+                        const startX = this.selectionBox.startX;
+                        const startY = this.selectionBox.startY;
+
+                        this.selectionBox.x = Math.min(startX, svgCurrentX);
+                        this.selectionBox.y = Math.min(startY, svgCurrentY);
+                        this.selectionBox.width = Math.abs(svgCurrentX - startX);
+                        this.selectionBox.height = Math.abs(svgCurrentY - startY);
+                    }
+                    this.handleMouseMove(event);
+                },
+                // 結束拖曳或框選，若處於框選狀態則根據選取框更新各便利貼選取狀態
+                endDrag(event) {  // 注意：這裡需要加上 event 參數
+                    if (event.button === 0) {
+                        if (this.draggingNodes.length > 0) {
+                            this.draggingNodes = [];
+                        }
+                        if (this.selectionBox.active) {
+                            this.finishSelection();
+                        }
+                    }
+                    this.handleMouseUp(event);
+                },
+                // 框選結束：檢查哪些便利貼的中心落在選取框內，並標記為 selected
+                finishSelection() {
+                    const box = this.selectionBox;
+                    this.nodes.forEach(n => {
+                        if (n.x >= box.x && n.x <= box.x + box.width &&
+                            n.y >= box.y && n.y <= box.y + box.height) {
+                            n.selected = true;
+                        }
+                    });
+                    this.selectionBox.active = false;
+                    this.selectionBox.width = 0;
+                    this.selectionBox.height = 0;
+                },
+                // 開始拖曳便利貼：如果該便利貼尚未選取，先清除其他選取；之後將所有已選取的便利貼作為拖曳群組
+                startDrag(node, event) {
+                    const vm = this;
+                    // 避免點擊輸入框或選單時觸發拖曳
+                    const targetTag = event.target.tagName.toLowerCase();
+                    if (["textarea", "select"].includes(targetTag)) {
+                        return;
+                    }
+                    // 更新選取狀態
+                    if (!node.selected) {
+                        this.nodes.forEach(n => n.selected = false);
+                        node.selected = true;
+                    }
+                    // 獲取當前平移和縮放值
+                    const tx = this.boardOffset.x; // 平移 x
+                    const ty = this.boardOffset.y; // 平移 y
+                    const s = this.scale;         // 縮放比例
+                    // 計算滑鼠在 SVG 座標系統中的位置
+                    const svgX = (event.clientX - tx) / s;
+                    const svgY = (event.clientY - ty) / s;
+                    // 記錄拖曳起點（SVG 座標）
+                    vm.dragStart = { x: svgX, y: svgY };
+                    // 記錄選取的節點
+                    vm.draggingNodes = this.nodes.filter(n => n.selected);
+                    // 記錄每個節點的初始位置
+                    vm.draggingNodes.forEach(n => {
+                        n.startX = n.x;
+                        n.startY = n.y;
+                        n.userId = vm.userId;
+                        n.boardId = vm.boardId;
+                    });
+
+                    // 重新記錄持有者
+
+                    // 綁定拖曳事件
+                    document.addEventListener("mousemove", this.onDrag);
+                    document.addEventListener("mouseup", this.stopDrag);
+                },
+
+                onDrag(event) {
+                    if (!this.draggingNodes.length) return;
+
+                    // 獲取當前平移和縮放值
+                    const tx = this.boardOffset.x;
+                    const ty = this.boardOffset.y;
+                    const s = this.scale;
+                    // 計算當前滑鼠在 SVG 座標系統中的位置
+                    const svgX = (event.clientX - tx) / s;
+                    const svgY = (event.clientY - ty) / s;
+                    // 計算移動距離（SVG 座標系統）
+                    const dx = svgX - this.dragStart.x;
+                    const dy = svgY - this.dragStart.y;
+                    // 更新每個節點的位置
+                    this.draggingNodes.forEach(n => {
+                        n.x = n.startX + dx;
+                        n.y = n.startY + dy;
+                    });
+                },
+
+                stopDrag() {
+                    // 清理拖曳狀態
+                    this.dragStart = null;
+                    this.draggingNodes = [];
+                    document.removeEventListener("mousemove", this.onDrag);
+                    document.removeEventListener("mouseup", this.stopDrag);
+                    //儲存狀態
+                    this.saveState()
+                },
+                // 點擊便利貼：若處於連線模式則建立連線；否則若按住 Shift 則切換選取狀態
+                nodeClick(node, event) {
+                    const vm = this;
+                    console.log(node.id)
+
+                    if (this.connectionStartNode && this.connectionStartNode.id !== node.id) {
+                        this.connections.push({
+                            from: this.connectionStartNode.id,
+                            to: node.id,
+                            selected: false,
+                            userId: vm.userId,
+                            boardId: vm.boardId,
+                            connectionsId: Math.random().toString(36).substring(2, 12),
+                        });
+                        // // 更新連線資料：來源記錄 connectionsOut，目標記錄 connectionsIn
+                        this.connectionStartNode.connectionsOut.push(node.id);
+                        node.connectionsIn.push(this.connectionStartNode.id);
+                        this.connectionStartNode = null;
+
+                        this.calculateTotal()
+
+
+                    } else {
+                        if (event.shiftKey) {
+                            node.selected = !node.selected;
+                        }
+                    }
+                },
+
+                calculateTotal() {
+                    //測試新增 加總值
+                    if (this.nodes) {
+                        this.nodes.forEach(item => {
+                            if (item.connectionsIn.length >= 1) {
+                                this.updateTotal(item)
+                            }
+                        })
+                    }
+                    //儲存狀態
+                    this.saveState()
+                },
+
+
+                // 空白處右鍵選單
+                handleSvgContextMenu(event) {
+                    if (event.button === 2) {
+                        this.contextMenu.visible = true;
+                        this.contextMenu.x = event.clientX;
+                        this.contextMenu.y = event.clientY;
+                        this.contextMenu.type = 'blank';
+                        this.contextMenu.node = null;
+                        this.contextMenu.connection = null;
+                        this.connectionStartNode = null;
+                    }
+                },
+                // 便利貼右鍵選單：顯示開始連線、更換顏色與刪除功能
+                handleNodeContextMenu(node, event) {
+                    if (event.button === 2) {
+                        this.contextMenu.visible = true;
+                        this.contextMenu.x = event.clientX;
+                        this.contextMenu.y = event.clientY;
+                        this.contextMenu.type = 'node';
+                        this.contextMenu.node = node;
+                        event.stopPropagation();
+                    }
+                },
+                // 曲線右鍵選單：僅顯示刪除
+                handleCurveContextMenu(conn, event) {
+                    if (event.button === 2) {
+                        this.contextMenu.visible = true;
+                        this.contextMenu.x = event.clientX;
+                        this.contextMenu.y = event.clientY;
+                        this.contextMenu.type = 'curve';
+                        this.contextMenu.connection = conn;
+                        event.stopPropagation();
+                    }
+                },
+                hideContextMenu() {
+                    this.contextMenu.visible = false;
+                },
+                // 在空白右鍵選單中點「新增節點」，根據滑鼠位置新增便利貼
+                addNodeAtContext() {
+                    const vm = this;
+                    const svgElement = document.getElementById('mindmapSvg');
+                    const rect = svgElement.getBoundingClientRect();
+                    // const x = this.contextMenu.x - rect.left;
+                    // const y = this.contextMenu.y - rect.top;
+                    const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
+                    const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
+                    const newNode = {
+                        id: Math.random().toString(36).substring(2, 12), //取隨機8字元
+                        label: 'New Node',
+                        x: x,
+                        y: y,
+                        color: '#FFF8CA',
+                        colorTop: '#FFF4B2',
+                        editing: false,
+                        selected: false,
+                        operation: "sum",  // 預設值
+                        connectionsOut: [],
+                        connectionsIn: [],
+                        connections: [],
+                        total: 0,
+                        count: 0,
+                        userId: vm.userId,
+                        boardId: vm.boardId,
+
+                    };
+                    this.nodes.push(newNode);
+                    this.contextMenu.visible = false;
+                },
+
+                // ============== 連線相關 ===============
+                // 右鍵選單中「開始連線」
+                startConnection(node) {
+                    this.connectionStartNode = node;
+                    this.contextMenu.visible = false;
+                    // alert('請點擊另一個便利貼以建立連線');
+                },
+
+
+                // DELETE 按鍵：刪除所有已選取的便利貼與連線
+                handleKeyDown(event) {
+                    if (event.key === 'Delete') {
+                        // 記錄所有被選取的節點 ID
+                        const deletedIds = this.nodes.filter(node => node.selected).map(node => node.id);
+
+                        // 刪除所有選取的節點
+                        this.nodes = this.nodes.filter(node => !node.selected);
+
+                        // 刪除相關連線
+                        this.connections = this.connections.filter(conn => {
+                            // 若連線兩端皆存在且未被選取則保留
+                            const fromExists = this.nodes.some(n => n.id === conn.from);
+                            const toExists = this.nodes.some(n => n.id === conn.to);
+                            return fromExists && toExists && !conn.selected;
+                        });
+
+                        // 更新剩餘節點的 connectionsIn
+                        this.deleteForEachNodes(deletedIds);
+                        // 重新計算
+                        this.calculateTotal()
+                        //儲存狀態
+                        this.saveState()
+                    }
+
+
+                    if (event.ctrlKey && event.key === 'z' || event.key === 'Z') {
+                        if (event.shiftKey) {
+                            console.log("CTRL+SHIFT+Z 重做")
+                            this.redo(); // CTRL+SHIFT+Z 重做
+                        } else {
+                            console.log("CTRL+Z 撤銷")
+                            this.undo(); // CTRL+Z 撤銷
+                        }
+                    };
+
+
+                },
+                deleteBtn() {
+                    // 記錄所有被選取的節點 ID
+                    const deletedIds = this.nodes.filter(node => node.selected).map(node => node.id);
+
+                    // 刪除所有選取的節點
+                    this.nodes = this.nodes.filter(node => !node.selected);
+
+                    // 刪除相關連線
+                    this.connections = this.connections.filter(conn => {
+                        // 若連線兩端皆存在且未被選取則保留
+                        const fromExists = this.nodes.some(n => n.id === conn.from);
+                        const toExists = this.nodes.some(n => n.id === conn.to);
+                        return fromExists && toExists && !conn.selected;
+                    });
+
+                    // 更新剩餘節點的 connectionsIn
+                    this.deleteForEachNodes(deletedIds);
+                    // 重新計算
+                    this.calculateTotal()
+                    //儲存狀態
+                    this.saveState()
+                },
+
+                deleteNode(node) {
+                    // 刪除該節點
+                    this.nodes = this.nodes.filter(n => n.id !== node.id);
+                    // 刪除所有與該節點相關的連線
+                    this.connections = this.connections.filter(conn => conn.from !== node.id && conn.to !== node.id);
+
+                    this.deleteForEachNodes([node.id]);
+                    // 隱藏右鍵選單
+                    this.contextMenu.visible = false;
+                    // 重新計算
+                    this.calculateTotal()
+                    //儲存狀態
+                    this.saveState()
+                },
+
+                //傳入陣列ID後查找
+                deleteForEachNodes(deletedIds) {
+                    // 更新所有節點，移除 connectionsIn 中包含在 deletedIds 中的 ID
+                    this.nodes.forEach(n => {
+                        n.connectionsIn = n.connectionsIn.filter(id => !deletedIds.includes(id));
+                    });
+                },
+                // 傳入單一ID後查找
+                deleteForEachNode(node) {
+                    // 更新所有節點，移除 connectionsIn 中包含該節點 ID 的項目
+                    this.nodes.forEach(n => {
+                        n.connectionsIn = n.connectionsIn.filter(id => id !== node.id);
+                    });
+                },
+                // 刪除連線
+                deleteConnection(conn) {
+                    this.connections = this.connections.filter(c => c !== conn);
+                    this.contextMenu.visible = false;
+                    //儲存狀態
+                    this.saveState()
+                },
+                // 點擊曲線時切換選取狀態（顏色從紅變藍）
+                toggleConnectionSelection(conn, event) {
+                    conn.selected = !conn.selected;
+                },
+                // ============== 連線相關 ===============
+
+
+                // 右鍵選單中更換便利貼顏色，將 node.color 改為指定顏色
+                changeNodeColor(node, color, colorTop) {
+                    node.color = color;
+                    node.colorTop = colorTop;
+                    this.contextMenu.visible = false;
+                },
+                // 預留:分享功能
+                sendBoard() {
+
+                },
+
+                // 預留:共用功能
+                shareBoard() {
+
+                },
+
+                // 根據 id 取得便利貼資料（用於繪製連線）
+                getNodeById(id) {
+                    /*
+                    find 方法會在陣列中逐一尋找符合條件的元素，並回傳 第一個匹配的元素。
+
+                    n => n.id === id 是箭頭函式
+                    尋找指定 id 的節點，如果找到就回傳該節點的物件。 
+
+                        每個 n 代表 this.nodes 陣列中的一個物件（即一個節點）。
+                        n.id === id：檢查節點的 id 是否等於傳入的 id。
+                        若找到符合的節點，就會直接回傳該節點物件。
+                    */
+                    return this.nodes.find(n => n.id === id) || { x: 0, y: 0 };
+
+                },
+
+                // 計算並返回連線的二次貝茲曲線路徑字串
+                getConnectionPath(conn) {
+                    const fromNode = this.getNodeById(conn.from);
+                    const toNode = this.getNodeById(conn.to);
+                    if (!fromNode || !toNode) return '';
+                    const x1 = fromNode.x, y1 = fromNode.y;
+                    const x2 = toNode.x, y2 = toNode.y;
+                    const dx = x2 - x1, dy = y2 - y1;
+                    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    let offset = 30;
+                    if (len === 0) offset = 0;
+                    const px = -dy / (len || 1), py = dx / (len || 1);
+                    const cx = mx + px * offset, cy = my + py * offset;
+                    return `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+                },
+
+
+                setCookie(cname, cvalue, exdays) {
+                    const d = new Date();
+                    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+                    let expires = "expires=" + d.toUTCString();
+                    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+                },
+
+
+                getCookie(cname) {
+                    let name = cname + "=";
+                    let ca = document.cookie.split(';');
+                    for (let i = 0; i < ca.length; i++) {
+                        let c = ca[i];
+                        while (c.charAt(0) == ' ') {
+                            c = c.substring(1);
+                        }
+                        if (c.indexOf(name) == 0) {
+                            return c.substring(name.length, c.length);
+                        }
+                    }
+                    return "";
+                },
+            }
+        });
+        app.mount('#app');
+    </script>
+</body>
+
+</html>

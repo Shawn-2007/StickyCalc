@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&family=Noto+Serif+TC:wght@200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+TC:wght@100..900&family=Noto+Serif+TC:wght@200..900&display=swap');
+:root{
+    --mycolor01: #1A1A19;
+    --mycolor02: #31511E;
+    --mycolor03: #859F3D;
+    --mycolor04: #F6FCDF;
+    --mycolor05: #89A8B2;
+    --mycolor06: #B3C8CF;
+    --mycolor07: #E5E1DA;
+    --mycolor08: #F1F0E8;
+}
+.bg_000{
+    background-color: var(--mycolor01);
+}
+.bg_001{
+    background-color: var(--mycolor02);
+}
+.bg_002{
+    background-color: var(--mycolor03);
+}
+.bg_003{
+    background-color: var(--mycolor04);
+}
+.bg_004{
+    background-color: var(--mycolor05);
+}
+.bg_005{
+    background-color: var(--mycolor06);
+}
+
+/* 粗體文字 */
+.fw-900{
+    font-weight: 900;
+}
+.fw-800{
+    font-weight: 800;
+}
+.fw-700{
+    font-weight: 700;
+}
+.fw-600{
+    font-weight: 600;
+}
+.fw-500{
+    font-weight: 500;
+}
+.fw-400{
+    font-weight: 400;
+}
+.fw-300{
+    font-weight: 300;
+}
+.fw-200{
+    font-weight: 200;
+}
+.fw-100{
+    font-weight: 100;
+}
+
+
+.bg-cover{
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.bg-end{
+    background-position: center end;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.mycenter{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.myroller {
+    position: relative;
+    /* 遮罩 範圍外 */
+    overflow: hidden;
+}
+
+.myroller .roller {
+
+    position: absolute;
+
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.2));
+    width: 100%;
+    height: 100%;
+    top: -100%;
+    left: 0;
+    /* 不知道長寬時可以用下面三個來置中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.myroller:hover .roller {
+    top: 0;
+    transition: top 1s;
+}
+
+.myroller .rollert {
+
+    position: absolute;
+
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.2));
+    width: 100%;
+    height: 100%;
+    top: -100%;
+    left: 0;
+    /* 不知道長寬時可以用下面三個來置中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.myroller:hover .rollert {
+    top: 0;
+    transition: top 1s;
+}
+
+.myroller .rollerl {
+
+    position: absolute;
+
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.2));
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: -100%;
+    /* 不知道長寬時可以用下面三個來置中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.myroller:hover .rollerl {
+    left: 0;
+    transition: left 1s;
+}
+
+.myroller .rollerr {
+
+    position: absolute;
+
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.2));
+    width: 100%;
+    height: 100%;
+    top: 0;
+    right: -100%;
+    /* 不知道長寬時可以用下面三個來置中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.myroller:hover .rollerr {
+    right: 0;
+    transition: right 1s;
+}
+
+.myroller .rollerb {
+
+    position: absolute;
+
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(255, 255, 255, 0.2));
+    width: 100%;
+    height: 100%;
+    bottom: -100%;
+    left: 0;
+    /* 不知道長寬時可以用下面三個來置中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.myroller:hover .rollerb {
+    bottom: 0;
+    transition: bottom 1s;
+}
+
+.myroller a {
+    background-color: var(--mycolor03);
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    margin-right: 15px;
+    font-size: 20px;
+    color: var(--mycolor04);
+    text-decoration: none;
+    border-radius: 4px;
+}

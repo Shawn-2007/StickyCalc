@@ -1,0 +1,40 @@
+/* 
+
+1. table.table-rwd
+2. table
+3. table
+
+*/
+@media screen and ( max-width: 768px){
+    .table-rwd thead{
+        display: none;
+    }
+
+    .table-rwd tbody tr{
+        display: block;
+        border: 5px solid var(--mycolor02);
+        margin-top: 5px;
+    }
+
+    .table-rwd tbody tr td{
+        display: block;
+        overflow: hidden;
+    }
+
+    .table-rwd tbody tr td::before{
+        content: attr(data-th) " : ";
+        font-weight: 900;
+        font-size: 20px;
+        display: block;
+        float: left;
+        width: 30%;
+        text-align: right;
+        padding-right: 15px;
+    }
+
+    .table-rwd tbody tr td span.table-col{
+        display: block;
+        float: left;
+        width: 70%;
+    }
+}

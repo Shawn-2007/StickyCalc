@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StickyCalc 便利貼計算板</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/my.css">
+
+    <style>
+        /* 格狀紋背景 */
+        .grid-background {
+            background: repeating-linear-gradient(0deg,
+                    #f0f0f000 0px,
+                    #f0f0f0 1px,
+                    transparent 1px,
+                    transparent 19px), repeating-linear-gradient(90deg,
+                    #f0f0f000 0px,
+                    #f0f0f0 1px,
+                    transparent 1px,
+                    transparent 19px);
+            background-position: center;
+            background-size: 200% 200%;
+        }
+
+        /* 便條紙樣式 */
+        .sticky-note {
+            position: relative;
+            width: 200px;
+            /* 參考你的 noteWidth */
+            height: 150px;
+            /* 參考你的 noteHeight */
+            background-color: lightyellow;
+            /* 預設 node.color */
+            border-radius: 3px;
+            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #000;
+        }
+
+        .sticky-note::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 26px;
+            /* 上方色條高度 */
+            background-color: #fffacd;
+            /* 類似 node.colorTop */
+            border-radius: 5px 5px 0 0;
+        }
+
+        .sticky-note-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 自訂義字重 */
+        .fw-800 {
+            font-weight: 800;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="" id="app">
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-lg bg-body-tertiary shadow-sm">
+                <div class="container-fluid">
+                    <!-- LOGO -->
+                    <svg width="55" height="50" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 主體 -->
+                        <defs>
+                            <linearGradient id="grad10" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FFF9C4" />
+                                <stop offset="100%" stop-color="#FFEB3B" />
+                            </linearGradient>
+                            <linearGradient id="grad12" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FFF9C4" />
+                                <stop offset="100%" stop-color="#FFEB3B" />
+                            </linearGradient>
+                            <linearGradient id="grad11" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FFEB3B" />
+                                <stop offset="100%" stop-color="#FFEB3B" />
+                            </linearGradient>
+                        </defs>
+                        <!-- 整合圖形符號 -->
+                        <g transform="scale(0.4)">
+                            <rect x="20" y="20" rx="2" ry="2" width="100" height="100" fill="url(#grad10)"
+                                stroke="#FBC02D" stroke-width="2" />
+                            <rect x="20" y="20" rx="2" ry="2" width="100" height="100" fill="url(#grad12)"
+                                stroke="#FBC02D" stroke-width="0" />
+                            <rect x="20" y="20" rx="2" width="100" height="20" fill="url(#grad11)" stroke="#FBC02D"
+                                stroke-width="0" />
+                            <!-- 節點沿邊排列 -->
+
+                            <circle cx="70" cy="20" r="5" fill="#F57F17" />
+                            <circle cx="120" cy="70" r="5" fill="#F57F17" />
+                            <circle cx="70" cy="120" r="5" fill="#F57F17" />
+                            <!-- 連線 -->
+                            <line x1="70" y1="20" x2="120" y2="70" stroke="#F57F17" stroke-width="2" />
+                            <line x1="120" y1="70" x2="70" y2="120" stroke="#F57F17" stroke-width="2" />
+                        </g>
+                        <!-- 品牌文字 -->
+                        <!-- <text x="140" y="85" font-family="Arial, sans-serif" font-size="24" fill="#424242">StickyCalc</text> -->
+                    </svg>
+                    <!-- LOGO -->
+
+                    <a class="navbar-brand" href="StickyCalc_index.html">StickyCalc</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="StickyCalc_board.html">我的貼板</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link disabled" href="#">軟體下載</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    幫助中心
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item disabled" href="#">電腦教學</a></li>
+                                    <li><a class="dropdown-item disabled" href="#">手機教學</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item disabled" href="#">更新日誌</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    解決方案
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item disabled" href="#">Q&A</a></li>
+                                    <li><a class="dropdown-item disabled" href="#">文章博客</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item disabled" href="#">聯絡客服</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link  disabled" aria-disabled="true">站內搜索</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-none" href="StickyCalc_manage.html" id="backstage">管理台</a>
+                            </li>
+
+                        </ul>
+                        <div class="">
+                            <span class="h4 text-success d-none" id="username_showtext">會員: <span class="h3 text-danger"
+                                    id="username_text">XXX</span> <span>等級: <span id="memberLv">XX</span></span>
+                            </span>
+                            <button class="btn btn-warning d-none" id="logout_btn">登出</button>
+
+                            <button class="btn btn-warning rounded-pill text-white" id="login_btn" name="login_btn"
+                                data-bs-toggle="modal" data-bs-target="#loginModal">登入/註冊</button>
+
+                        </div>
+                        <!-- 搜索 -->
+                        <!-- <form class="d-flex" role="search">
+                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                            <button class="btn btn-outline-success" type="submit">Search</button>
+                        </form> -->
+
+
+                        <!-- loginModal 登入 -->
+                        <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                            aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-warning">
+                                        <h1 class="modal-title  display-5 fw-600 " id="exampleModalLabel">會員登入</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="" class="form-label">會員帳號:</label>
+                                            <input type="text" name="username_login" id="username_login"
+                                                class="form-control is-invalid ">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="" class="form-label">密碼:</label>
+                                            <input type="password" id="password_login" name="password_login"
+                                                class="form-control  is-invalid" @keyup.enter="ok_btn_login()">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <div class="">還沒帳號?<span><a href="#" data-bs-toggle="modal"
+                                                    data-bs-target="#registerModal">立即註冊</a></span></div>
+
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">取消</button>
+                                        <button type="button" id="ok_btn_login" @click="ok_btn_login()"
+                                            class="btn btn-primary">登入</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- loginModal 登入 -->
+
+                        <!-- 註冊 -->
+                        <!-- registerModal -->
+                        <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                            aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-warning">
+                                        <h1 class="modal-title display-5 fw-600 " id="exampleModalLabel">會員註冊</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="display-6 fw-600 my-3">快速註冊</div>
+                                                <p>註冊以便紀錄計算內容</p>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="mb-3">
+                                                    <label for="" class="form-label">會員帳號:</label>
+                                                    <input type="text" class="form-control "
+                                                        :class="{' is-valid' : flag_username_reg,'is-invalid' :  !flag_username_reg}"
+                                                        name="username_reg" placeholder="3-6字數" v-model="username_vue">
+                                                    <!-- valid-feedback 通過樣式 -->
+                                                    <div class="valid-feedback" id="username_reg_valid-feedback">格式正確
+                                                    </div>
+                                                    <!-- valid-feedback 警告樣式 -->
+                                                    <div class="invalid-feedback" id="username_reg_invalid-feedback">
+                                                        格式不正確
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="" class="form-label">密碼:</label>
+                                                    <input type="password" class="form-control "
+                                                        :class="{' is-valid' : flag_password_reg,'is-invalid' :  !flag_password_reg}"
+                                                        name="password_reg" placeholder="3-6字數" v-model="password_vue">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="" class="form-label">確認密碼:</label>
+                                                    <input type="password"
+                                                        :class="{'is-valid':flag_re_password_reg , 'is-invalid':!flag_re_password_reg}"
+                                                        class="form-control" name="re_password_reg"
+                                                        v-model="re_password_vue">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="" class="form-label">E-mail:</label>
+                                                    <input type="email"
+                                                        :class="{' is-valid' : flag_email_reg,'is-invalid' :  !flag_email_reg}"
+                                                        placeholder="3-10字數" class="form-control" v-model="email_vue">
+                                                </div>
+                                                <!-- valid-feedback 通過樣式 -->
+                                                <div class="valid-feedback">格式正確</div>
+                                                <!-- valid-feedback 警告樣式 -->
+                                                <div class="invalid-feedback">格式不正確</div>
+                                            </div>
+
+                                        </div>
+
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">取消</button>
+                                        <button type="button" class="btn btn-primary" @click="userReg()">確認</button>
+                                    </div>
+
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="container mt-5">
+            <div class="row-12">
+                <div class="col position-relative mt-5 grid-background" style="height: 580px;">
+                    <div class="display-4 fw-800 position-absolute"
+                        style="top: 40%; left: 50%; transform: translate(-50%, -50%);">
+                        讓計算 <span style="color: rgb(145, 212, 212);">更</span><span
+                            style="color: rgb(255, 133, 133);">多</span><span style="color: rgb(172, 255, 179);">元</span>
+                    </div>
+                    <div class="h6 fw-800 mb-4 text-center" style="top: 0%; left: 0%; transform: translate(0%, 1500%);">
+                        這是一個結合便條紙、計算機、記帳以及節點的工具網站，讓你的計算方式更加直觀與多元
+                    </div>
+                    <div class=" text-center" style="transform: translate(50%, 200%);">
+                        <a style="transform: translate(-50%, 0%);" href="#" class="sticky-note" @click="newBoard">
+                            <span class="sticky-note-text">貼上你的第一張</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <!-- --------------程 式 區 載 入 區-------------- -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
+    <script src="js/vue.global.js"></script>
+
+
+    <!-- --------------程 式 區-------------- -->
+    <script>
+        // 登入布林
+        var flag_username_login = false;
+        var flag_password_login = false;
+
+
+        var memberLevel = 10;
+
+
+        // Vue 主程式
+        const App = {
+            data() {
+                return {
+                    username_vue: '',
+                    password_vue: '',
+                    re_password_vue: '',
+                    email_vue: '',
+                    flag_username_reg: false,
+                    flag_password_reg: false,
+                    flag_email_reg: false,
+                    flag_re_password_reg: false,
+
+                    memberLevel01: 0,
+                }
+            },
+            // 生命週期:起始
+            created() {
+
+            },
+            // 監聽
+            watch: {
+                username_vue: function (newValue) {
+                    const vm = this;
+                    if (newValue.length > 3 && newValue.length < 30) {
+                        var JSONdata01 = {};
+                        JSONdata01["username"] = newValue;
+
+                        $.ajax({
+                            type: "POST",
+                            url: "member_control_api_v1.php?action=checkuni",
+                            data: JSON.stringify(JSONdata01),
+                            dataType: "json",
+                            success: function (deta) {
+                                if (deta.state) {
+                                    console.log("無重複")
+                                    vm.flag_username_reg = true;
+
+                                } else {
+                                    console.log("重複不可用")
+                                    vm.flag_username_reg = false;
+                                }
+
+                            },
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_login_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        });
+                    } else {
+                        vm.flag_username_reg = false;
+                    }
+                },
+                password_vue: function (newValue) {
+                    const vm = this;
+                    if (newValue.length > 3 && newValue.length < 30) {
+                        vm.flag_password_reg = true;
+                        vm.flag_re_password_reg = false;
+                    } else {
+                        vm.flag_password_reg = false;
+                        vm.flag_re_password_reg = false;
+
+                    }
+                },
+                re_password_vue: function (newValue) {
+                    const vm = this;
+                    if (newValue == vm.password_vue) {
+                        vm.flag_re_password_reg = true;
+                    } else {
+                        vm.flag_re_password_reg = false;
+                    }
+                },
+                email_vue: function (newValue) {
+                    const vm = this;
+                    if (newValue.length > 3 && newValue.length < 30) {
+                        vm.flag_email_reg = true;
+                    } else {
+                        vm.flag_email_reg = false;
+                    }
+                },
+            },
+            // 函式區
+            methods: {
+                newBoard() {
+                    console.log("RRRRRRRRRRRRRRRRRR")
+                    localStorage.setItem('boardId', "newBoard")
+                    localStorage.setItem('boardName', "newBoard")
+
+                    location.href = "StickyCalc_page.html";
+                },
+                userReg() {
+                    const vm = this;
+                    if (vm.flag_username_reg && vm.flag_password_reg && vm.flag_email_reg && vm.flag_re_password_reg) {
+                        var JSONdata = {};
+                        //傳遞至後端API執行註冊行為
+                        // {"username" : "owner01", "password" : "123456", "email" : "owner01@test.com"}
+                        JSONdata["username"] = vm.username_vue;
+                        JSONdata["password"] = vm.password_vue;
+                        JSONdata["email"] = vm.email_vue;
+                        $.ajax({
+                            type: "POST",
+                            url: "member_control_api_v1.php?action=register",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: showdata_reg,
+                            error: function () {
+
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_register_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        })
+                    } else {
+                        Swal.fire({
+                            title: "欄位有錯誤，請修正",
+                            text: "That thing is still around?",
+                            icon: "error"
+                        });
+                    }
+                },
+                ok_btn_login() {
+                    if (flag_username_login && flag_password_login) {
+                        //傳遞後端API 執行登入行為
+                        // {"username" : "owner01", "password" : "123456"}
+                        var JSONdata01 = {};
+                        JSONdata01["username"] = $("#username_login").val();
+                        JSONdata01["password"] = $("#password_login").val();
+
+                        $.ajax({
+                            type: "POST",
+                            url: "member_control_api_v1.php?action=login",
+                            data: JSON.stringify(JSONdata01),
+                            dataType: "json",
+                            success: this.showdata_login,
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_login_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        });
+
+                    } else {
+                        Swal.fire({
+                            title: "輸入錯誤",
+                            text: "請輸入帳號和密碼",
+                            icon: "error"
+                        });
+                    }
+                },
+                showdata_login(data) {
+                    // location.href = "SPA-index.html";
+                    console.log(data);
+                    if (data.state) {
+                        Swal.fire({
+                            title: data.message,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // 讓loginModal 消失
+                                $("#loginModal").modal("hide");
+                                $("#username_showtext").removeClass("d-none");
+
+                                this.memberLevel01 = data.data.Level;
+
+                                chageLevel(data.data.Level);
+
+
+                                $("#username_text").text(data.data.Username);
+
+                                $("#login_btn").addClass("d-none");
+                                $("#logout_btn").removeClass("d-none");
+
+
+                                setCookie("Uid01", data.data.Uid01, 7);
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: data.message,
+                            icon: "error"
+                        });
+                    }
+                },
+                chageLevel0001(level) {
+
+                    if (level == 100) {
+                        $("#backstage").removeClass("d-none");
+                        return "管理員"
+                    } else if (level >= 50 && level < 100) {
+                        $("#memberLv").text("VIP");
+                    }
+
+                    if (level >= 10 && level < 50) {
+                        $("#memberLv").text("一般使用者");
+                    }
+
+                    if (level >= -20 && level < 10) {
+                        $("#memberLv").text("停權帳號");
+                        Swal.fire({
+                            title: "此帳號違反規定已遭停權",
+                            icon: "error"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                setCookie("Uid01", "", 7);
+                                location.href = "StickyCalc_index.html"
+                            }
+                        });
+                    }
+                },
+
+            }
+        }
+        Vue.createApp(App).mount('#app')
+
+        // 主程式
+        $(function () {
+
+            //確認UID是否存在
+            if (getCookie("Uid01")) {
+                // 將Uid01傳遞至後端API執行驗證
+                // input {"uid01" : "owne132fd2"}
+                var JSONdata = {};
+                JSONdata["uid01"] = getCookie("Uid01");
+                $.ajax({
+                    type: "POST",
+                    url: "member_control_api_v1.php?action=checkuid",
+                    data: JSON.stringify(JSONdata),
+                    dataType: "json",
+                    success: showdata_checkuid,
+                    error: function () {
+                        Swal.fire({
+                            title: "API串接錯誤",
+                            text: "member_register_api_v1.php",
+                            icon: "error"
+                        });
+                    }
+                })
+
+            } else {
+
+            }
+
+
+            //及時監聽username_login 登入布林
+            $("#username_login").bind("input propertychange", function () {
+                if ($(this).val().length > 0) {
+                    $(this).removeClass("is-invalid")
+                    flag_username_login = true;
+                } else {
+                    $(this).add("is-invalid")
+                    flag_username_login = false;
+                }
+            });
+            $("#password_login").bind("input propertychange", function () {
+                if ($(this).val().length > 0) {
+                    $(this).removeClass("is-invalid")
+                    flag_password_login = true;
+                } else {
+                    $(this).add("is-invalid")
+                    flag_password_login = false;
+                }
+            });
+            //及時監聽 登入布林
+
+
+            // 登出按鈕
+            $("#logout_btn").click(function () {
+                setCookie("Uid01", "", 7);
+                location.href = "StickyCalc_index.html";
+            });
+        })
+
+        function showdata_reg(data) {
+            console.log(data);
+            if (data.state) {
+                Swal.fire({
+                    title: data.message,
+                    icon: "success"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        location.href = "StickyCalc_index.html"
+                    }
+                });
+
+            } else {
+                Swal.fire({
+                    title: data.message,
+                    icon: "error"
+                });
+            }
+        }
+
+
+
+
+        function showdata_checkuid(data) {
+            console.log(data)
+            if (data.state) {
+                $("#username_showtext").removeClass("d-none");
+
+                $("#username_text").text(data.data.Username);
+
+                $("#reg_btn").addClass("d-none");
+                $("#login_btn").addClass("d-none");
+                $("#logout_btn").removeClass("d-none");
+                setCookie("Uid01", data.data.Uid01, 7)
+                memberLevel = data.data.Level;
+                chageLevel(data.data.Level);
+
+
+            }
+        }
+
+        function chageLevel(level) {
+
+            if (level == 100) {
+                $("#backstage").removeClass("d-none");
+                $("#memberLv").text("管理者");
+            }
+
+            if (level >= 50 && level < 100) {
+                $("#memberLv").text("VIP");
+            }
+
+            if (level >= 10 && level < 50) {
+                $("#memberLv").text("一般使用者");
+            }
+
+            if (level >= -20 && level < 10) {
+                $("#memberLv").text("停權帳號");
+                Swal.fire({
+                    title: "此帳號違反規定已遭停權",
+                    icon: "error"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        setCookie("Uid01", "", 7);
+                        location.href = "StickyCalc_index.html"
+                    }
+                });
+            }
+
+            if (level >= -50 && level < -20) {
+                $("#memberLv").text("凍結帳號");
+                Swal.fire({
+                    title: "此帳號已被凍結，解凍請聯繫管理員",
+                    icon: "error"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        setCookie("Uid01", "", 7);
+                        location.href = "StickyCalc_index.html"
+                    }
+                });
+            }
+        }
+
+
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+
+        function getCookie(cname) {
+            let name = cname + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+
+    </script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StickyCalc 便利貼計算板</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/my.css">
+
+    <style>
+        .leftMenu a {
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .leftMenu {
+            width: 300px;
+            /* 固定側欄寬度 */
+            min-width: 250px;
+            /* 最小寬度 (避免過窄) */
+            max-width: 300px;
+            /* 限制最大寬度 */
+            height: 100vh;
+            /* 讓側欄固定填滿整個畫面高度 */
+            overflow-y: auto;
+            /* 如果內容超出，則顯示滾動條 */
+            /* position: fixed; */
+            /* 固定在畫面左側 */
+            top: 0;
+            left: 0;
+            background: white;
+            /* 設定背景色，避免透明 */
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            /* 加入陰影，提升視覺層次 */
+            z-index: -1000;
+            /* 確保側欄在最上層 */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="" id="app">
+
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-lg bg-body-tertiary shadow-sm">
+                <div class="container-fluid">
+                    <!-- LOGO -->
+                    <svg width="55" height="50" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 主體 -->
+                        <defs>
+                            <linearGradient id="grad10" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FFF9C4" />
+                                <stop offset="100%" stop-color="#FFEB3B" />
+                            </linearGradient>
+                            <linearGradient id="grad12" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FFF9C4" />
+                                <stop offset="100%" stop-color="#FFEB3B" />
+                            </linearGradient>
+                            <linearGradient id="grad11" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#FFEB3B" />
+                                <stop offset="100%" stop-color="#FFEB3B" />
+                            </linearGradient>
+                        </defs>
+                        <!-- 整合圖形符號 -->
+                        <g transform="scale(0.4)">
+                            <rect x="20" y="20" rx="2" ry="2" width="100" height="100" fill="url(#grad10)"
+                                stroke="#FBC02D" stroke-width="2" />
+                            <rect x="20" y="20" rx="2" ry="2" width="100" height="100" fill="url(#grad12)"
+                                stroke="#FBC02D" stroke-width="0" />
+                            <rect x="20" y="20" rx="2" width="100" height="20" fill="url(#grad11)" stroke="#FBC02D"
+                                stroke-width="0" />
+                            <!-- 節點沿邊排列 -->
+
+                            <circle cx="70" cy="20" r="5" fill="#F57F17" />
+                            <circle cx="120" cy="70" r="5" fill="#F57F17" />
+                            <circle cx="70" cy="120" r="5" fill="#F57F17" />
+                            <!-- 連線 -->
+                            <line x1="70" y1="20" x2="120" y2="70" stroke="#F57F17" stroke-width="2" />
+                            <line x1="120" y1="70" x2="70" y2="120" stroke="#F57F17" stroke-width="2" />
+                        </g>
+                        <!-- 品牌文字 -->
+                        <!-- <text x="140" y="85" font-family="Arial, sans-serif" font-size="24" fill="#424242">StickyCalc</text> -->
+                    </svg>
+                    <!-- LOGO -->
+
+                    <a class="navbar-brand" href="StickyCalc_index.html">StickyCalc</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" href="StickyCalc_board.html">我的貼板</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link disabled" href="#">軟體下載</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle " href="#" role="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    幫助中心
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item disabled" href="#">電腦教學</a></li>
+                                    <li><a class="dropdown-item disabled" href="#">手機教學</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item disabled" href="#">更新日誌</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    解決方案
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item disabled" href="#">Q&A</a></li>
+                                    <li><a class="dropdown-item disabled" href="#">文章博客</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item disabled" href="#">聯絡客服</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link disabled" aria-disabled="true">站內搜索</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-none" href="StickyCalc_manage.html" id="backstage">管理台</a>
+                            </li>
+                            <!-- <li class="nav-item">
+                                <a class="nav-link disabled" aria-disabled="true">站內搜索</a>
+                            </li> -->
+                        </ul>
+                        <div class="">
+                            <span class="h4 text-success d-none" id="username_showtext">會員: <span class="h3 text-danger"
+                                    id="username_text">XXX</span> <span>等級: <span>{{userLevel}}</span></span>
+                            </span>
+                            <button class="btn btn-warning d-none" id="logout_btn">登出</button>
+
+                            <button class="btn btn-warning rounded-pill text-white" id="login_btn" name="login_btn"
+                                data-bs-toggle="modal" data-bs-target="#loginModal">登入/註冊</button>
+
+                        </div>
+                        <!-- 搜索 -->
+                        <!-- <form class="d-flex" role="search">
+                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                            <button class="btn btn-outline-success" type="submit">Search</button>
+                        </form> -->
+
+
+                        <!-- loginModal 登入 -->
+                        <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                            aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-warning">
+                                        <h1 class="modal-title  display-5 fw-600 " id="exampleModalLabel">會員登入</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="" class="form-label">會員帳號:</label>
+                                            <input type="text" name="username_login" id="username_login"
+                                                class="form-control is-invalid ">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="" class="form-label">密碼:</label>
+                                            <input type="password" id="password_login" name="password_login"
+                                                class="form-control  is-invalid">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <div class="">還沒帳號?<span><a href="">立即註冊</a></span></div>
+
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">取消</button>
+                                        <button type="button" id="ok_btn_login" class="btn btn-primary">登入</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- loginModal 登入 -->
+
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="container-fluid ">
+            <div class="row">
+                <div class="col-3">
+                    <div class="leftMenu">
+                        <div class="mt-4">
+                            <a href="StickyCalc_index.html" class="form-control">
+                                <div class="">首頁</div>
+                            </a>
+                        </div>
+                        <div class="mt-3">
+                            <a href="#" @click="newBoard" class="form-control">
+                                <div class="">新增貼版</div>
+                            </a>
+                        </div>
+
+                        <div class="mt-3">
+                            <a href="#" class="form-control">
+                                <div class="" style="color: #b4b4b4;">熱門範本</div>
+
+                            </a>
+                        </div>
+
+                        <div class="mt-3">
+                            <a href="#" class="form-control">
+                                <div class="" style="color: #b4b4b4;">會員管理</div>
+
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ------------- 列表 ---------------- -->
+                <div class="col-9">
+                    <!-- <h1>檔案列表</h1> -->
+                    <div class="row mt-3 mb-3">
+                        <div class="col-1">
+
+                        </div>
+                        <div class="col-4 h4">
+                            檔案名稱
+                        </div>
+                        <div class="col-3 h4">
+                            修改時間
+                        </div>
+                        <div class="col-3 h4">
+                            創建時間
+                        </div>
+
+                        <div class="col-1">
+
+
+                        </div>
+                    </div>
+                    <div v-for="item in boardData" :key="item.BoardId" class="row mt-3">
+                        <div class="col-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="33" height="28" viewBox="0 0 33 28"
+                                fill="none">
+                                <rect x="12" y="5" width="10" height="8" rx="2" stroke="black" stroke-width="2" />
+                                <rect x="5" y="16" width="10" height="8" rx="2" stroke="black" stroke-width="2" />
+                                <rect x="19" y="16" width="10" height="8" rx="2" stroke="black" stroke-width="2" />
+                                <rect x="1" y="1" width="31" height="26" rx="4" stroke="black" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="col-4 h4">
+                            <a href="#" style="text-decoration: none; color: #000;"
+                                @click="openBoard(item.BoardId, item.BoardName)">
+                                {{ item.BoardName }}
+                            </a>
+                        </div>
+                        <div class="col-3">
+                            {{ item.AlterTime }}
+                        </div>
+                        <div class="col-3">
+                            {{ item.CreateTime }}
+                        </div>
+                        <!-- dropdown是bootstrap的下拉選單 -->
+                        <div class="col-1">
+                            <div class="dropdown">
+                                <button class="btn btn-link" type="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="5" viewBox="0 0 26 5"
+                                        fill="none">
+                                        <path fill-rule="evenodd" clip-rule="evenodd"
+                                            d="M0 2C0 0.895432 0.895386 0 2 0H4C5.10461 0 6 0.895432 6 2V3C6 4.10457 5.10461 5 4 5H2C0.895386 5 0 4.10457 0 3V2ZM10 2C10 0.895432 10.8954 0 12 0H14C15.1046 0 16 0.895432 16 2V3C16 4.10457 15.1046 5 14 5H12C10.8954 5 10 4.10457 10 3V2ZM22 0C20.8954 0 20 0.895432 20 2V3C20 4.10457 20.8954 5 22 5H24C25.1046 5 26 4.10457 26 3V2C26 0.895432 25.1046 0 24 0H22Z"
+                                            fill="#505050" />
+                                    </svg>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#"
+                                            @click="shareBoard(item.BoardId, item.UserId)">共用</a></li>
+                                    <li><a class="dropdown-item" href="#"
+                                            @click="sendBoard(item.BoardId, item.UserId)">分享</a></li>
+                                    <li><a class="dropdown-item" href="#"
+                                            @click="deleteBoard(item.BoardId, item.UserId)">刪除</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- updata Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">會員更新</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 顯示位置 -->
+                    <div class="mb-3">
+                        <label for="username" class="form-label">帳號</label>
+                        <input type="text" class="form-control" name="username" id="username" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">email</label>
+                        <input type="text" class="form-control is-valid" name="email" id="email">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="updateModal_ok_btn">確認</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --------------程 式 區 載 入 區-------------- -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- 載入 Vue 3 全域版 -->
+    <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
+    <script src="js/vue.global.js"></script>
+
+    <!-- --------------程 式 區-------------- -->
+    <script>
+        // 登入布林
+        var flag_username_login = false;
+        var flag_password_login = false;
+        // 註冊布林
+        var flag_username_reg = false;
+        var flag_password_reg = false;
+        var flag_email_reg = false;
+        var flag_re_password_reg = false;
+
+        var selectBoard = "";
+
+
+
+        const App = {
+            data() {
+                return {
+                    username: '',
+                    boardData: [],
+                    memberLevel01: 0,
+                    userLevel: '',
+                }
+            },
+            created() {
+                const vm = this;
+                //確認UID是否存在
+                if (vm.getCookie("Uid01")) {
+                    // 將Uid01傳遞至後端API執行驗證
+                    // input {"uid01" : "owne132fd2"}
+                    var JSONdata = {};
+                    JSONdata["uid01"] = vm.getCookie("Uid01");
+                    $.ajax({
+                        type: "POST",
+                        url: "member_control_api_v1.php?action=checkuid",
+                        data: JSON.stringify(JSONdata),
+                        dataType: "json",
+                        success: vm.showdata_checkuid,
+                        error: function () {
+                            Swal.fire({
+                                title: "API串接錯誤",
+                                text: "member_register_api_v1.php",
+                                icon: "error"
+                            });
+                        }
+                    })
+
+                } else {
+                    Swal.fire({
+                        title: "請先登入會員",
+                        icon: "info",
+                        allowOutsideClick: false,
+                    }).then((result) => {
+                        location.href = "StickyCalc_index.html";
+                    });
+                }
+
+                localStorage.setItem('boardId', "")
+                localStorage.setItem('boardName', "")
+            },
+            watch: {
+            },
+            methods: {
+                deleteBoard(boardId, userId) {
+                    var JSONdata = {};
+
+                    JSONdata["userId"] = userId;
+                    JSONdata["boardId"] = boardId;
+                    // 渲染帳號資料
+                    $.ajax({
+                        type: "POST",
+                        url: "member_control_api_v1.php?action=deleteBoard",
+                        // url: "member_control_api_v1.php?action=advanceDeleteBoard",
+                        data: JSON.stringify(JSONdata),
+                        dataType: "json",
+                        async: false,
+                        success: function (data) {
+                            console.log(data.state);
+                            location.href = "StickyCalc_board.html";
+                        },
+                        error: function () {
+                            alert("發生錯誤"); //練習階段，一切皆用sweetalert
+                        }
+                    });
+                },
+                showdata_checkuid(data) {
+                    const vm = this;
+                    if (data.state) {
+                        $("#username_showtext").removeClass("d-none");
+
+                        $("#username_text").text(data.data.Username);
+
+                        vm.memberLevel01 = data.data.Level;
+                        console.log(data)
+                        vm.chageLevel(vm.memberLevel01);
+
+                        $("#login_btn").addClass("d-none");
+                        $("#logout_btn").removeClass("d-none");
+                        var JSONdata = {};
+
+                        JSONdata["userId"] = data.data.Username;
+                        // 渲染帳號資料
+                        $.ajax({
+                            type: "POST",
+                            url: "member_control_api_v1.php?action=getAllUserBoard",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            async: false,
+                            success: function (data) {
+                                vm.boardData = data.data;
+                                console.log(vm.boardData);
+                                // vm.showdata();
+                            },
+                            error: function () {
+                                alert("發生錯誤"); //練習階段，一切皆用sweetalert
+                            }
+                        });
+                    }
+                },
+                chageLevel(level) {
+                    const vm = this;
+                    if (level == 100) {
+                        $("#backstage").removeClass("d-none");
+                        vm.userLevel = "管理員";
+                        return "管理員"
+                    } else if (level >= 50 && level < 100) {
+                        vm.userLevel = "VIP";
+
+                    }
+
+                    if (level >= 10 && level < 50) {
+                        vm.userLevel = "一般使用者";
+
+                    }
+
+                    if (level >= -20 && level < 10) {
+                        vm.userLevel = "停權帳號";
+
+                        Swal.fire({
+                            title: "此帳號違反規定已遭停權",
+                            icon: "error"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                setCookie("Uid01", "", 7);
+                                location.href = "StickyCalc_index.html"
+                            }
+                        });
+                    }
+                },
+
+                showdata(data) {
+                    const vm = this
+                    vm.boards = data;
+                    console.log("列表資訊" + data.data);
+                    if (data.state) {
+
+                        $("#mydata #inBoard_btn").click(function () {
+
+                            bid = $(this).data("boardid");
+                            localStorage.setItem('boardId', bid)
+                            bname = $(this).data("boardname");
+                            localStorage.setItem('boardName', bname)
+                            location.href = "StickyCalc_page.html";
+                        })
+
+
+                        $("#mydata #delete_btn").click(function () {
+                            uid = $(this).data("id");
+                            Swal.fire({
+                                // title: "確認刪除 " + $(this).data("username") + " ?",
+                                title: "確認刪除 " + " ?",
+                                text: "確認刪除這筆資料",
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonColor: "#3085d6",
+                                cancelButtonColor: "#d33",
+                                confirmButtonText: "確定"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    //符合規定，傳遞至後端API執行更新行為
+                                    //{"id" : "26", "price" : "90", "remark" : "高品質鮮乳"}
+                                    var JSONdata02 = {};
+                                    JSONdata02["id"] = uid;
+                                    console.log(JSONdata02);
+
+                                    $.ajax({
+                                        type: "DELETE",
+                                        url: "member_control_api_v1.php?action=delete",
+                                        data: JSON.stringify(JSONdata02),
+                                        dataType: "json",
+                                        async: false,
+                                        success: showdata_delete,
+                                        error: function () {
+                                            alert(); //練習階段，一切皆用sweetalert
+                                        }
+                                    });
+                                    // Swal.fire({
+                                    //     title: "刪除成功!",
+                                    //     text: "此筆資料已被刪除",
+                                    //     icon: "success"
+                                    // });
+                                }
+                            });
+                        })
+
+                        $("#email").bind("input propertychange", function () {
+                            if ($(this).val().length > 0 && $(this).val().length < 33) {
+                                $(this).removeClass("is-invalid");
+                                $(this).addClass("is-valid");
+                                flag_email = true;
+                            } else {
+                                $(this).removeClass("is-valid");
+                                $(this).addClass("is-invalid");
+                                flag_email = false;
+                            }
+                        })
+
+                        $("#updateModal_ok_btn").click(function () {
+                            if (flag_email) {
+
+                                var JSONdata01 = {};
+                                JSONdata01["id"] = uid;
+                                JSONdata01["email"] = $("#email").val();
+                                console.log(JSONdata01);
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: "member_control_api_v1.php?action=update",
+                                    data: JSON.stringify(JSONdata01),
+                                    dataType: "json",
+                                    async: false,
+                                    success: showdata_update,
+                                    error: function () {
+                                        alert(); //練習階段，一切皆用sweetalert
+                                    }
+                                });
+                            } else {
+                                alert("欄位錯誤");
+                            }
+
+                        })
+
+
+                    } else {
+                        // alert(data.message);//練習階段，一切皆用sweetalert
+                    }
+                },
+                openBoard(boardId, boardName) {
+                    // bid = $(this).data("boardid");
+                    localStorage.setItem('boardId', boardId)
+                    // bname = $(this).data("boardname");
+                    localStorage.setItem('boardName', boardName)
+                    location.href = "StickyCalc_page.html";
+                },
+
+                newBoard() {
+                    localStorage.setItem('boardId', "newBoard")
+                    localStorage.setItem('boardName', "newBoard")
+
+                    location.href = "StickyCalc_page.html";
+                },
+
+                // 預留:分享功能
+                sendBoard(boardId, userId) {
+
+                },
+
+                // 預留:共用功能
+                shareBoard(boardId, userId) {
+
+                },
+
+                setCookie(cname, cvalue, exdays) {
+                    const d = new Date();
+                    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+                    let expires = "expires=" + d.toUTCString();
+                    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+                },
+                getCookie(cname) {
+                    let name = cname + "=";
+                    let decodedCookie = decodeURIComponent(document.cookie);
+                    let ca = decodedCookie.split(';');
+                    for (let i = 0; i < ca.length; i++) {
+                        let c = ca[i];
+                        while (c.charAt(0) == ' ') {
+                            c = c.substring(1);
+                        }
+                        if (c.indexOf(name) == 0) {
+                            return c.substring(name.length, c.length);
+                        }
+                    }
+                    return "";
+                },
+            }
+        }
+        Vue.createApp(App).mount('#app')
+
+
+
+
+        // 主程式
+        $(function () {
+
+
+            // 登入按鈕
+            $("#ok_btn_login").click(function () {
+                if (flag_username_login && flag_password_login) {
+                    //傳遞後端API 執行登入行為
+                    // {"username" : "owner01", "password" : "123456"}
+                    var JSONdata01 = {};
+                    JSONdata01["username"] = $("#username_login").val();
+                    JSONdata01["password"] = $("#password_login").val();
+
+                    $.ajax({
+                        type: "POST",
+                        url: "member_control_api_v1.php?action=login",
+                        data: JSON.stringify(JSONdata01),
+                        dataType: "json",
+                        success: showdata_login,
+                        error: function () {
+                            Swal.fire({
+                                title: "API串接錯誤",
+                                text: "member_login_api_v1.php",
+                                icon: "error"
+                            });
+                        }
+                    });
+
+                } else {
+                    Swal.fire({
+                        title: "輸入錯誤",
+                        text: "請輸入帳號和密碼",
+                        icon: "error"
+                    });
+                }
+            });
+
+            //及時監聽username_login 登入布林
+            $("#username_login").bind("input propertychange", function () {
+                if ($(this).val().length > 0) {
+                    $(this).removeClass("is-invalid")
+                    flag_username_login = true;
+                } else {
+                    $(this).add("is-invalid")
+                    flag_username_login = false;
+                }
+            });
+            $("#password_login").bind("input propertychange", function () {
+                if ($(this).val().length > 0) {
+                    $(this).removeClass("is-invalid")
+                    flag_password_login = true;
+                } else {
+                    $(this).add("is-invalid")
+                    flag_password_login = false;
+                }
+            });
+            //及時監聽 登入布林
+
+            // 登出按鈕
+            $("#logout_btn").click(function () {
+                setCookie("Uid01", "", 7);
+                location.href = "StickyCalc_index.html";
+            });
+
+
+        })
+
+
+        function showdata_login(data) {
+            // location.href = "SPA-index.html";
+            console.log(data);
+            if (data.state) {
+                Swal.fire({
+                    title: data.message,
+                    icon: "success"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // 讓loginModal 消失
+                        $("#loginModal").modal("hide");
+                        $("#username_showtext").removeClass("d-none");
+                        $("#backstage").removeClass("d-none");
+
+                        $("#username_text").text(data.data.Username);
+
+                        $("#login_btn").addClass("d-none");
+                        $("#logout_btn").removeClass("d-none");
+
+
+                        setCookie("Uid01", data.data.Uid01, 7);
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: data.message,
+                    icon: "error"
+                });
+            }
+        }
+
+        function showdata_checkuid(data) {
+            if (data.state) {
+                $("#username_showtext").removeClass("d-none");
+
+                $("#username_text").text(data.data.Username);
+
+                $("#login_btn").addClass("d-none");
+                $("#logout_btn").removeClass("d-none");
+                $("#backstage").removeClass("d-none");
+                var JSONdata = {};
+                // JSONdata['"userId"'] = data.data.Username;
+                JSONdata['"userId"'] = "testUserId0001";
+                console.log(JSONdata)
+                // 渲染帳號資料
+                $.ajax({
+                    type: "GET",
+                    url: "member_control_api_v1.php?action=getAllUserBoard",
+                    data: JSON.stringify(JSONdata),
+                    dataType: "json",
+                    async: false,
+                    success: showdata,
+                    error: function () {
+                        alert("錯誤唷"); //練習階段，一切皆用sweetalert
+                    }
+                });
+            }
+        }
+
+
+
+
+        function showdata_delete(data) {
+            console.log(data);
+
+            if (data.state) {
+                alert(data.message);//練習階段，一切皆用sweetalert
+                location.href = "StickyCalc_manage.html";
+
+
+            } else {
+                alert(data.message);//練習階段，一切皆用sweetalert
+            }
+        }
+
+        function showdata_update(data) {
+            // console.log(data);
+            if (data.state) {
+                alert(data.message);//練習階段，一切皆用sweetalert
+                location.href = "StickyCalc_manage.html";
+
+            } else {
+                alert(data.message);//練習階段，一切皆用sweetalert
+            }
+        }
+
+
+
+
+
+        function setCookie(cname, cvalue, exdays) {
+            const d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        }
+
+
+        function getCookie(cname) {
+            let name = cname + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+
+    </script>
+
+
+</body>
+
+</html>
