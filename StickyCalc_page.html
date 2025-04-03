@@ -154,6 +154,8 @@
     <div id="app">
         <!-- 外層容器，點擊時隱藏右鍵選單 -->
         <div class="mind-map-container" @click="hideContextMenu">
+            <!-- 用於測試圖表 in jquery -->
+            <!-- <canvas id="test0001"></canvas> -->
             <!-- 左上工具列 -->
             <div class="toolbar toolbar-left">
                 <div class="mt-2 d-flex">
@@ -239,6 +241,11 @@
                                 d="M4 0C1.79086 0 0 1.79086 0 4V24C0 26.2091 1.79086 28 4 28H26C28.2091 28 30 26.2091 30 24V4C30 1.79086 28.2091 0 26 0H4ZM2 4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4V24C28 25.1046 27.1046 26 26 26H4C2.89543 26 2 25.1046 2 24V4ZM5 5H25V3H5V5ZM14 17H8V15H14V9H16V15H22V17H16V23H14V17Z"
                                 fill="#505050" />
                         </svg>
+                    </div>
+                    <div class="mx-2">
+                        <button class="btn btn-outline-info btn-sm" onclick="testShowData()">
+                            測試
+                        </button>
                     </div>
                     <div class="mx-2" data-title="連線">
                         <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
@@ -346,6 +353,7 @@
                             </ul>
                         </div>
                     </div>
+
                 </div>
             </div>
             <svg id="mindmapSvg" :width="width" :height="height" @mousedown="handleSvgMouseDown" @mousemove="dragMove"
@@ -421,7 +429,7 @@
                             <!-- Chart 圖表區域 -->
                             <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 10"
                                 :width="node.chartWidth - 20" :height="node.chartHeight - 40">
-                                <canvas :id=" node.id"></canvas>
+                                <canvas :id="node.id"></canvas>
                             </foreignObject>
                             <!-- 右下角縮放點 -->
                             <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
@@ -514,16 +522,21 @@
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
 
     <!-- 載入 Vue 3 全域版 -->
     <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
+    <script src="https://unpkg.com/vue-chartjs@latest/dist/index.js"></script>
+    <!-- 引入 Chart.js -->
+    <script src="https://unpkg.com/chart.js@4/dist/chart.umd.js"></script>
+    <!-- 引入 vue-chartjs -->
+    <!-- <script src="https://unpkg.com/vue-chartjs@5/dist/index.umd.js"></script> -->
     <script src="js/vue.global.js"></script>
     <script>
-
         var nodeChart;
 
         const app = Vue.createApp({
+
             data() {
                 return {
                     width: window.innerWidth,
@@ -589,6 +602,7 @@
                     ChartValue: [20, 50, 30],
 
                     nodeChart: null,
+
                 }
             },
             // 生命週期 : 起始
@@ -698,11 +712,6 @@
                 // 新增圖表便利貼
                 addChartNode() {
                     const vm = this;
-                    // const svgElement = document.getElementById('mindmapSvg');
-                    // const rect = svgElement.getBoundingClientRect();
-                    // const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
-                    // const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
-
                     // 內容為新增便利貼
                     const x = (event.clientX - this.boardOffset.x) / this.scale;
                     const y = (event.clientY - this.boardOffset.y) / this.scale;
@@ -740,27 +749,28 @@
                             }]
                         },
                         options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
+                            // responsive: true,
+                            // maintainAspectRatio: false,
                             scales: {
-                                x: { title: { display: true, text: 'X 軸' } },
+
                                 y: { title: { display: true, text: 'Y 軸' } }
                             }
                         }
                     });
                 },
-                chart001() {
+                resetChart() {
+
                     const vm = this;
                     vm.nodeChart.data.labels = [];
                     vm.nodeChart.data.datasets[0].data = [];
-                    // vm.nodeChart.update();
-                    vm.nodes.forEach(n => {
-                        if (n.selected == true) {
-                            // 貌似因為大小有變動，所以表格就會重整
-                            console.log("重整圖表")
-                            n.chartWidth++;
-                        }
-                    })
+                    vm.nodeChart.update();
+                    // vm.nodes.forEach(n => {
+                    //     if (n.selected == true) {
+                    //         // 貌似因為大小有變動，所以表格就會重整
+                    //         console.log("重整圖表")
+                    //         // n.chartWidth++;
+                    //     }
+                    // })
                 },
                 // 開始縮放
                 startResize(node, event) {
@@ -1782,6 +1792,43 @@
             }
         });
         app.mount('#app');
+
+        var nodeChart;
+
+        // 測試jquery
+        $(function () {
+            const canvas = document.getElementById("test0001");
+            if (!canvas) return;
+            nodeChart = new Chart(canvas, {
+                type: 'line', // 預設折線圖
+                data: {
+                    labels: ['範例1', '範例2', '範例3'], // 預設數據
+                    datasets: [{
+                        label: '數據',
+                        data: [10, 20, 30],
+                        borderColor: 'red',
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { title: { display: true, text: 'Y 軸' } }
+                    }
+                }
+            });
+        })
+
+        function testShowData() {
+            nodeChart.data.labels = [];
+            nodeChart.data.datasets[0].data = [];
+            nodeChart.data.labels = ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'];
+            nodeChart.data.datasets[0].data = [12, 19, 3, 5, 2, 3];
+            nodeChart.data.labels.push("紅色");
+            nodeChart.data.datasets[0].data.push(12);
+            nodeChart.update();
+        }
+
+
     </script>
 </body>
 
