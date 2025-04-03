@@ -1211,7 +1211,7 @@
 
                 // computeTotal: 提取所有數字（含負號）並加總後存入 node.total
                 computeTotal(node) {
-                    const matches = node.label.match(/-?\d+/g);
+                    const matches = node.label.match(/-?\d*\.?\d+/g);
                     let total = 0;
                     if (matches) {
                         matches.forEach(numStr => {
