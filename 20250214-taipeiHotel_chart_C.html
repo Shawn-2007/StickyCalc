@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/my.css">
+    <link rel="stylesheet" href="css/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+
+<body>
+
+    <!-- section 02 -->
+    <section id="s03" class="bg-dark">
+        <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <!-- fa-2x : 放大ICON -->
+                    <i class="fa-solid fa-paper-plane fa-2x"></i>
+                    啟航投資顧問有限公司
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="SPA-index.html">首頁</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="SPA-member-control-panel_v1.html" id="backstage">控制台</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="SPA-control-panel_MAP.html" id="map_btn">口罩地圖</a>
+                        </li>
+
+
+                    </ul>
+                    <div class="">
+                        <span class="h4 text-success d-none" id="s02_username_showtext">會員: <span class="h3 text-danger"
+                                id="s02_username_text">XXX</span>
+                        </span>
+
+                        <button class="btn btn-warning d-none" data-bs-toggle="modal" data-bs-target="#loginModal"
+                            id="s02_logout_btn">登出</button>
+
+                    </div>
+
+
+
+
+                </div>
+            </div>
+        </nav>
+    </section>
+
+    <!-- <div class="banner bg-cover"
+        style="background-image: url(images/photo-1730051470698-f5c95d6d5120.avif); height: 280px;">
+        <div class="display-2 fw-900 text-white p-5">台北旅館地圖</div>
+    </div> -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <ul class="list-group" id="Citylist">
+                    <li class="list-group-item" data-name="台中市">台中市</li>
+                </ul>
+            </div>
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-12">
+                        <div>
+                            <canvas id="myChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div>
+                            <canvas id="myChart1"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+
+    </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/counterup2@2.0.2/dist/index.js">	</script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/wow.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/leaflet-color-markers.js"></script>
+    <script src="js/leaflet.markercluster.js"></script>
+    <script src="js/auth.js"></script>
+
+
+
+    <script>
+        var regionData = [];
+        var counter = [];
+        var regionTitle = [];
+        var map;
+        var mychart01;
+        var mychart1;
+        var selectedCity; // 選取的城市
+        var hotelData = [];
+
+        $(function () {
+            // 先畫圖再跑資料
+            const ctx = document.getElementById('myChart');
+            const ctx1 = document.getElementById('myChart1');
+
+            mychart01 = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                    datasets: [{
+                        label: '旅館數量',
+                        data: [12, 19, 3, 5, 2, 3],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            mychart1 = new Chart(ctx1, {
+                type: 'polarArea',
+                data: {
+                    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                    datasets: [{
+                        label: '旅館數量',
+                        data: [12, 19, 3, 5, 2, 3],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // 旅館資料
+            $.ajax({
+                type: "GET",
+                url: "js/hotel_C_f.json",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    hotelData = data.XML_Head.Infos.Info;
+                    console.log(hotelData)
+
+                },
+                error: function () {
+                    Swal.fire({
+                        title: "API串接錯誤",
+                        text: "20250213-taipeiHotel.php",
+                        icon: "error"
+                    });
+                }
+            })
+
+            // 縣市資料
+            $.ajax({
+                type: "GET",
+                url: "js/CityCountyData.json",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    console.log(data);
+                    data.forEach(function (item) {
+                        strHTML = `<li class="list-group-item" data-name="${item.CityName}">${item.CityName}</li>`
+                        $("#Citylist").append(strHTML);
+                    })
+                },
+                error: function () {
+                    Swal.fire({
+                        title: "API串接錯誤",
+                        text: "CityCountyData.json",
+                        icon: "error"
+                    });
+                }
+            })
+
+            $("#Citylist .list-group-item").click(function () {
+                // console.log($(this).data("name"));
+                selectedCity = $(this).data("name");
+
+
+                mychart01.data.labels = [];
+                mychart01.data.datasets[0].data = [];
+                mychart1.data.labels = [];
+                mychart1.data.datasets[0].data = [];
+                getRegion = [];
+                counter = [];
+                regionTitle = [];
+                var filterData = [];
+                hotelData.forEach(function (item) {
+                    if (item.Region == selectedCity) {
+                        filterData.push(item)
+                    }
+                })
+
+                filterData.forEach(function (item) {
+                    getRegion = item.Town;
+                    if (counter[getRegion] == undefined) {
+                        counter[getRegion] = regionData.length;
+                        regionData.push(new Array());
+                        regionTitle[counter[getRegion]] = getRegion;
+                    }
+                    regionData[counter[getRegion]].push(item);
+                })
+
+
+                regionTitle.forEach(function (item) {
+                    mychart01.data.labels.push(item)
+                    mychart01.data.datasets[0].data.push(regionData[counter[item]].length)
+                    mychart1.data.labels.push(item)
+                    mychart1.data.datasets[0].data.push(regionData[counter[item]].length)
+                })
+
+                mychart01.update();
+                mychart1.update();
+            })
+
+        })
+
+        function showdata(data) {
+            // $("#listData").empty();
+
+            // console.log(data);
+            // 資料重構
+            // data.data.forEach(function (item) {
+            //     getRegion = item.display_addr.substring(0, item.display_addr.indexOf("區", 0) + 1);
+            //     if (counter[getRegion] == undefined) {
+            //         counter[getRegion] = regionData.length;
+            //         regionData.push(new Array());
+            //         regionTitle[counter[getRegion]] = getRegion;
+            //     }
+            //     regionData[counter[getRegion]].push(item);
+            // })
+
+            // console.log(counter)
+            // console.log(regionTitle)
+            // console.log(regionData)
+
+            // mychart01.data.labels = [];
+            // mychart01.data.datasets[0].data = [];
+
+            // regionTitle.forEach(function (item) {
+            //     mychart01.data.labels.push(item)
+            //     mychart01.data.datasets[0].data.push(regionData[counter[item]].length)
+            // })
+
+            // mychart01.update();
+        }
+
+
+    </script>
+
+    <script>
+    </script>
+
+</body>
+
+</html>

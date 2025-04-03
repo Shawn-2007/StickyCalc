@@ -421,7 +421,7 @@
                             <!-- Chart 圖表區域 -->
                             <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 10"
                                 :width="node.chartWidth - 20" :height="node.chartHeight - 40">
-                                <canvas :id="'chart-' + node.id"></canvas>
+                                <canvas :id=" node.id"></canvas>
                             </foreignObject>
                             <!-- 右下角縮放點 -->
                             <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
@@ -434,7 +434,7 @@
                         </template>
 
                         <!-- 雙擊文字進入編輯模式，利用 v-model 雙向綁定輸入值存入 node.label -->
-                        <template v-if="node.editing">
+                        <template v-if="node.editing && node.type != 'chart'">
                             <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 10" style="overflow: hidden;">
                                 <!-- <input class="edit-input" type="text" v-model="node.label" @blur="finishEdit(node)"
@@ -448,7 +448,7 @@
                         </template>
 
 
-                        <template v-else>
+                        <template v-else-if=" node.type != 'chart'">
                             <foreignObject :x="node.x- noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 30">
 
@@ -462,9 +462,9 @@
 
                         </template>
                         <!-- 若便利貼被選取，畫一層藍色邊框提示 -->
-                        <rect v-if=" node.selected" :x="node.x - noteWidth/2" :y="node.y - noteHeight/2"
-                            :width="noteWidth" :height="noteHeight" fill="none" stroke="blue" stroke-width="2" rx="1"
-                            ry="5" />
+                        <rect v-if=" node.selected && node.type != 'chart'" :x="node.x - noteWidth/2"
+                            :y="node.y - noteHeight/2" :width="noteWidth" :height="noteHeight" fill="none" stroke="blue"
+                            stroke-width="2" rx="1" ry="5" />
                     </g>
 
                     <!-- 畫板邊緣浮動箭頭（若有便條紙超出可見範圍則顯示） -->
@@ -627,6 +627,7 @@
 
 
             },
+            // 生命週期 : 初始化完成後
             mounted() {
                 const vm = this;
                 vm.checkuid();
@@ -676,18 +677,18 @@
                     return { left, top, right, bottom };
                 },
                 /* 若有便條紙超出可見範圍則顯示浮動箭頭 */
-                showLeftArrow() {
-                    return this.nodes.some(n => n.x + this.noteWidth / 2 < this.visibleRect.left);
-                },
-                showRightArrow() {
-                    return this.nodes.some(n => n.x - this.noteWidth / 2 > this.visibleRect.right);
-                },
-                showTopArrow() {
-                    return this.nodes.some(n => n.y + this.noteHeight / 2 < this.visibleRect.top);
-                },
-                showBottomArrow() {
-                    return this.nodes.some(n => n.y - this.noteHeight / 2 > this.visibleRect.bottom);
-                }
+                // showLeftArrow() {
+                //     return this.nodes.some(n => n.x + this.noteWidth / 2 < this.visibleRect.left);
+                // },
+                // showRightArrow() {
+                //     return this.nodes.some(n => n.x - this.noteWidth / 2 > this.visibleRect.right);
+                // },
+                // showTopArrow() {
+                //     return this.nodes.some(n => n.y + this.noteHeight / 2 < this.visibleRect.top);
+                // },
+                // showBottomArrow() {
+                //     return this.nodes.some(n => n.y - this.noteHeight / 2 > this.visibleRect.bottom);
+                // }
             },
 
 
@@ -697,19 +698,21 @@
                 // 新增圖表便利貼
                 addChartNode() {
                     const vm = this;
-                    const svgElement = document.getElementById('mindmapSvg');
-                    const rect = svgElement.getBoundingClientRect();
+                    // const svgElement = document.getElementById('mindmapSvg');
+                    // const rect = svgElement.getBoundingClientRect();
                     // const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
                     // const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
-                    const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
-                    const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
+
+                    // 內容為新增便利貼
+                    const x = (event.clientX - this.boardOffset.x) / this.scale;
+                    const y = (event.clientY - this.boardOffset.y) / this.scale;
                     const newNode = {
                         id: 'chart-' + Date.now(), // 唯一 ID
                         type: 'chart',
                         x: x,
                         y: y,
-                        chartWidth: 600, // 初始寬度
-                        chartHeight: 500, // 初始高度
+                        chartWidth: 400, // 初始寬度
+                        chartHeight: 240, // 初始高度
                         selected: false,
                         connectionsIn: [],
                         connectionsOut: []
@@ -720,24 +723,18 @@
                 },
                 // 初始化 Chart.js（空白圖表）
                 initChart(node) {
-
-
                     const vm = this;
-
-                    var ChartName1 = []
-                    var ChartValue1 = []
-                    const canvas = document.getElementById('chart-' + node.id);
+                    const canvas = document.getElementById(node.id);
                     if (!canvas) return;
-
                     vm.nodeChart = new Chart(canvas, {
                         type: 'line', // 預設折線圖
                         data: {
-                            // labels: ['範例1', '範例2', '範例3'], // 預設數據
-                            labels: vm.ChartName, // 預設數據
+                            labels: ['範例1', '範例2', '範例3'], // 預設數據
+                            // labels: vm.ChartName, // 預設數據
                             datasets: [{
                                 label: '數據',
-                                // data: [10, 20, 30],
-                                data: vm.ChartValue,
+                                data: [10, 20, 30],
+                                // data: vm.ChartValue,
                                 borderColor: 'red',
                                 fill: false
                             }]
@@ -754,11 +751,16 @@
                 },
                 chart001() {
                     const vm = this;
-                    console.log("重整圖表")
                     vm.nodeChart.data.labels = [];
                     vm.nodeChart.data.datasets[0].data = [];
-                    vm.nodeChart.update();
-
+                    // vm.nodeChart.update();
+                    vm.nodes.forEach(n => {
+                        if (n.selected == true) {
+                            // 貌似因為大小有變動，所以表格就會重整
+                            console.log("重整圖表")
+                            n.chartWidth++;
+                        }
+                    })
                 },
                 // 開始縮放
                 startResize(node, event) {
