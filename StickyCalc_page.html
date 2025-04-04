@@ -147,6 +147,12 @@
             white-space: nowrap;
             /* 不換行 */
         }
+
+        /* 新增圖表相關樣式 */
+        .chart-container {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 
@@ -420,26 +426,6 @@
                         </template>
                         <!-- 頂欄 -->
 
-                        <!-- 圖表便利貼（基本版本） -->
-                        <template v-if="node.type === 'chart'">
-                            <rect :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
-                                :width="node.chartWidth" :height="node.chartHeight" fill="#f9f9f9" stroke="#ccc"
-                                stroke-width="1" rx="5" ry="5"
-                                style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));"></rect>
-                            <!-- Chart 圖表區域 -->
-                            <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 10"
-                                :width="node.chartWidth - 20" :height="node.chartHeight - 40">
-                                <canvas :id="node.id"></canvas>
-                            </foreignObject>
-                            <!-- 右下角縮放點 -->
-                            <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
-                                height="15" fill="grey" stroke="black" stroke-width="1" style="cursor: se-resize;"
-                                @mousedown.stop="startResize(node, $event)" />
-                            <!-- 選取邊框 -->
-                            <rect v-if="node.selected" :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
-                                :width="node.chartWidth" :height="node.chartHeight" fill="none" stroke="blue"
-                                stroke-width="2" rx="5" ry="5" />
-                        </template>
 
                         <!-- 雙擊文字進入編輯模式，利用 v-model 雙向綁定輸入值存入 node.label -->
                         <template v-if="node.editing && node.type != 'chart'">
@@ -455,20 +441,24 @@
                             </foreignObject>
                         </template>
 
-
-                        <template v-else-if=" node.type != 'chart'">
-                            <foreignObject :x="node.x- noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
-                                :width="noteWidth - 10" :height="noteHeight - 30">
-
-                                <text :x="node.x" :y="node.y" text-anchor="middle" font-size="12"
-                                    @dblclick="editNode(node)"
-                                    style="width: 100%; height: 100%; word-break: break-all;">
-                                    {{ node.label }}
-                                </text>
-
+                        <!-- 圖表便利貼 -->
+                        <template v-else-if="node.type === 'chart'">
+                            <rect :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
+                                :width="node.chartWidth" :height="node.chartHeight" :fill="node.color || '#f9f9f9'"
+                                stroke="#ccc" stroke-width="1" rx="5" ry="5"
+                                style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));"></rect>
+                            <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 10"
+                                :width="node.chartWidth - 20" :height="node.chartHeight - 40">
+                                <div :id="node.id" class="chart-container"></div>
                             </foreignObject>
-
+                            <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
+                                height="15" fill="grey" stroke="black" stroke-width="1" style="cursor: se-resize;"
+                                @mousedown.stop="startResize(node, $event)" />
+                            <rect v-if="node.selected" :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
+                                :width="node.chartWidth" :height="node.chartHeight" fill="none" stroke="blue"
+                                stroke-width="2" rx="5" ry="5" />
                         </template>
+
                         <!-- 若便利貼被選取，畫一層藍色邊框提示 -->
                         <rect v-if=" node.selected && node.type != 'chart'" :x="node.x - noteWidth/2"
                             :y="node.y - noteHeight/2" :width="noteWidth" :height="noteHeight" fill="none" stroke="blue"
@@ -503,7 +493,7 @@
                 <template v-else-if="contextMenu.type === 'node'">
                     <button @click="startConnection(contextMenu.node)">開始連線</button>
                     <button @click="deleteNode(contextMenu.node)">刪除此便利貼</button>
-                    <button @click="chart001()">重整圖表</button>
+                    <button v-if="contextMenu.node.type === 'chart'" @click="resetChart(contextMenu.node)">重整圖表</button>
                     <div>
                         更換顏色：
                         <button @click="changeNodeColor(contextMenu.node, '#ffc0cb', '#FCAFAA')">粉紅</button>
@@ -524,11 +514,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
 
+    <!-- 引入 ApexCharts -->
+    <script src="https://unpkg.com/apexcharts@latest/dist/apexcharts.min.js"></script>
     <!-- 載入 Vue 3 全域版 -->
     <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
-    <script src="https://unpkg.com/vue-chartjs@latest/dist/index.js"></script>
+    <!-- <script src="https://unpkg.com/vue-chartjs@latest/dist/index.js"></script> -->
     <!-- 引入 Chart.js -->
-    <script src="https://unpkg.com/chart.js@4/dist/chart.umd.js"></script>
+    <!-- <script src="https://unpkg.com/chart.js@4/dist/chart.umd.js"></script> -->
     <!-- 引入 vue-chartjs -->
     <!-- <script src="https://unpkg.com/vue-chartjs@5/dist/index.umd.js"></script> -->
     <script src="js/vue.global.js"></script>
@@ -596,12 +588,8 @@
                     resizingNode: null,
                     resizeStartX: 0,
                     resizeStartY: 0,
+                    chartInstances: {}, // 儲存每個圖表實例
 
-                    // chart 測試用變量
-                    ChartName: ['範例1', '範例2', '範例3'],
-                    ChartValue: [20, 50, 30],
-
-                    nodeChart: null,
 
                 }
             },
@@ -644,6 +632,7 @@
             // 生命週期 : 初始化完成後
             mounted() {
                 const vm = this;
+                this.addChartNode(null); // 初始化一個便利貼
                 vm.checkuid();
 
                 window.addEventListener('keydown', this.handleKeyDown);
@@ -691,18 +680,18 @@
                     return { left, top, right, bottom };
                 },
                 /* 若有便條紙超出可見範圍則顯示浮動箭頭 */
-                // showLeftArrow() {
-                //     return this.nodes.some(n => n.x + this.noteWidth / 2 < this.visibleRect.left);
-                // },
-                // showRightArrow() {
-                //     return this.nodes.some(n => n.x - this.noteWidth / 2 > this.visibleRect.right);
-                // },
-                // showTopArrow() {
-                //     return this.nodes.some(n => n.y + this.noteHeight / 2 < this.visibleRect.top);
-                // },
-                // showBottomArrow() {
-                //     return this.nodes.some(n => n.y - this.noteHeight / 2 > this.visibleRect.bottom);
-                // }
+                showLeftArrow() {
+                    return this.nodes.some(n => n.x + this.noteWidth / 2 < this.visibleRect.left);
+                },
+                showRightArrow() {
+                    return this.nodes.some(n => n.x - this.noteWidth / 2 > this.visibleRect.right);
+                },
+                showTopArrow() {
+                    return this.nodes.some(n => n.y + this.noteHeight / 2 < this.visibleRect.top);
+                },
+                showBottomArrow() {
+                    return this.nodes.some(n => n.y - this.noteHeight / 2 > this.visibleRect.bottom);
+                }
             },
 
 
@@ -710,74 +699,95 @@
             methods: {
                 /* ================ 圖表便利貼 ==================== */
                 // 新增圖表便利貼
-                addChartNode() {
+                /* 圖表便利貼相關方法 */
+                addChartNode(event) {
                     const vm = this;
-                    // 內容為新增便利貼
-                    const x = (event.clientX - this.boardOffset.x) / this.scale;
-                    const y = (event.clientY - this.boardOffset.y) / this.scale;
+                    const svgElement = document.getElementById('mindmapSvg');
+                    const rect = svgElement.getBoundingClientRect();
+                    const x = event ? (event.clientX - rect.left - this.boardOffset.x) / this.scale : this.center.x;
+                    const y = event ? (event.clientY - rect.top - this.boardOffset.y) / this.scale : this.center.y;
                     const newNode = {
-                        id: 'chart-' + Date.now(), // 唯一 ID
+                        id: `chart-${Date.now()}`,
                         type: 'chart',
                         x: x,
                         y: y,
-                        chartWidth: 400, // 初始寬度
-                        chartHeight: 240, // 初始高度
+                        chartWidth: 400,
+                        chartHeight: 240,
+                        color: '#f9f9f9',
                         selected: false,
+                        connectionsOut: [],
                         connectionsIn: [],
-                        connectionsOut: []
+                        userId: vm.userId,
+                        boardId: vm.boardId,
                     };
                     this.nodes.push(newNode);
-                    this.$nextTick(() => this.initChart(newNode));
-
-                },
-                // 初始化 Chart.js（空白圖表）
-                initChart(node) {
-                    const vm = this;
-                    const canvas = document.getElementById(node.id);
-                    if (!canvas) return;
-                    vm.nodeChart = new Chart(canvas, {
-                        type: 'line', // 預設折線圖
-                        data: {
-                            labels: ['範例1', '範例2', '範例3'], // 預設數據
-                            // labels: vm.ChartName, // 預設數據
-                            datasets: [{
-                                label: '數據',
-                                data: [10, 20, 30],
-                                // data: vm.ChartValue,
-                                borderColor: 'red',
-                                fill: false
-                            }]
-                        },
-                        options: {
-                            // responsive: true,
-                            // maintainAspectRatio: false,
-                            scales: {
-
-                                y: { title: { display: true, text: 'Y 軸' } }
-                            }
-                        }
+                    this.contextMenu.visible = false;
+                    this.$nextTick(() => {
+                        setTimeout(() => this.renderChart(newNode), 50); // 延遲渲染以確保 DOM 準備好
                     });
+                    this.saveState();
                 },
-                resetChart() {
-
-                    const vm = this;
-                    vm.nodeChart.data.labels = [];
-                    vm.nodeChart.data.datasets[0].data = [];
-                    vm.nodeChart.update();
-                    // vm.nodes.forEach(n => {
-                    //     if (n.selected == true) {
-                    //         // 貌似因為大小有變動，所以表格就會重整
-                    //         console.log("重整圖表")
-                    //         // n.chartWidth++;
-                    //     }
-                    // })
+                renderChart(node) {
+                    const container = document.querySelector(`#${node.id}`);
+                    if (!container) {
+                        console.error('Chart container not found for ID:', node.id);
+                        return;
+                    }
+                    if (this.chartInstances[node.id]) {
+                        this.chartInstances[node.id].destroy();
+                    }
+                    const options = {
+                        chart: {
+                            type: 'bar',
+                            height: node.chartHeight - 40,
+                            width: node.chartWidth - 20,
+                        },
+                        series: [{
+                            name: '數據',
+                            data: [10, 20, 30],
+                        }],
+                        xaxis: {
+                            categories: ['範例1', '範例2', '範例3'],
+                        },
+                        colors: ['#ff6384'],
+                    };
+                    this.chartInstances[node.id] = new ApexCharts(container, options);
+                    this.chartInstances[node.id].render();
                 },
-                // 開始縮放
+                resetChart(node) {
+                    if (this.chartInstances[node.id]) {
+                        const newOptions = {
+                            series: [{ name: '數據', data: [55] }],
+                            xaxis: { categories: ['RRR'] },
+                        };
+                        this.chartInstances[node.id].updateOptions(newOptions);
+                    }
+                    this.contextMenu.visible = false;
+                },
                 startResize(node, event) {
                     this.resizingNode = node;
                     this.resizeStartX = event.clientX;
                     this.resizeStartY = event.clientY;
-                    event.stopPropagation();
+                    document.addEventListener('mousemove', this.resizeChart);
+                    document.addEventListener('mouseup', this.stopResize);
+                },
+                resizeChart(event) {
+                    if (!this.resizingNode) return;
+                    const dx = event.clientX - this.resizeStartX;
+                    const dy = event.clientY - this.resizeStartY;
+                    this.resizingNode.chartWidth = Math.max(300, this.resizingNode.chartWidth + dx);
+                    this.resizingNode.chartHeight = Math.max(200, this.resizingNode.chartHeight + dy);
+                    this.resizeStartX = event.clientX;
+                    this.resizeStartY = event.clientY;
+                    this.$nextTick(() => {
+                        setTimeout(() => this.renderChart(this.resizingNode), 50);
+                    });
+                },
+                stopResize() {
+                    this.resizingNode = null;
+                    document.removeEventListener('mousemove', this.resizeChart);
+                    document.removeEventListener('mouseup', this.stopResize);
+                    this.saveState();
                 },
 
 
@@ -1675,6 +1685,12 @@
                 },
 
                 deleteNode(node) {
+                    if (node.type === 'chart' && this.chartInstances[node.id]) {
+                        this.chartInstances[node.id].destroy();
+                        delete this.chartInstances[node.id];
+                    }
+
+
                     // 刪除該節點
                     this.nodes = this.nodes.filter(n => n.id !== node.id);
                     // 刪除所有與該節點相關的連線
@@ -1797,35 +1813,35 @@
 
         // 測試jquery
         $(function () {
-            const canvas = document.getElementById("test0001");
-            if (!canvas) return;
-            nodeChart = new Chart(canvas, {
-                type: 'line', // 預設折線圖
-                data: {
-                    labels: ['範例1', '範例2', '範例3'], // 預設數據
-                    datasets: [{
-                        label: '數據',
-                        data: [10, 20, 30],
-                        borderColor: 'red',
-                        fill: false
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: { title: { display: true, text: 'Y 軸' } }
-                    }
-                }
-            });
+            // const canvas = document.getElementById("test0001");
+            // if (!canvas) return;
+            // nodeChart = new Chart(canvas, {
+            //     type: 'line', // 預設折線圖
+            //     data: {
+            //         labels: ['範例1', '範例2', '範例3'], // 預設數據
+            //         datasets: [{
+            //             label: '數據',
+            //             data: [10, 20, 30],
+            //             borderColor: 'red',
+            //             fill: false
+            //         }]
+            //     },
+            //     options: {
+            //         scales: {
+            //             y: { title: { display: true, text: 'Y 軸' } }
+            //         }
+            //     }
+            // });
         })
 
         function testShowData() {
-            nodeChart.data.labels = [];
-            nodeChart.data.datasets[0].data = [];
-            nodeChart.data.labels = ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'];
-            nodeChart.data.datasets[0].data = [12, 19, 3, 5, 2, 3];
-            nodeChart.data.labels.push("紅色");
-            nodeChart.data.datasets[0].data.push(12);
-            nodeChart.update();
+            // nodeChart.data.labels = [];
+            // nodeChart.data.datasets[0].data = [];
+            // nodeChart.data.labels = ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'];
+            // nodeChart.data.datasets[0].data = [12, 19, 3, 5, 2, 3];
+            // nodeChart.data.labels.push("紅色");
+            // nodeChart.data.datasets[0].data.push(12);
+            // nodeChart.update();
         }
 
 
