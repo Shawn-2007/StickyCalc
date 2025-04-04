@@ -152,6 +152,7 @@
         .chart-container {
             width: 100%;
             height: 100%;
+            background: transparent;
         }
     </style>
 </head>
@@ -440,14 +441,42 @@
                             </textarea>
                             </foreignObject>
                         </template>
+                        <template v-else-if=" node.type != 'chart'">
+                            <foreignObject :x="node.x- noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
+                                :width="noteWidth - 10" :height="noteHeight - 30">
 
+                                <text :x="node.x" :y="node.y" text-anchor="middle" font-size="12"
+                                    @dblclick="editNode(node)"
+                                    style="width: 100%; height: 100%; word-break: break-all;">
+                                    {{ node.label }}
+                                </text>
+
+                            </foreignObject>
+
+                        </template>
                         <!-- 圖表便利貼 -->
                         <template v-else-if="node.type === 'chart'">
+                            <!-- 底層矩形（淺色） -->
                             <rect :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
-                                :width="node.chartWidth" :height="node.chartHeight" :fill="node.color || '#f9f9f9'"
-                                stroke="#ccc" stroke-width="1" rx="5" ry="5"
+                                :width="node.chartWidth" :height="node.chartHeight" fill="#FFF8CA" stroke="#ccc"
+                                stroke-width="0" rx="1" ry="5"
                                 style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));"></rect>
-                            <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 10"
+                            <!-- 頂部矩形（深色） -->
+                            <rect :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
+                                :width="node.chartWidth" :height="26" fill="#FFF4B2" rx="0" ry="0"></rect>
+                            <!-- 圖表類型選擇（置於深色區） -->
+                            <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 2"
+                                :width="node.chartWidth - 20" height="22">
+                                <select v-model="node.chartType" @change="renderChart(node)"
+                                    style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
+                                    <option value="bar">柱狀圖</option>
+                                    <option value="line">折線圖</option>
+                                    <option value="pie">圓餅圖</option>
+                                    <option value="area">面積圖</option>
+                                </select>
+                            </foreignObject>
+                            <!-- 圖表容器 -->
+                            <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 30"
                                 :width="node.chartWidth - 20" :height="node.chartHeight - 40">
                                 <div :id="node.id" class="chart-container"></div>
                             </foreignObject>
@@ -632,7 +661,7 @@
             // 生命週期 : 初始化完成後
             mounted() {
                 const vm = this;
-                this.addChartNode(null); // 初始化一個便利貼
+                // this.addChartNode(null); // 初始化一個便利貼
                 vm.checkuid();
 
                 window.addEventListener('keydown', this.handleKeyDown);
@@ -698,7 +727,6 @@
             // 方法函式
             methods: {
                 /* ================ 圖表便利貼 ==================== */
-                // 新增圖表便利貼
                 /* 圖表便利貼相關方法 */
                 addChartNode(event) {
                     const vm = this;
@@ -713,6 +741,7 @@
                         y: y,
                         chartWidth: 400,
                         chartHeight: 240,
+                        chartType: 'bar', // 預設為柱狀圖
                         color: '#f9f9f9',
                         selected: false,
                         connectionsOut: [],
@@ -736,23 +765,46 @@
                     if (this.chartInstances[node.id]) {
                         this.chartInstances[node.id].destroy();
                     }
+
+                    let categories = ['範例1', '範例2', '範例3'];
+                    let data = [10, 20, 30];
+                    if (node.connectionsIn.length >= 2) {
+                        const firstNode = this.getNodeById(node.connectionsIn[0]);
+                        const secondNode = this.getNodeById(node.connectionsIn[1]);
+                        if (firstNode && firstNode.label) {
+                            // 按空格分割，並濾除空字串
+                            categories = firstNode.label.split(/\s+/).filter(Boolean);
+                        }
+                        if (secondNode && secondNode.label) {
+                            const matches = secondNode.label.match(/-?\d*\.?\d+/g);
+                            data = matches ? matches.map(num => parseFloat(num)) : [];
+                        }
+                    }
+
                     const options = {
                         chart: {
-                            type: 'bar',
+                            type: node.chartType || 'bar',
                             height: node.chartHeight - 40,
                             width: node.chartWidth - 20,
                         },
                         series: [{
                             name: '數據',
-                            data: [10, 20, 30],
+                            data: data,
                         }],
                         xaxis: {
-                            categories: ['範例1', '範例2', '範例3'],
+                            categories: categories,
                         },
                         colors: ['#ff6384'],
                     };
                     this.chartInstances[node.id] = new ApexCharts(container, options);
                     this.chartInstances[node.id].render();
+                },
+                refreshChartsConnectedTo(node) {
+                    this.nodes.forEach(chartNode => {
+                        if (chartNode.type === 'chart' && chartNode.connectionsIn.includes(node.id)) {
+                            this.renderChart(chartNode);
+                        }
+                    });
                 },
                 resetChart(node) {
                     if (this.chartInstances[node.id]) {
@@ -1254,6 +1306,7 @@
                     node.count = newTotal;
 
                     this.calculateTotal()
+                    this.refreshChartsConnectedTo(node); // 編輯完成後刷新相關圖表
                 },
 
                 /* ========便利貼文字部分========= */
@@ -1522,6 +1575,10 @@
 
                         this.calculateTotal()
 
+                        // 新增連線後檢查並刷新圖表
+                        if (node.type === 'chart' && node.connectionsIn.length >= 2) {
+                            this.renderChart(node);
+                        }
 
                     } else {
                         if (event.shiftKey) {
@@ -1761,8 +1818,8 @@
                         n.id === id：檢查節點的 id 是否等於傳入的 id。
                         若找到符合的節點，就會直接回傳該節點物件。
                     */
-                    return this.nodes.find(n => n.id === id) || { x: 0, y: 0 };
-
+                    // return this.nodes.find(n => n.id === id) || { x: 0, y: 0 };
+                    return this.nodes.find(n => n.id === id) || { x: 0, y: 0, label: '' };
                 },
 
                 // 計算並返回連線的二次貝茲曲線路徑字串
