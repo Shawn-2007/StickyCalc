@@ -661,7 +661,7 @@
             // 生命週期 : 初始化完成後
             mounted() {
                 const vm = this;
-                // this.addChartNode(null); // 初始化一個便利貼
+
                 vm.checkuid();
 
                 window.addEventListener('keydown', this.handleKeyDown);
@@ -948,6 +948,7 @@
                                 }
                             }
                         }
+
 
                         vm.startLocalStorage = true;
                     }
@@ -1489,6 +1490,11 @@
                 // 開始拖曳便利貼：如果該便利貼尚未選取，先清除其他選取；之後將所有已選取的便利貼作為拖曳群組
                 startDrag(node, event) {
                     const vm = this;
+                    // if (event.button !== 0) return; // 只處理左鍵
+                    // if (this.connectionStartNode) return; // 如果正在連線，忽略拖曳
+                    // 確保初始值有效
+                    node.initialX = node.x || 0;
+                    node.initialY = node.y || 0;
                     // 避免點擊輸入框或選單時觸發拖曳
                     const targetTag = event.target.tagName.toLowerCase();
                     if (["textarea", "select"].includes(targetTag)) {
