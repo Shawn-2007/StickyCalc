@@ -750,6 +750,7 @@
                         connectionsIn: [],
                         userId: vm.userId,
                         boardId: vm.boardId,
+
                     };
                     this.nodes.push(newNode);
                     this.contextMenu.visible = false;
@@ -930,8 +931,11 @@
                         // chageLevel(data.data.Level);
                         vm.userId = data.data.Username;
 
-                        // 後端取得
-                        vm.get_nodes()
+                        // 訂閱會員才可使用雲端存儲資料
+                        if (data.data.Level >= 30) {
+                            // 後端取得
+                            vm.get_nodes()
+                        }
 
                         // 從localStorage取得
                         if (vm.nodes == "") {
@@ -986,30 +990,65 @@
                         vm.nodes = [];
                         for (i = 0; i < data.data.length; i++) {
                             var newData = [];
-                            newData.push({
-                                "id": data.data[i].Id,
-                                "label": data.data[i].Label,
-                                "x": data.data[i].X,
-                                "y": data.data[i].Y,
-                                "color": data.data[i].Color,
-                                "colorTop": data.data[i].ColorTop,
-                                "editing": false,
-                                "selected": false,
-                                "operation": data.data[i].Operation,
-                                "connectionsOut": data.data[i].ConnectionsOut,
-                                "connectionsIn": data.data[i].ConnectionsIn,
-                                "connections": data.data[i].Connections,
-                                "total": data.data[i].Total,
-                                "count": data.data[i].Count,
-                                "startX": data.data[i].StartX,
-                                "startY": data.data[i].StartY,
-                                "userId": data.data[i].UserId,
-                                "boardId": data.data[i].BoardId,
-                            })
+                            if (data.data[i].Type == 'chart') {
+                                newData.push({
+                                    "id": data.data[i].Id,
+                                    "type": data.data[i].Type,
+                                    "chartType": data.data[i].ChartType,
+                                    "x": data.data[i].X,
+                                    "y": data.data[i].Y,
+                                    "chartWidth": 400,
+                                    "chartHeight": 240,
+                                    "color": data.data[i].Color,
+                                    "colorTop": data.data[i].ColorTop,
+                                    "connectionsOut": data.data[i].ConnectionsOut,
+                                    "connectionsIn": data.data[i].ConnectionsIn,
+                                    "connections": data.data[i].Connections,
+                                    "userId": data.data[i].UserId,
+                                    "boardId": data.data[i].BoardId,
+                                    "initialX": 0,
+                                    "initialY": 0,
+                                    "startX": 0,
+                                    "startY": 0,
+                                    "editing": false,
+                                    "selected": false,
+                                })
+                            } else {
+                                newData.push({
+                                    "id": data.data[i].Id,
+                                    "label": data.data[i].Label,
+                                    "x": data.data[i].X,
+                                    "y": data.data[i].Y,
+                                    "color": data.data[i].Color,
+                                    "colorTop": data.data[i].ColorTop,
+                                    "type": data.data[i].Type,
+                                    "connectionsOut": data.data[i].ConnectionsOut,
+                                    "connectionsIn": data.data[i].ConnectionsIn,
+                                    "connections": data.data[i].Connections,
+                                    "total": data.data[i].Total,
+                                    "count": data.data[i].Count,
+                                    "startX": 0,
+                                    "startY": 0,
+                                    "userId": data.data[i].UserId,
+                                    "boardId": data.data[i].BoardId,
+                                    "editing": false,
+                                    "selected": false,
+                                })
+
+                            }
                             vm.nodes.push(newData[0]);
                             // this.computeTotal(vm.nodes[i])
+
                         }
                     }
+                    // 延遲渲染以確保 DOM 準備好
+                    this.$nextTick(() => {
+                        vm.nodes.forEach(chartNode => {
+                            if (chartNode.type === 'chart') {
+                                this.renderChart(chartNode);
+                            }
+                        });
+                    });
                 },
                 getConnections() {
                     //取得後端的連線資料      
