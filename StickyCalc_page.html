@@ -471,8 +471,14 @@
                                     style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
                                     <option value="bar">柱狀圖</option>
                                     <option value="line">折線圖</option>
-                                    <!-- <option value="pie">圓餅圖</option> -->
                                     <option value="area">面積圖</option>
+                                    <option value="radar">雷達圖</option>
+                                    <option value="pie">圓餅圖</option>
+                                    <option value="polarArea">極座標圓餅圖</option>
+                                    <option value="donut">甜甜圈</option>
+                                    <option value="radialBar">跑道圖</option>
+                                    <option value="rangeBar">時間圖</option>
+
                                 </select>
                             </foreignObject>
                             <!-- 圖表容器 -->
@@ -543,6 +549,9 @@
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+
+    <!-- 引入 Moment.js -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
     <!-- 引入 ApexCharts -->
     <script src="https://unpkg.com/apexcharts@latest/dist/apexcharts.min.js"></script>
@@ -635,10 +644,10 @@
                     localStorage.setItem('boardId', vm.boardId)
 
                     vm.nodes = [
-                        { boardId: vm.boardId, id: 1, count: 1, label: '便條紙 1', angle: 0, color: '#FFF8CA', colorTop: '#FFF4B2', selected: false, total: 1, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, id: 2, count: 2, label: '便條紙 2', angle: 90, color: '#D3ED7F', colorTop: '#C7DF7A', selected: false, total: 2, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, id: 3, count: 3, label: '便條紙 3', angle: 180, color: '#ffc0cb', colorTop: '#FCAFAA', selected: false, total: 3, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, id: 4, count: 4, label: '便條紙 4', angle: 270, color: '#CEEBFD', colorTop: '#ADD8E6', selected: false, total: 4, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, type: 'general', id: 1, count: 1, label: '便條紙 1', angle: 0, color: '#FFF8CA', colorTop: '#FFF4B2', selected: false, total: 1, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, type: 'general', id: 2, count: 2, label: '便條紙 2', angle: 90, color: '#D3ED7F', colorTop: '#C7DF7A', selected: false, total: 2, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, type: 'general', id: 3, count: 3, label: '便條紙 3', angle: 180, color: '#ffc0cb', colorTop: '#FCAFAA', selected: false, total: 3, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, type: 'general', id: 4, count: 4, label: '便條紙 4', angle: 270, color: '#CEEBFD', colorTop: '#ADD8E6', selected: false, total: 4, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
                     ];
 
                     // 根據角度初始化便利貼的位置
@@ -742,7 +751,8 @@
                         y: y,
                         chartWidth: 400,
                         chartHeight: 240,
-                        chartType: 'bar', // 預設為柱狀圖
+                        // chartType: 'bar', // 預設為柱狀圖
+                        chartType: 'rangeBar', // 預設圖
                         color: '#fdfdfd',
                         colorTop: '#dddddd',
                         selected: false,
@@ -760,6 +770,7 @@
                     this.saveState();
                 },
                 renderChart(node) {
+                    const vm = this;
                     const container = document.querySelector(`#${node.id}`);
                     if (!container) {
                         console.error('Chart container not found for ID:', node.id);
@@ -778,37 +789,137 @@
                         const secondNode = this.getNodeById(node.connectionsIn[1]);
                         if (firstNode && firstNode.label) {
                             // 按空格分割，並濾除空字串
-                            categories = firstNode.label.split(/\s+/).filter(Boolean);
+                            // categories = firstNode.label.split(/\s+/).filter(Boolean);
+                            categories = vm.regularSplitString(firstNode);
                         }
                         if (secondNode && secondNode.label) {
-                            const matches = secondNode.label.match(/-?\d*\.?\d+/g);
+                            const matches = vm.regularSplitNumbers(secondNode);
                             data = matches ? matches.map(num => parseFloat(num)) : [];
                         }
                     }
 
-                    const options = {
-                        chart: {
-                            type: node.chartType || 'bar',
-                            height: node.chartHeight - 40,
-                            width: node.chartWidth - 20,
-                        },
-                        series: [{
-                            name: '數據',
-                            data: data,
-                        }],
-                        xaxis: {
-                            categories: categories,
-                        },
-                        colors: ['#ff6384'],
-                        dataLabels: {
-                            enabled: true,
-                            style: {
-                                colors: ['#dddddd']  // 文字顏色
+                    if (node.chartType == 'bar' || node.chartType == 'line' || node.chartType == 'area' || node.chartType == 'radar') {
+                        const options = {
+                            chart: {
+                                type: node.chartType || 'pie',
+                                height: node.chartHeight - 40,
+                                width: node.chartWidth - 20,
+                            },
+                            series: [{
+                                name: '數據',
+                                data: data,
+                            }],
+                            xaxis: {
+                                categories: categories,
+                            },
+                            plotOptions: {
+                                bar: {
+                                    borderRadius: 4,
+                                    borderRadiusApplication: 'end',
+                                    horizontal: true,
+                                }
+                            },
+                            colors: ['#ff6384'],
+                            dataLabels: {
+                                enabled: true,
+                                style: {
+                                    colors: ['#dddddd']  // 文字顏色
+                                }
                             }
-                        }
-                    };
-                    this.chartInstances[node.id] = new ApexCharts(container, options);
-                    this.chartInstances[node.id].render();
+                        };
+                        this.chartInstances[node.id] = new ApexCharts(container, options);
+                        this.chartInstances[node.id].render();
+
+                    } else if (node.chartType == 'pie' || node.chartType == 'polarArea' || node.chartType == 'donut' || node.chartType == 'radialBar') {
+                        const options = {
+                            chart: {
+                                type: node.chartType || 'pie',
+                                height: node.chartHeight - 40,
+                                width: node.chartWidth - 20,
+                            },
+                            series: data,
+                            labels: categories,
+
+                            colors: ['#ff6384'],
+                            dataLabels: {
+                                enabled: true,
+                                style: {
+                                    colors: ['#dddddd']  // 文字顏色
+                                }
+                            }
+                        };
+                        this.chartInstances[node.id] = new ApexCharts(container, options);
+                        this.chartInstances[node.id].render();
+                    } else {
+                        const options = {
+                            series: [
+                                {
+                                    data: [
+                                        {
+                                            x: 'Code',
+                                            y: [
+                                                new Date(this.convertToISOWithMoment("2019/03/19 09:45:00 AM")).getTime(),
+                                                new Date(this.convertToISOWithMoment("2019/3/20 01:45:00 PM")).getTime()
+                                            ]
+                                        },
+                                        {
+                                            x: 'Test',
+                                            y: [
+                                                new Date(this.convertToISOWithMoment("2019/03/17 09:45:00 AM")).getTime(),
+                                                new Date(this.convertToISOWithMoment("2019/3/23 11:45:00 PM")).getTime()
+                                            ]
+                                        },
+                                        {
+                                            x: 'Validation',
+                                            y: [
+                                                new Date(this.convertToISOWithMoment("2019/03/16 05:45:00 AM")).getTime(),
+                                                new Date(this.convertToISOWithMoment("2019/3/28 01:45:00 PM")).getTime()
+                                            ]
+                                        },
+                                    ]
+                                }
+                            ],
+                            chart: {
+                                height: 350,
+                                type: 'rangeBar'
+                            },
+                            dataLabels: {
+                                enabled: true,
+                                formatter: function (val) {
+                                    var a = moment(val[0])
+                                    var b = moment(val[1])
+                                    var diff = b.diff(a, 'days')
+                                    return diff + (diff > 1 ? ' days' : ' day')
+                                }
+                            },
+                            plotOptions: {
+                                bar: {
+                                    horizontal: true
+                                }
+                            },
+                            xaxis: {
+                                type: 'datetime'
+                            }
+                        };
+                        this.chartInstances[node.id] = new ApexCharts(container, options);
+                        this.chartInstances[node.id].render();
+                    }
+
+                },
+                // 換算時間(我自己要用的)
+                convertToISOWithMoment(dateStr) {
+                    return moment(dateStr, "YYYY/MM/DD hh:mm:ss A").format("YYYY-MM-DDTHH:mm:ss");
+                },
+                /** 
+                 * 正則:分割字串
+                 * 按空格分割，並濾除空字串
+                 * */
+                regularSplitString(node) {
+                    return node.label.split(/\s+/).filter(Boolean);
+                },
+                // 正則:分割數字
+                regularSplitNumbers(node) {
+                    return node.label.match(/-?\d*\.?\d+/g);
                 },
                 refreshChartsConnectedTo(node) {
                     this.nodes.forEach(chartNode => {
@@ -1716,13 +1827,12 @@
                     const vm = this;
                     const svgElement = document.getElementById('mindmapSvg');
                     const rect = svgElement.getBoundingClientRect();
-                    // const x = this.contextMenu.x - rect.left;
-                    // const y = this.contextMenu.y - rect.top;
                     const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
                     const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
                     const newNode = {
                         id: Math.random().toString(36).substring(2, 12), //取隨機8字元
                         label: 'New Node',
+                        type: 'general',
                         x: x,
                         y: y,
                         color: '#FFF8CA',
