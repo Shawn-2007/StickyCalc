@@ -458,12 +458,12 @@
                         <template v-else-if="node.type === 'chart'">
                             <!-- 底層矩形（淺色） -->
                             <rect :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
-                                :width="node.chartWidth" :height="node.chartHeight" fill="#FFF8CA" stroke="#ccc"
+                                :width="node.chartWidth" :height="node.chartHeight" :fill="node.color" stroke="#ccc"
                                 stroke-width="0" rx="1" ry="5"
                                 style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));"></rect>
                             <!-- 頂部矩形（深色） -->
                             <rect :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
-                                :width="node.chartWidth" :height="26" fill="#FFF4B2" rx="0" ry="0"></rect>
+                                :width="node.chartWidth" :height="26" :fill="node.colorTop" rx="0" ry="0"></rect>
                             <!-- 圖表類型選擇（置於深色區） -->
                             <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 2"
                                 :width="node.chartWidth - 20" height="22">
@@ -529,6 +529,7 @@
                         <button @click="changeNodeColor(contextMenu.node, '#D3ED7F', '#C7DF7A')">粉綠</button>
                         <button @click="changeNodeColor(contextMenu.node, '#CEEBFD', '#ADD8E6')">粉藍</button>
                         <button @click="changeNodeColor(contextMenu.node, '#FFF8CA', '#FFF4B2')">粉黃</button>
+                        <button @click="changeNodeColor(contextMenu.node, '#fdfdfd', '#dddddd')">白色</button>
                     </div>
                 </template>
                 <template v-else-if="contextMenu.type === 'curve'">
@@ -742,7 +743,8 @@
                         chartWidth: 400,
                         chartHeight: 240,
                         chartType: 'bar', // 預設為柱狀圖
-                        color: '#f9f9f9',
+                        color: '#fdfdfd',
+                        colorTop: '#dddddd',
                         selected: false,
                         connectionsOut: [],
                         connectionsIn: [],
@@ -797,6 +799,12 @@
                             categories: categories,
                         },
                         colors: ['#ff6384'],
+                        dataLabels: {
+                            enabled: true,
+                            style: {
+                                colors: ['#dddddd']  // 文字顏色
+                            }
+                        }
                     };
                     this.chartInstances[node.id] = new ApexCharts(container, options);
                     this.chartInstances[node.id].render();
@@ -1313,69 +1321,43 @@
                 多連(in >= 4 ):全加總 左上顯示總計 加總數值。
                 */
                 updateTotal(node) {
-
-                    console.log("測試")
                     let values = 0;
-                    this.nodes.forEach(item => {
-                        if (item.connectionsIn.length == 1) {
-                            values = 0
 
-                            a = this.getNodeById(item.connectionsIn[0]).total;
-                            b = item.count;
-                            values = a + b;
-                            item.label = item.label;
-                            item.total = values;
-                        } else if (item.connectionsIn.length >= 3) {
-                            values = 0
-                            for (let i = 0; i < item.connectionsIn.length; i++) {
-                                a = this.getNodeById(item.connectionsIn[i]).total;
-                                values = values + a;
-                            }
-                            item.label = values;
-                            item.total = values;
-                        }
-                    })
+                    if (node.type === 'chart') return;
 
-                    if (node.connectionsIn.length == 2) {
-                        values = 0
-
-                        a = this.getNodeById(node.connectionsIn[0]).total;
-                        b = this.getNodeById(node.connectionsIn[1]).total;
+                    if (node.connectionsIn.length === 1) {
+                        const a = this.getNodeById(node.connectionsIn[0]).total || 0;
+                        const b = node.count || 0;
+                        values = a + b;
+                        node.label = node.label; // 保留原有 label
+                        node.total = values;
+                    } else if (node.connectionsIn.length === 2) {
+                        const a = this.getNodeById(node.connectionsIn[0]).total || 0;
+                        const b = this.getNodeById(node.connectionsIn[1]).total || 0;
                         switch (node.operation) {
-                            case "sum":
-                                values = a + b;
-                                break;
-                            case "subtractAB":
-                                values = a - b;
-                                break;
-                            case "subtractBA":
-                                values = b - a;
-                                break;
-                            case "multiply":
-                                values = a * b;
-                                break;
-                            case "divideAB":
-                                values = a / b;
-                                break;
-                            case "divideBA":
-                                values = b / a;
-                                break;
-                            case "modulusAB":
-                                values = a % b;
-                                break;
-                            case "modulusBA":
-                                values = b % a;
-                                break;
-                            default:
-                                values = 0; // 預設值
+                            case "sum": values = a + b; break;
+                            case "subtractAB": values = a - b; break;
+                            case "subtractBA": values = b - a; break;
+                            case "multiply": values = a * b; break;
+                            case "divideAB": values = b !== 0 ? a / b : 0; break;
+                            case "divideBA": values = a !== 0 ? b / a : 0; break;
+                            case "modulusAB": values = b !== 0 ? a % b : 0; break;
+                            case "modulusBA": values = a !== 0 ? b % a : 0; break;
+                            default: values = 0;
                         }
-
-
+                        node.label = values;
+                        node.total = values;
+                    } else if (node.connectionsIn.length >= 3) {
+                        values = 0;
+                        for (let i = 0; i < node.connectionsIn.length; i++) {
+                            const a = this.getNodeById(node.connectionsIn[i]).total || 0;
+                            values += a;
+                        }
                         node.label = values;
                         node.total = values;
                     }
 
-                    return values; // 回傳計算結果
+                    return values;
                 },
 
 
@@ -1549,9 +1531,19 @@
                 // 點擊便利貼：若處於連線模式則建立連線；否則若按住 Shift 則切換選取狀態
                 nodeClick(node, event) {
                     const vm = this;
-
                     if (this.connectionStartNode && this.connectionStartNode.id !== node.id) {
+                        // 檢查是否會形成循環
+                        if (this.willCauseLoop(this.connectionStartNode.id, node.id)) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '無法連線',
+                                text: '此連線會導致循環，請檢查您的連線結構！',
+                            });
+                            this.connectionStartNode = null;
+                            return;
+                        }
 
+                        // 新增連線
                         this.connections.push({
                             from: this.connectionStartNode.id,
                             to: node.id,
@@ -1560,18 +1552,16 @@
                             boardId: vm.boardId,
                             connectionsId: Math.random().toString(36).substring(2, 12),
                         });
-                        // // 更新連線資料：來源記錄 connectionsOut，目標記錄 connectionsIn
                         this.connectionStartNode.connectionsOut.push(node.id);
                         node.connectionsIn.push(this.connectionStartNode.id);
                         this.connectionStartNode = null;
 
-                        this.calculateTotal()
+                        this.calculateTotal();
 
                         // 新增連線後檢查並刷新圖表
                         if (node.type === 'chart' && node.connectionsIn.length >= 2) {
                             this.renderChart(node);
                         }
-
                     } else {
                         if (event.shiftKey) {
                             node.selected = !node.selected;
@@ -1579,19 +1569,71 @@
                     }
                 },
 
-                calculateTotal() {
-                    //測試新增 加總值
-                    if (this.nodes) {
-                        this.nodes.forEach(item => {
-                            if (item.connectionsIn.length >= 1) {
-                                this.updateTotal(item)
+                willCauseLoop(fromId, toId) {
+                    const visited = new Set();
+                    const recStack = new Set();
+
+                    const dfs = (currentId, isNewConnection = false) => {
+                        if (recStack.has(currentId)) return true; // 發現循環
+                        if (visited.has(currentId)) return false;
+
+                        visited.add(currentId);
+                        recStack.add(currentId);
+
+                        const node = this.getNodeById(currentId);
+                        let nextNodes = [...node.connectionsOut];
+
+                        // 如果是起始節點，模擬新連線
+                        if (currentId === fromId && !isNewConnection) {
+                            nextNodes.push(toId);
+                        }
+
+                        for (const nextId of nextNodes) {
+                            if (dfs(nextId, currentId === fromId)) {
+                                return true;
                             }
-                        })
-                    }
-                    //儲存狀態
-                    this.saveState()
+                        }
+
+                        recStack.delete(currentId);
+                        return false;
+                    };
+
+                    console.log('Checking loop from', fromId, 'to', toId);
+                    return dfs(fromId);
                 },
 
+                calculateTotal() {
+                    // 重置所有節點的 total，避免舊值影響
+                    this.nodes.forEach(item => {
+                        if (item.type !== 'chart') {
+                            item.total = item.count || 0;
+                        }
+                    });
+
+                    // 使用訪問標記避免循環
+                    const visited = new Set();
+                    const tempMark = new Set();
+
+                    const visit = (node) => {
+                        if (tempMark.has(node.id)) return; // 跳過循環
+                        if (visited.has(node.id)) return;
+
+                        tempMark.add(node.id);
+
+                        node.connectionsIn.forEach(inId => {
+                            const inNode = this.getNodeById(inId);
+                            visit(inNode);
+                        });
+
+                        tempMark.delete(node.id);
+                        visited.add(node.id);
+
+                        this.updateTotal(node);
+                    };
+
+                    this.nodes.forEach(node => visit(node));
+                    this.saveState();
+                },
 
                 // 空白處右鍵選單
                 handleSvgContextMenu(event) {
@@ -1800,19 +1842,15 @@
 
                 // 根據 id 取得便利貼資料（用於繪製連線）
                 getNodeById(id) {
-                    /*
-                    find 方法會在陣列中逐一尋找符合條件的元素，並回傳 第一個匹配的元素。
-
-                    n => n.id === id 是箭頭函式
-                    尋找指定 id 的節點，如果找到就回傳該節點的物件。 
-
-                        每個 n 代表 this.nodes 陣列中的一個物件（即一個節點）。
-                        n.id === id：檢查節點的 id 是否等於傳入的 id。
-                        若找到符合的節點，就會直接回傳該節點物件。
-                    */
-                    // return this.nodes.find(n => n.id === id) || { x: 0, y: 0 };
-                    // return this.nodes.find(n => n.id === id) || { x: 0, y: 0, label: '' };
-                    return this.nodes.find(n => n.id === id) || { x: 0, y: 0, label: '', connectionsOut: [], connectionsIn: [], total: 0 };
+                    return this.nodes.find(n => n.id === id) || {
+                        x: 0,
+                        y: 0,
+                        label: '',
+                        connectionsOut: [],
+                        connectionsIn: [],
+                        total: 0,
+                        count: 0
+                    };
                 },
 
                 // 計算並返回連線的二次貝茲曲線路徑字串
