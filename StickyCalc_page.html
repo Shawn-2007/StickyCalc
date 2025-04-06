@@ -2,10 +2,10 @@
 <html lang="zh-TW">
 
 <head>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StickyCalc 便利貼計算板</title>
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/my.css">
     <meta charset="UTF-8">
@@ -1266,6 +1266,8 @@
                                 "connectionsId": data.data[i].connectionsId,
                                 "from": data.data[i].C_from,
                                 "to": data.data[i].C_to,
+                                "color": data.data[i].Color,
+                                "type": data.data[i].Type,
                                 "userId": data.data[i].UserId,
                                 "boardId": data.data[i].BoardId,
                             })
@@ -1332,6 +1334,8 @@
                                 userId: vm.userId,
                                 from: vm.connections[i].from,
                                 to: vm.connections[i].to,
+                                color: vm.connections[i].color,
+                                type: vm.connections[i].type,
                                 connectionsId: vm.connections[i].connectionsId
                             })
                         }
