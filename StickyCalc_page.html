@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StickyCalc 便利貼計算板</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/my.css">
-
     <meta charset="UTF-8">
     <title>Vue 3 多選、刪除與更換顏色示範</title>
     <style>
@@ -551,7 +551,8 @@
                     <button @click="addChartNode">新增 圖表便利貼</button>
                 </template>
                 <template v-else-if="contextMenu.type === 'node'">
-                    <button @click="startConnection(contextMenu.node)">開始連線</button>
+                    <button v-if="contextMenu.node.type != 'chart'"
+                        @click="startConnection(contextMenu.node)">開始連線</button>
                     <button @click="deleteNode(contextMenu.node)">刪除此便利貼</button>
                     <button v-if="contextMenu.node.type === 'chart'" @click="resetChart(contextMenu.node)">重整圖表</button>
                     <div>
@@ -1776,6 +1777,19 @@
                             this.connectionStartNode = null;
                             return;
                         }
+                        // 檢查是否重複連線
+                        this.connectionStartNode.connectionsOut.forEach(conn => {
+                            if (conn == node.id) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '無法連線',
+                                    text: '重複連線了唷，請檢查您的連線結構！',
+                                });
+                                this.connectionStartNode = null;
+                                return;
+                            }
+
+                        })
 
                         // 新增連線
                         this.connections.push({
