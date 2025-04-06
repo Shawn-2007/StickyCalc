@@ -154,6 +154,22 @@
             height: 100%;
             background: transparent;
         }
+
+        .note-text-container {
+            width: 100%;
+            height: 90%;
+            overflow: hidden;
+            white-space: pre-wrap;
+            /* 支援換行 */
+            font-size: 14px;
+            line-height: 1.2;
+            position: relative;
+        }
+
+        .note-text {
+            display: inline;
+            overflow: hidden;
+        }
     </style>
 </head>
 
@@ -388,23 +404,22 @@
                         :stroke="conn.selected ? 'blue' : 'red'" fill="none" stroke-dasharray="5,5"
                         marker-end="url(#arrow)" @click.stop="toggleConnectionSelection(conn, $event)"
                         @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
-
-
                     <!-- 可拖動的便利貼 -->
                     <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
                         @click.stop="nodeClick(node, $event)" @contextmenu.prevent="handleNodeContextMenu(node, $event)"
                         style="cursor: move;">
-                        <!-- 便利貼背景，使用 node.color，預設 lightyellow -->
+
+                        <!-- 便利貼背景 -->
                         <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth"
                             :height="noteHeight" :fill="node.color" stroke="#ccc" stroke-width="0" rx="1" ry="5"
-                            style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));"></rect>
+                            style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));" @dblclick="editNode(node)">
+                        </rect>
                         <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth" :height="26"
                             :fill="node.colorTop" rx="0" ry="0"></rect>
+
                         <!-- 頂欄 -->
-                        <template v-if=" node.connectionsIn.length == 2">
-                            <!-- 當連結進來的數量 ≥ 2 時，顯示 Select 選單 -->
-                            <!-- 隱藏選中框 outline: none; -->
-                            <foreignObject :x="node.x -50 " :y="node.y - noteHeight / 2 - 4" width="100" height="32">
+                        <template v-if="node.connectionsIn.length == 2">
+                            <foreignObject :x="node.x - 50" :y="node.y - noteHeight / 2 - 4" width="100" height="32">
                                 <select v-model="node.operation" @change="updateTotal(node)"
                                     style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
                                     <option value="sum">+ 加法</option>
@@ -418,8 +433,8 @@
                                 </select>
                             </foreignObject>
                         </template>
+
                         <template v-else>
-                            <!-- 顯示總額（放在便利貼右上角，向左延伸）-->
                             <text :x="node.x + noteWidth / 2 - 5" :y="node.y - noteHeight / 2 + 15" text-anchor="end"
                                 font-size="12" fill="grey" font-weight="bold">
                                 {{ node.total }}
@@ -428,32 +443,37 @@
                         <!-- 頂欄 -->
 
 
-                        <!-- 雙擊文字進入編輯模式，利用 v-model 雙向綁定輸入值存入 node.label -->
-                        <template v-if="node.editing && node.type != 'chart'">
+                        <!-- 編輯模式 -->
+                        <template v-if="node.editing && node.type !== 'chart'">
                             <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 10" style="overflow: hidden;">
-                                <!-- <input class="edit-input" type="text" v-model="node.label" @blur="finishEdit(node)"
-                                @keyup.enter="finishEdit(node)" /> -->
-                                <textarea class="form-control bg-white bg-opacity-25" name="" id="" type="text"
-                                    v-model="node.label" @blur="finishEdit(node)" @keyup.enter="finishEdit(node)"
-                                    style="height: 86px;">
-
-                            </textarea>
+                                <textarea class="form-control bg-white bg-opacity-25" v-model="node.label"
+                                    @blur="finishEdit(node)" @keyup.enter="finishEdit(node)"
+                                    style="height: 86px;"></textarea>
                             </foreignObject>
                         </template>
-                        <template v-else-if=" node.type != 'chart'">
-                            <foreignObject :x="node.x- noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
+
+                        <!-- 顯示模式 -->
+                        <template v-else-if="node.type !== 'chart'">
+                            <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 30">
-
-                                <text :x="node.x" :y="node.y" text-anchor="middle" font-size="12"
-                                    @dblclick="editNode(node)"
-                                    style="width: 100%; height: 100%; word-break: break-all;">
-                                    {{ node.label }}
-                                </text>
-
+                                <div class="note-text-container" @dblclick="editNode(node)">
+                                    <!-- 一連以下顯示此段，label無內容顯示雙擊編輯 -->
+                                    <span v-if="node.connectionsIn.length < 2" class="note-text">{{ node.label || "雙擊編輯"
+                                        }}</span>
+                                    <!-- 二連以上顯示此段，顯示總值或0 -->
+                                    <span v-else class="note-text">{{ node.label }}</span>
+                                </div>
                             </foreignObject>
-
+                            <!-- 右下角「...」按鈕 -->
+                            <text v-if="node.connectionsIn.length < 2 && !node.editing" :x="node.x + noteWidth/2 - 32"
+                                :y="node.y + noteHeight/2 - 6" font-size="40" fill="grey" font-weight="bold"
+                                style="cursor: pointer;" @click.stop="showFullText(node)">
+                                ...
+                            </text>
                         </template>
+
+
                         <!-- 圖表便利貼 -->
                         <template v-else-if="node.type === 'chart'">
                             <!-- 底層矩形（淺色） -->
@@ -477,7 +497,7 @@
                                     <option value="polarArea">極座標圓餅圖</option>
                                     <option value="donut">甜甜圈</option>
                                     <option value="radialBar">跑道圖</option>
-                                    <option value="rangeBar">時間圖</option>
+                                    <!-- <option value="rangeBar">時間圖</option> -->
 
                                 </select>
                             </foreignObject>
@@ -736,6 +756,16 @@
 
             // 方法函式
             methods: {
+                /* ================ 一般便利貼 ==================== */
+
+                showFullText(node) {
+                    Swal.fire({
+                        title: '便利貼內容',
+                        html: `<pre style="text-align: left; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">${node.label}</pre>`,
+                        width: '600px',
+                        confirmButtonText: '關閉',
+                    });
+                },
                 /* ================ 圖表便利貼 ==================== */
                 /* 圖表便利貼相關方法 */
                 addChartNode(event) {
@@ -751,8 +781,7 @@
                         y: y,
                         chartWidth: 400,
                         chartHeight: 240,
-                        // chartType: 'bar', // 預設為柱狀圖
-                        chartType: 'rangeBar', // 預設圖
+                        chartType: 'bar', // 預設為柱狀圖
                         color: '#fdfdfd',
                         colorTop: '#dddddd',
                         selected: false,
@@ -851,32 +880,33 @@
                         this.chartInstances[node.id] = new ApexCharts(container, options);
                         this.chartInstances[node.id].render();
                     } else {
+                        // 時間類型
+                        const firstNode = this.getNodeById(node.connectionsIn[0]);
+                        const secondNode = this.getNodeById(node.connectionsIn[1]);
+
+                        // 取得資料
+                        // const labels = vm.regularSplitNumbers(firstNode); // 這會是 ['-22600', '-22600', ...]
+                        // const dateStrings = vm.regularSplitTime(secondNode); // 這會是 ['2016/12/23 01:45:00 PM', '2016/12/30 01:45:00 PM', ...]
+
+                        const timelineData = [];
+                        for (let i = 0; i < labels.length; i++) {
+                            const startStr = dateStrings[i * 2];
+                            const endStr = dateStrings[i * 2 + 1];
+                            if (!startStr || !endStr) continue; // 防呆
+                            const start = new Date(vm.convertToISOWithMoment(startStr)).getTime();
+                            const end = new Date(vm.convertToISOWithMoment(endStr)).getTime();
+                            // 確保 start < end，否則跳過
+                            if (start >= end) continue;
+                            timelineData.push({
+                                x: labels[i],
+                                y: [start, end]
+                            });
+                        }
+
                         const options = {
                             series: [
                                 {
-                                    data: [
-                                        {
-                                            x: 'Code',
-                                            y: [
-                                                new Date(this.convertToISOWithMoment("2019/03/19 09:45:00 AM")).getTime(),
-                                                new Date(this.convertToISOWithMoment("2019/3/20 01:45:00 PM")).getTime()
-                                            ]
-                                        },
-                                        {
-                                            x: 'Test',
-                                            y: [
-                                                new Date(this.convertToISOWithMoment("2019/03/17 09:45:00 AM")).getTime(),
-                                                new Date(this.convertToISOWithMoment("2019/3/23 11:45:00 PM")).getTime()
-                                            ]
-                                        },
-                                        {
-                                            x: 'Validation',
-                                            y: [
-                                                new Date(this.convertToISOWithMoment("2019/03/16 05:45:00 AM")).getTime(),
-                                                new Date(this.convertToISOWithMoment("2019/3/28 01:45:00 PM")).getTime()
-                                            ]
-                                        },
-                                    ]
+                                    data: timelineData
                                 }
                             ],
                             chart: {
@@ -894,17 +924,25 @@
                             },
                             plotOptions: {
                                 bar: {
-                                    horizontal: true
+                                    horizontal: true,
                                 }
                             },
                             xaxis: {
-                                type: 'datetime'
-                            }
+                                type: 'datetime',
+                            },
                         };
                         this.chartInstances[node.id] = new ApexCharts(container, options);
                         this.chartInstances[node.id].render();
                     }
 
+                },
+                // time
+                regularSplitTime(node) {
+                    if (!node || !node.label) return [];
+
+                    // 正則拆出日期 + 時間字串（格式：yyyy/mm/dd hh:mm:ss AM/PM）
+                    const regex = /(\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}:\d{2}\s+[AP]M)/g;
+                    return node.label.match(regex) || [];
                 },
                 // 換算時間(我自己要用的)
                 convertToISOWithMoment(dateStr) {
@@ -1033,13 +1071,6 @@
                     const vm = this;
                     console.log(data)
                     if (data.state) {
-                        // $("#username_showtext").removeClass("d-none");
-                        // $("#username_text").text(data.data.Username);
-                        // $("#reg_btn").addClass("d-none");
-                        // $("#login_btn").addClass("d-none");
-                        // $("#logout_btn").removeClass("d-none");
-                        // memberLevel = data.data.Level;
-                        // chageLevel(data.data.Level);
                         vm.userId = data.data.Username;
 
                         // 訂閱會員才可使用雲端存儲資料
@@ -1291,6 +1322,7 @@
 
                 },
 
+
                 board_upload() {
                     const vm = this;
                     var alterTime = vm.getCurrentTime();
@@ -1433,7 +1465,16 @@
 
                 // 雙擊文字進入編輯模式
                 editNode(node) {
-                    node.editing = true;
+                    if (node.type !== 'chart' && node.connectionsIn.length <= 1) {
+                        node.editing = true;
+                        this.$nextTick(() => {
+                            const textarea = document.querySelector(`#app textarea`);
+                            if (textarea) {
+                                textarea.focus();
+                                textarea.select();
+                            }
+                        });
+                    }
                 },
 
                 // computeTotal: 提取所有數字（含負號）並加總後存入 node.total
@@ -1453,6 +1494,7 @@
                 // 結束編輯，v-model 自動將輸入值存入 node.label；可直接透過 node.label 讀取文字
                 finishEdit(node) {
                     const vm = this;
+
                     node.editing = false;
                     const newTotal = this.computeTotal(node);
                     node.total = newTotal;
@@ -1863,6 +1905,14 @@
 
 
                 handleKeyDown(event) {
+                    // Enter 按鍵：關閉編輯模式
+                    if (event.key === 'Enter') {
+                        const editingNode = this.nodes.find(n => n.editing);
+                        if (editingNode) {
+                            this.finishEdit(editingNode);
+                        }
+                    }
+
                     // DELETE 按鍵：刪除所有已選取的便利貼與連線
                     if (event.key === 'Delete') {
 
