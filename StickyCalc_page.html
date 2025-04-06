@@ -401,9 +401,12 @@
                 <g :transform="boardTransform">
                     <!-- 連線：以二次貝茲曲線呈現，虛線且末端帶箭頭；點擊/右鍵可選取與刪除 -->
                     <path v-for="(conn, index) in connections" :key="'conn-' + index" :d="getConnectionPath(conn)"
-                        :stroke="conn.selected ? 'blue' : 'red'" fill="none" stroke-dasharray="5,5"
-                        marker-end="url(#arrow)" @click.stop="toggleConnectionSelection(conn, $event)"
+                        :stroke="conn.selected ? 'blue' : conn.color" fill="none" :stroke-dasharray="conn.type"
+                        stroke-width="3" marker-end="url(#arrow)" pointer-events="visibleStroke"
+                        @click.stop="toggleConnectionSelection(conn, $event)"
                         @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
+
+
                     <!-- 可拖動的便利貼 -->
                     <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
                         @click.stop="nodeClick(node, $event)" @contextmenu.prevent="handleNodeContextMenu(node, $event)"
@@ -465,12 +468,14 @@
                                     <span v-else class="note-text">{{ node.label }}</span>
                                 </div>
                             </foreignObject>
+
                             <!-- 右下角「...」按鈕 -->
-                            <text v-if="node.connectionsIn.length < 2 && !node.editing" :x="node.x + noteWidth/2 - 32"
+                            <text v-if="node.connectionsIn.length < 2 && !node.editing" :x="node.x + noteWidth/2 - 35"
                                 :y="node.y + noteHeight/2 - 6" font-size="40" fill="grey" font-weight="bold"
                                 style="cursor: pointer;" @click.stop="showFullText(node)">
                                 ...
                             </text>
+
                         </template>
 
 
@@ -560,6 +565,19 @@
                 </template>
                 <template v-else-if="contextMenu.type === 'curve'">
                     <button @click="deleteConnection(contextMenu.connection)">刪除此連線</button>
+                    <div>
+                        更換類型：
+                        <button @click="changeLineType(contextMenu.connection, 'solid')">實線</button>
+                        <button @click="changeLineType(contextMenu.connection, 'dashed')">虛線</button>
+                        <button @click="changeLineType(contextMenu.connection, 'dotted')">點線</button>
+                    </div>
+                    <div>
+                        更換顏色：
+                        <button @click="changeLineColor(contextMenu.connection, '#FCAFAA')">粉紅</button>
+                        <button @click="changeLineColor(contextMenu.connection, '#C7DF7A')">粉綠</button>
+                        <button @click="changeLineColor(contextMenu.connection, '#ADD8E6')">粉藍</button>
+                        <button @click="changeLineColor(contextMenu.connection, '#FFF4B2')">粉黃</button>
+                    </div>
                 </template>
             </div>
         </div>
@@ -756,6 +774,27 @@
 
             // 方法函式
             methods: {
+                /* ================ 線條優化 ==================== */
+
+                changeLineColor(conn, type) {
+                    conn.color = type;
+                    this.contextMenu.visible = false;
+                },
+
+                changeLineType(conn, type) {
+                    conn.type = this.getDashArray(type);
+                    this.contextMenu.visible = false;
+                },
+
+                getDashArray(type) {
+                    switch (type) {
+                        case 'solid': return 'none';
+                        case 'dashed': return '12,6'; // 中空線
+                        case 'dotted': return '2,2'; // 點線
+                        default: return 'none';
+                    }
+                },
+
                 /* ================ 一般便利貼 ==================== */
 
                 showFullText(node) {
@@ -1643,10 +1682,13 @@
                             n.selected = true;
                         }
                     });
+
+
                     this.selectionBox.active = false;
                     this.selectionBox.width = 0;
                     this.selectionBox.height = 0;
                 },
+
                 // 開始拖曳便利貼：如果該便利貼尚未選取，先清除其他選取；之後將所有已選取的便利貼作為拖曳群組
                 startDrag(node, event) {
                     const vm = this;
@@ -1742,6 +1784,8 @@
                             selected: false,
                             userId: vm.userId,
                             boardId: vm.boardId,
+                            color: 'red',
+                            type: '12,6',
                             connectionsId: Math.random().toString(36).substring(2, 12),
                         });
                         this.connectionStartNode.connectionsOut.push(node.id);
