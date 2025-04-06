@@ -154,22 +154,6 @@
             height: 100%;
             background: transparent;
         }
-
-        .note-text-container {
-            width: 100%;
-            height: 90%;
-            overflow: hidden;
-            white-space: pre-wrap;
-            /* 支援換行 */
-            font-size: 14px;
-            line-height: 1.2;
-            position: relative;
-        }
-
-        .note-text {
-            display: inline;
-            overflow: hidden;
-        }
     </style>
 </head>
 
@@ -401,9 +385,8 @@
                 <g :transform="boardTransform">
                     <!-- 連線：以二次貝茲曲線呈現，虛線且末端帶箭頭；點擊/右鍵可選取與刪除 -->
                     <path v-for="(conn, index) in connections" :key="'conn-' + index" :d="getConnectionPath(conn)"
-                        :stroke="conn.selected ? 'blue' : conn.color" fill="none" :stroke-dasharray="conn.type"
-                        stroke-width="3" marker-end="url(#arrow)" pointer-events="visibleStroke"
-                        @click.stop="toggleConnectionSelection(conn, $event)"
+                        :stroke="conn.selected ? 'blue' : 'red'" fill="none" stroke-dasharray="5,5"
+                        marker-end="url(#arrow)" @click.stop="toggleConnectionSelection(conn, $event)"
                         @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
 
 
@@ -411,18 +394,17 @@
                     <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
                         @click.stop="nodeClick(node, $event)" @contextmenu.prevent="handleNodeContextMenu(node, $event)"
                         style="cursor: move;">
-
-                        <!-- 便利貼背景 -->
+                        <!-- 便利貼背景，使用 node.color，預設 lightyellow -->
                         <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth"
                             :height="noteHeight" :fill="node.color" stroke="#ccc" stroke-width="0" rx="1" ry="5"
-                            style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));" @dblclick="editNode(node)">
-                        </rect>
+                            style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));"></rect>
                         <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth" :height="26"
                             :fill="node.colorTop" rx="0" ry="0"></rect>
-
                         <!-- 頂欄 -->
-                        <template v-if="node.connectionsIn.length == 2">
-                            <foreignObject :x="node.x - 50" :y="node.y - noteHeight / 2 - 4" width="100" height="32">
+                        <template v-if=" node.connectionsIn.length == 2">
+                            <!-- 當連結進來的數量 ≥ 2 時，顯示 Select 選單 -->
+                            <!-- 隱藏選中框 outline: none; -->
+                            <foreignObject :x="node.x -50 " :y="node.y - noteHeight / 2 - 4" width="100" height="32">
                                 <select v-model="node.operation" @change="updateTotal(node)"
                                     style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
                                     <option value="sum">+ 加法</option>
@@ -436,8 +418,8 @@
                                 </select>
                             </foreignObject>
                         </template>
-
                         <template v-else>
+                            <!-- 顯示總額（放在便利貼右上角，向左延伸）-->
                             <text :x="node.x + noteWidth / 2 - 5" :y="node.y - noteHeight / 2 + 15" text-anchor="end"
                                 font-size="12" fill="grey" font-weight="bold">
                                 {{ node.total }}
@@ -446,39 +428,32 @@
                         <!-- 頂欄 -->
 
 
-                        <!-- 編輯模式 -->
-                        <template v-if="node.editing && node.type !== 'chart'">
+                        <!-- 雙擊文字進入編輯模式，利用 v-model 雙向綁定輸入值存入 node.label -->
+                        <template v-if="node.editing && node.type != 'chart'">
                             <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 10" style="overflow: hidden;">
-                                <textarea class="form-control bg-white bg-opacity-25" v-model="node.label"
-                                    @blur="finishEdit(node)" @keyup.enter="finishEdit(node)"
-                                    style="height: 86px;"></textarea>
+                                <!-- <input class="edit-input" type="text" v-model="node.label" @blur="finishEdit(node)"
+                                @keyup.enter="finishEdit(node)" /> -->
+                                <textarea class="form-control bg-white bg-opacity-25" name="" id="" type="text"
+                                    v-model="node.label" @blur="finishEdit(node)" @keyup.enter="finishEdit(node)"
+                                    style="height: 86px;">
+
+                            </textarea>
                             </foreignObject>
                         </template>
-
-                        <!-- 顯示模式 -->
-                        <template v-else-if="node.type !== 'chart'">
-                            <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
+                        <template v-else-if=" node.type != 'chart'">
+                            <foreignObject :x="node.x- noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 30">
-                                <div class="note-text-container" @dblclick="editNode(node)">
-                                    <!-- 一連以下顯示此段，label無內容顯示雙擊編輯 -->
-                                    <span v-if="node.connectionsIn.length < 2" class="note-text">{{ node.label || "雙擊編輯"
-                                        }}</span>
-                                    <!-- 二連以上顯示此段，顯示總值或0 -->
-                                    <span v-else class="note-text">{{ node.label }}</span>
-                                </div>
+
+                                <text :x="node.x" :y="node.y" text-anchor="middle" font-size="12"
+                                    @dblclick="editNode(node)"
+                                    style="width: 100%; height: 100%; word-break: break-all;">
+                                    {{ node.label }}
+                                </text>
+
                             </foreignObject>
 
-                            <!-- 右下角「...」按鈕 -->
-                            <text v-if="node.connectionsIn.length < 2 && !node.editing" :x="node.x + noteWidth/2 - 35"
-                                :y="node.y + noteHeight/2 - 6" font-size="40" fill="grey" font-weight="bold"
-                                style="cursor: pointer;" @click.stop="showFullText(node)">
-                                ...
-                            </text>
-
                         </template>
-
-
                         <!-- 圖表便利貼 -->
                         <template v-else-if="node.type === 'chart'">
                             <!-- 底層矩形（淺色） -->
@@ -496,14 +471,8 @@
                                     style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
                                     <option value="bar">柱狀圖</option>
                                     <option value="line">折線圖</option>
+                                    <!-- <option value="pie">圓餅圖</option> -->
                                     <option value="area">面積圖</option>
-                                    <option value="radar">雷達圖</option>
-                                    <option value="pie">圓餅圖</option>
-                                    <option value="polarArea">極座標圓餅圖</option>
-                                    <option value="donut">甜甜圈</option>
-                                    <option value="radialBar">跑道圖</option>
-                                    <!-- <option value="rangeBar">時間圖</option> -->
-
                                 </select>
                             </foreignObject>
                             <!-- 圖表容器 -->
@@ -565,19 +534,6 @@
                 </template>
                 <template v-else-if="contextMenu.type === 'curve'">
                     <button @click="deleteConnection(contextMenu.connection)">刪除此連線</button>
-                    <div>
-                        更換類型：
-                        <button @click="changeLineType(contextMenu.connection, 'solid')">實線</button>
-                        <button @click="changeLineType(contextMenu.connection, 'dashed')">虛線</button>
-                        <button @click="changeLineType(contextMenu.connection, 'dotted')">點線</button>
-                    </div>
-                    <div>
-                        更換顏色：
-                        <button @click="changeLineColor(contextMenu.connection, '#FCAFAA')">粉紅</button>
-                        <button @click="changeLineColor(contextMenu.connection, '#C7DF7A')">粉綠</button>
-                        <button @click="changeLineColor(contextMenu.connection, '#ADD8E6')">粉藍</button>
-                        <button @click="changeLineColor(contextMenu.connection, '#FFF4B2')">粉黃</button>
-                    </div>
                 </template>
             </div>
         </div>
@@ -587,9 +543,6 @@
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
-
-    <!-- 引入 Moment.js -->
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
     <!-- 引入 ApexCharts -->
     <script src="https://unpkg.com/apexcharts@latest/dist/apexcharts.min.js"></script>
@@ -682,10 +635,10 @@
                     localStorage.setItem('boardId', vm.boardId)
 
                     vm.nodes = [
-                        { boardId: vm.boardId, type: 'general', id: 1, count: 1, label: '便條紙 1', angle: 0, color: '#FFF8CA', colorTop: '#FFF4B2', selected: false, total: 1, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, type: 'general', id: 2, count: 2, label: '便條紙 2', angle: 90, color: '#D3ED7F', colorTop: '#C7DF7A', selected: false, total: 2, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, type: 'general', id: 3, count: 3, label: '便條紙 3', angle: 180, color: '#ffc0cb', colorTop: '#FCAFAA', selected: false, total: 3, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, type: 'general', id: 4, count: 4, label: '便條紙 4', angle: 270, color: '#CEEBFD', colorTop: '#ADD8E6', selected: false, total: 4, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, id: 1, count: 1, label: '便條紙 1', angle: 0, color: '#FFF8CA', colorTop: '#FFF4B2', selected: false, total: 1, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, id: 2, count: 2, label: '便條紙 2', angle: 90, color: '#D3ED7F', colorTop: '#C7DF7A', selected: false, total: 2, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, id: 3, count: 3, label: '便條紙 3', angle: 180, color: '#ffc0cb', colorTop: '#FCAFAA', selected: false, total: 3, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, id: 4, count: 4, label: '便條紙 4', angle: 270, color: '#CEEBFD', colorTop: '#ADD8E6', selected: false, total: 4, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
                     ];
 
                     // 根據角度初始化便利貼的位置
@@ -774,37 +727,6 @@
 
             // 方法函式
             methods: {
-                /* ================ 線條優化 ==================== */
-
-                changeLineColor(conn, type) {
-                    conn.color = type;
-                    this.contextMenu.visible = false;
-                },
-
-                changeLineType(conn, type) {
-                    conn.type = this.getDashArray(type);
-                    this.contextMenu.visible = false;
-                },
-
-                getDashArray(type) {
-                    switch (type) {
-                        case 'solid': return 'none';
-                        case 'dashed': return '12,6'; // 中空線
-                        case 'dotted': return '2,2'; // 點線
-                        default: return 'none';
-                    }
-                },
-
-                /* ================ 一般便利貼 ==================== */
-
-                showFullText(node) {
-                    Swal.fire({
-                        title: '便利貼內容',
-                        html: `<pre style="text-align: left; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">${node.label}</pre>`,
-                        width: '600px',
-                        confirmButtonText: '關閉',
-                    });
-                },
                 /* ================ 圖表便利貼 ==================== */
                 /* 圖表便利貼相關方法 */
                 addChartNode(event) {
@@ -828,7 +750,6 @@
                         connectionsIn: [],
                         userId: vm.userId,
                         boardId: vm.boardId,
-
                     };
                     this.nodes.push(newNode);
                     this.contextMenu.visible = false;
@@ -838,7 +759,6 @@
                     this.saveState();
                 },
                 renderChart(node) {
-                    const vm = this;
                     const container = document.querySelector(`#${node.id}`);
                     if (!container) {
                         console.error('Chart container not found for ID:', node.id);
@@ -857,146 +777,37 @@
                         const secondNode = this.getNodeById(node.connectionsIn[1]);
                         if (firstNode && firstNode.label) {
                             // 按空格分割，並濾除空字串
-                            // categories = firstNode.label.split(/\s+/).filter(Boolean);
-                            categories = vm.regularSplitString(firstNode);
+                            categories = firstNode.label.split(/\s+/).filter(Boolean);
                         }
                         if (secondNode && secondNode.label) {
-                            const matches = vm.regularSplitNumbers(secondNode);
+                            const matches = secondNode.label.match(/-?\d*\.?\d+/g);
                             data = matches ? matches.map(num => parseFloat(num)) : [];
                         }
                     }
 
-                    if (node.chartType == 'bar' || node.chartType == 'line' || node.chartType == 'area' || node.chartType == 'radar') {
-                        const options = {
-                            chart: {
-                                type: node.chartType || 'pie',
-                                height: node.chartHeight - 40,
-                                width: node.chartWidth - 20,
-                            },
-                            series: [{
-                                name: '數據',
-                                data: data,
-                            }],
-                            xaxis: {
-                                categories: categories,
-                            },
-                            plotOptions: {
-                                bar: {
-                                    borderRadius: 4,
-                                    borderRadiusApplication: 'end',
-                                    horizontal: true,
-                                }
-                            },
-                            colors: ['#ff6384'],
-                            dataLabels: {
-                                enabled: true,
-                                style: {
-                                    colors: ['#dddddd']  // 文字顏色
-                                }
+                    const options = {
+                        chart: {
+                            type: node.chartType || 'bar',
+                            height: node.chartHeight - 40,
+                            width: node.chartWidth - 20,
+                        },
+                        series: [{
+                            name: '數據',
+                            data: data,
+                        }],
+                        xaxis: {
+                            categories: categories,
+                        },
+                        colors: ['#ff6384'],
+                        dataLabels: {
+                            enabled: true,
+                            style: {
+                                colors: ['#dddddd']  // 文字顏色
                             }
-                        };
-                        this.chartInstances[node.id] = new ApexCharts(container, options);
-                        this.chartInstances[node.id].render();
-
-                    } else if (node.chartType == 'pie' || node.chartType == 'polarArea' || node.chartType == 'donut' || node.chartType == 'radialBar') {
-                        const options = {
-                            chart: {
-                                type: node.chartType || 'pie',
-                                height: node.chartHeight - 40,
-                                width: node.chartWidth - 20,
-                            },
-                            series: data,
-                            labels: categories,
-
-                            colors: ['#ff6384'],
-                            dataLabels: {
-                                enabled: true,
-                                style: {
-                                    colors: ['#dddddd']  // 文字顏色
-                                }
-                            }
-                        };
-                        this.chartInstances[node.id] = new ApexCharts(container, options);
-                        this.chartInstances[node.id].render();
-                    } else {
-                        // 時間類型
-                        const firstNode = this.getNodeById(node.connectionsIn[0]);
-                        const secondNode = this.getNodeById(node.connectionsIn[1]);
-
-                        // 取得資料
-                        // const labels = vm.regularSplitNumbers(firstNode); // 這會是 ['-22600', '-22600', ...]
-                        // const dateStrings = vm.regularSplitTime(secondNode); // 這會是 ['2016/12/23 01:45:00 PM', '2016/12/30 01:45:00 PM', ...]
-
-                        const timelineData = [];
-                        for (let i = 0; i < labels.length; i++) {
-                            const startStr = dateStrings[i * 2];
-                            const endStr = dateStrings[i * 2 + 1];
-                            if (!startStr || !endStr) continue; // 防呆
-                            const start = new Date(vm.convertToISOWithMoment(startStr)).getTime();
-                            const end = new Date(vm.convertToISOWithMoment(endStr)).getTime();
-                            // 確保 start < end，否則跳過
-                            if (start >= end) continue;
-                            timelineData.push({
-                                x: labels[i],
-                                y: [start, end]
-                            });
                         }
-
-                        const options = {
-                            series: [
-                                {
-                                    data: timelineData
-                                }
-                            ],
-                            chart: {
-                                height: 350,
-                                type: 'rangeBar'
-                            },
-                            dataLabels: {
-                                enabled: true,
-                                formatter: function (val) {
-                                    var a = moment(val[0])
-                                    var b = moment(val[1])
-                                    var diff = b.diff(a, 'days')
-                                    return diff + (diff > 1 ? ' days' : ' day')
-                                }
-                            },
-                            plotOptions: {
-                                bar: {
-                                    horizontal: true,
-                                }
-                            },
-                            xaxis: {
-                                type: 'datetime',
-                            },
-                        };
-                        this.chartInstances[node.id] = new ApexCharts(container, options);
-                        this.chartInstances[node.id].render();
-                    }
-
-                },
-                // time
-                regularSplitTime(node) {
-                    if (!node || !node.label) return [];
-
-                    // 正則拆出日期 + 時間字串（格式：yyyy/mm/dd hh:mm:ss AM/PM）
-                    const regex = /(\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}:\d{2}\s+[AP]M)/g;
-                    return node.label.match(regex) || [];
-                },
-                // 換算時間(我自己要用的)
-                convertToISOWithMoment(dateStr) {
-                    return moment(dateStr, "YYYY/MM/DD hh:mm:ss A").format("YYYY-MM-DDTHH:mm:ss");
-                },
-                /** 
-                 * 正則:分割字串
-                 * 按空格分割，並濾除空字串
-                 * */
-                regularSplitString(node) {
-                    return node.label.split(/\s+/).filter(Boolean);
-                },
-                // 正則:分割數字
-                regularSplitNumbers(node) {
-                    return node.label.match(/-?\d*\.?\d+/g);
+                    };
+                    this.chartInstances[node.id] = new ApexCharts(container, options);
+                    this.chartInstances[node.id].render();
                 },
                 refreshChartsConnectedTo(node) {
                     this.nodes.forEach(chartNode => {
@@ -1110,13 +921,17 @@
                     const vm = this;
                     console.log(data)
                     if (data.state) {
+                        // $("#username_showtext").removeClass("d-none");
+                        // $("#username_text").text(data.data.Username);
+                        // $("#reg_btn").addClass("d-none");
+                        // $("#login_btn").addClass("d-none");
+                        // $("#logout_btn").removeClass("d-none");
+                        // memberLevel = data.data.Level;
+                        // chageLevel(data.data.Level);
                         vm.userId = data.data.Username;
 
-                        // 訂閱會員才可使用雲端存儲資料
-                        if (data.data.Level >= 30) {
-                            // 後端取得
-                            vm.get_nodes()
-                        }
+                        // 後端取得
+                        vm.get_nodes()
 
                         // 從localStorage取得
                         if (vm.nodes == "") {
@@ -1171,65 +986,30 @@
                         vm.nodes = [];
                         for (i = 0; i < data.data.length; i++) {
                             var newData = [];
-                            if (data.data[i].Type == 'chart') {
-                                newData.push({
-                                    "id": data.data[i].Id,
-                                    "type": data.data[i].Type,
-                                    "chartType": data.data[i].ChartType,
-                                    "x": data.data[i].X,
-                                    "y": data.data[i].Y,
-                                    "chartWidth": 400,
-                                    "chartHeight": 240,
-                                    "color": data.data[i].Color,
-                                    "colorTop": data.data[i].ColorTop,
-                                    "connectionsOut": data.data[i].ConnectionsOut,
-                                    "connectionsIn": data.data[i].ConnectionsIn,
-                                    "connections": data.data[i].Connections,
-                                    "userId": data.data[i].UserId,
-                                    "boardId": data.data[i].BoardId,
-                                    "initialX": 0,
-                                    "initialY": 0,
-                                    "startX": 0,
-                                    "startY": 0,
-                                    "editing": false,
-                                    "selected": false,
-                                })
-                            } else {
-                                newData.push({
-                                    "id": data.data[i].Id,
-                                    "label": data.data[i].Label,
-                                    "x": data.data[i].X,
-                                    "y": data.data[i].Y,
-                                    "color": data.data[i].Color,
-                                    "colorTop": data.data[i].ColorTop,
-                                    "type": data.data[i].Type,
-                                    "connectionsOut": data.data[i].ConnectionsOut,
-                                    "connectionsIn": data.data[i].ConnectionsIn,
-                                    "connections": data.data[i].Connections,
-                                    "total": data.data[i].Total,
-                                    "count": data.data[i].Count,
-                                    "startX": 0,
-                                    "startY": 0,
-                                    "userId": data.data[i].UserId,
-                                    "boardId": data.data[i].BoardId,
-                                    "editing": false,
-                                    "selected": false,
-                                })
-
-                            }
+                            newData.push({
+                                "id": data.data[i].Id,
+                                "label": data.data[i].Label,
+                                "x": data.data[i].X,
+                                "y": data.data[i].Y,
+                                "color": data.data[i].Color,
+                                "colorTop": data.data[i].ColorTop,
+                                "editing": false,
+                                "selected": false,
+                                "operation": data.data[i].Operation,
+                                "connectionsOut": data.data[i].ConnectionsOut,
+                                "connectionsIn": data.data[i].ConnectionsIn,
+                                "connections": data.data[i].Connections,
+                                "total": data.data[i].Total,
+                                "count": data.data[i].Count,
+                                "startX": data.data[i].StartX,
+                                "startY": data.data[i].StartY,
+                                "userId": data.data[i].UserId,
+                                "boardId": data.data[i].BoardId,
+                            })
                             vm.nodes.push(newData[0]);
                             // this.computeTotal(vm.nodes[i])
-
                         }
                     }
-                    // 延遲渲染以確保 DOM 準備好
-                    this.$nextTick(() => {
-                        vm.nodes.forEach(chartNode => {
-                            if (chartNode.type === 'chart') {
-                                this.renderChart(chartNode);
-                            }
-                        });
-                    });
                 },
                 getConnections() {
                     //取得後端的連線資料      
@@ -1360,7 +1140,6 @@
                     })
 
                 },
-
 
                 board_upload() {
                     const vm = this;
@@ -1504,16 +1283,7 @@
 
                 // 雙擊文字進入編輯模式
                 editNode(node) {
-                    if (node.type !== 'chart' && node.connectionsIn.length <= 1) {
-                        node.editing = true;
-                        this.$nextTick(() => {
-                            const textarea = document.querySelector(`#app textarea`);
-                            if (textarea) {
-                                textarea.focus();
-                                textarea.select();
-                            }
-                        });
-                    }
+                    node.editing = true;
                 },
 
                 // computeTotal: 提取所有數字（含負號）並加總後存入 node.total
@@ -1533,7 +1303,6 @@
                 // 結束編輯，v-model 自動將輸入值存入 node.label；可直接透過 node.label 讀取文字
                 finishEdit(node) {
                     const vm = this;
-
                     node.editing = false;
                     const newTotal = this.computeTotal(node);
                     node.total = newTotal;
@@ -1682,13 +1451,10 @@
                             n.selected = true;
                         }
                     });
-
-
                     this.selectionBox.active = false;
                     this.selectionBox.width = 0;
                     this.selectionBox.height = 0;
                 },
-
                 // 開始拖曳便利貼：如果該便利貼尚未選取，先清除其他選取；之後將所有已選取的便利貼作為拖曳群組
                 startDrag(node, event) {
                     const vm = this;
@@ -1784,8 +1550,6 @@
                             selected: false,
                             userId: vm.userId,
                             boardId: vm.boardId,
-                            color: 'red',
-                            type: '12,6',
                             connectionsId: Math.random().toString(36).substring(2, 12),
                         });
                         this.connectionStartNode.connectionsOut.push(node.id);
@@ -1913,12 +1677,13 @@
                     const vm = this;
                     const svgElement = document.getElementById('mindmapSvg');
                     const rect = svgElement.getBoundingClientRect();
+                    // const x = this.contextMenu.x - rect.left;
+                    // const y = this.contextMenu.y - rect.top;
                     const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
                     const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
                     const newNode = {
                         id: Math.random().toString(36).substring(2, 12), //取隨機8字元
                         label: 'New Node',
-                        type: 'general',
                         x: x,
                         y: y,
                         color: '#FFF8CA',
@@ -1949,14 +1714,6 @@
 
 
                 handleKeyDown(event) {
-                    // Enter 按鍵：關閉編輯模式
-                    if (event.key === 'Enter') {
-                        const editingNode = this.nodes.find(n => n.editing);
-                        if (editingNode) {
-                            this.finishEdit(editingNode);
-                        }
-                    }
-
                     // DELETE 按鍵：刪除所有已選取的便利貼與連線
                     if (event.key === 'Delete') {
 
