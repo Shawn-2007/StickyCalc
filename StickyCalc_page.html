@@ -405,9 +405,19 @@
                             :stroke-dasharray="conn.type" stroke-width="3" :marker-end="'url(#arrow-' + index + ')'"
                             pointer-events="visibleStroke" @click.stop="toggleConnectionSelection(conn, $event)"
                             @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
-                        <circle :cx="getArrowPosition(conn).x" :cy="getArrowPosition(conn).y" r="8" fill="white"
-                            stroke="black" style="cursor: ns-resize;" @mousedown.stop="startDragArrow(conn, $event)">
-                        </circle>
+                        <!-- 終端圓圈 -->
+                        <g>
+                            <circle :cx="getAdjustedArrowPosition(conn).x" :cy="getAdjustedArrowPosition(conn).y" r="8"
+                                fill="white" stroke="black" style="cursor: ns-resize;"
+                                @mousedown.stop="startDragArrow(conn, $event)">
+                            </circle>
+                            <!-- 雙連時顯示 A/B 標籤 -->
+                            <text v-if="isDoubleConnection(conn)" :x="getAdjustedArrowPosition(conn).x"
+                                :y="getAdjustedArrowPosition(conn).y + 3" text-anchor="middle" font-size="10"
+                                fill="black">
+                                {{ getConnectionLabel(conn) }}
+                            </text>
+                        </g>
                     </g>
                     <!-- 可拖動的便利貼 -->
                     <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
@@ -426,13 +436,10 @@
                                 <select v-model="node.operation" @change="updateTotal(node)"
                                     style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
                                     <option value="sum">+ 加法</option>
-                                    <option value="subtractAB">- 減法(A/B)</option>
-                                    <option value="subtractBA">- 減法(B/A)</option>
+                                    <option value="subtractAB">- 減法</option>
                                     <option value="multiply">× 乘法</option>
-                                    <option value="divideAB">÷ 除法(A/B)</option>
-                                    <option value="divideBA">÷ 除法(B/A)</option>
-                                    <option value="modulusAB">% 餘數(A/B)</option>
-                                    <option value="modulusBA">% 餘數(B/A)</option>
+                                    <option value="divideAB">÷ 除法</option>
+                                    <option value="modulusAB">% 餘數</option>
                                 </select>
                             </foreignObject>
                         </template>
@@ -796,6 +803,69 @@
             // 方法函式
             methods: {
                 /* ================ 線條優化 ==================== */
+                // AB點
+                // 檢查是否為雙連情況
+                isDoubleConnection(conn) {
+                    const toNode = this.getNodeById(conn.to);
+                    return toNode && toNode.connectionsIn.length === 2;
+                },
+
+                // 獲取 A/B 標籤
+                getConnectionLabel(conn) {
+                    const toNode = this.getNodeById(conn.to);
+                    if (!toNode || toNode.connectionsIn.length !== 2) return '';
+                    const index = toNode.connectionsIn.indexOf(conn.from);
+                    return index === 0 ? 'A' : 'B';
+                },
+
+                // 調整圓圈位置（雙連時移出）
+                getAdjustedArrowPosition(conn) {
+                    const basePos = this.getArrowPosition(conn);
+                    const toNode = this.getNodeById(conn.to);
+                    if (!toNode) return basePos;
+
+                    // 如果不是雙連，直接返回原始位置
+                    if (toNode.connectionsIn.length !== 2) {
+                        return basePos;
+                    }
+
+                    // 根據圓圈所在邊緣調整位置
+                    const toRect = {
+                        x: toNode.x - this.noteWidth / 2,
+                        y: toNode.y - this.noteHeight / 2,
+                        width: this.noteWidth,
+                        height: this.noteHeight,
+                    };
+                    const left = toRect.x;
+                    const right = toRect.x + toRect.width;
+                    const top = toRect.y;
+                    const bottom = toRect.y + toRect.height;
+
+                    let adjustedX = basePos.x;
+                    let adjustedY = basePos.y;
+
+                    // 圓圈半徑為 8，移出 2/3（約 5.33 像素）
+                    const offset = 5.33;
+
+                    if (Math.abs(basePos.x - left) < 1) {
+                        // 在左邊
+                        adjustedX -= offset;
+                    } else if (Math.abs(basePos.x - right) < 1) {
+                        // 在右邊
+                        adjustedX += offset;
+                    }
+
+                    if (Math.abs(basePos.y - top) < 1) {
+                        // 在上邊
+                        adjustedY -= offset;
+                    } else if (Math.abs(basePos.y - bottom) < 1) {
+                        // 在下邊
+                        adjustedY += offset;
+                    }
+
+                    return { x: adjustedX, y: adjustedY };
+                },
+
                 // 臨時線條
                 startDragConnectionCircle(node, event) {
                     this.tempConnection.active = true;
@@ -1789,12 +1859,9 @@
                         switch (node.operation) {
                             case "sum": values = a + b; break;
                             case "subtractAB": values = a - b; break;
-                            case "subtractBA": values = b - a; break;
                             case "multiply": values = a * b; break;
                             case "divideAB": values = b !== 0 ? a / b : 0; break;
-                            case "divideBA": values = a !== 0 ? b / a : 0; break;
                             case "modulusAB": values = b !== 0 ? a % b : 0; break;
-                            case "modulusBA": values = a !== 0 ? b % a : 0; break;
                             default: values = 0;
                         }
                         node.label = values;
