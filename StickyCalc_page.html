@@ -476,6 +476,17 @@
                             </text>
                         </template>
 
+                        <!-- 右上角隱藏圓圈（總額下方） -->
+                        <circle v-if="hoveredNode === node || node.selected" :cx="node.x - noteWidth/2 + 130"
+                            :cy="node.y - noteHeight/2 + 62" r="8" fill="white" stroke="black" style="cursor: pointer;"
+                            @mousedown.stop="startDragConnectionCircle(node, $event)"
+                            @mouseover="console.log('Circle visible for node:', node.id)"></circle>
+
+                        <!-- 選取邊框 -->
+                        <rect v-if="node.selected && node.type != 'chart'" :x="node.x - noteWidth/2"
+                            :y="node.y - noteHeight/2" :width="noteWidth" :height="noteHeight" fill="none" stroke="blue"
+                            stroke-width="2" rx="1" ry="5" />
+
                         <!-- 圖表便利貼 -->
                         <template v-else-if="node.type === 'chart'">
                             <!-- 底層矩形（淺色） -->
@@ -562,7 +573,7 @@
                     </div>
                 </template>
                 <template v-else-if="contextMenu.type === 'curve'">
-                    <button @click="deleteConnection(contextMenu.connection)">刪除此連線</button>
+                    <button @click="deleteConnection()">刪除此連線</button>
                     <div>
                         更換類型：
                         <button @click="changeLineType(contextMenu.connection, 'solid')">實線</button>
@@ -789,8 +800,16 @@
                 startDragConnectionCircle(node, event) {
                     this.tempConnection.active = true;
                     this.tempConnection.startNode = node;
-                    this.tempConnection.startX = node.x - this.noteWidth / 2 + 10; // 圓圈位置
-                    this.tempConnection.startY = node.y - this.noteHeight / 2 + 35;
+                    // 右邊圓圈的位置
+                    this.tempConnection.startX = node.x - this.noteWidth / 2 + 130;
+                    this.tempConnection.startY = node.y - this.noteHeight / 2 + 62;
+
+                    // 確認起點座標有效
+                    console.log('Start drag connection circle:', {
+                        startX: this.tempConnection.startX,
+                        startY: this.tempConnection.startY,
+                        node: node.id,
+                    });
 
                     document.addEventListener('mousemove', this.dragConnectionCircle);
                     document.addEventListener('mouseup', this.endDragConnectionCircle, { once: true });
@@ -798,16 +817,32 @@
                 dragConnectionCircle(event) {
                     if (!this.tempConnection.active) return;
 
-                    // 獲取當前滑鼠在 SVG 座標系統中的位置
-                    const tx = this.boardOffset.x;
-                    const ty = this.boardOffset.y;
-                    const s = this.scale;
-                    const svgX = (event.offsetX - tx) / s;
-                    const svgY = (event.offsetY - ty) / s;
+                    // 獲取 SVG 元素
+                    const svg = document.getElementById('mindmapSvg');
+                    const point = svg.createSVGPoint();
+                    point.x = event.clientX;
+                    point.y = event.clientY;
 
-                    // 計算臨時連線路徑
+                    // 將視窗座標轉換為 SVG 座標（考慮平移和縮放）
+                    const ctm = svg.getScreenCTM();
+                    const svgX = (point.x - ctm.e) / ctm.a;
+                    const svgY = (point.y - ctm.f) / ctm.d;
+
+                    // 確保座標有效
+                    if (isNaN(svgX) || isNaN(svgY)) {
+                        console.warn('Invalid SVG coordinates:', svgX, svgY);
+                        return;
+                    }
+
+                    // 確認起點座標
                     const startX = this.tempConnection.startX;
                     const startY = this.tempConnection.startY;
+                    if (isNaN(startX) || isNaN(startY)) {
+                        console.warn('Invalid start coordinates:', startX, startY);
+                        return;
+                    }
+
+                    // 計算臨時連線路徑
                     const endX = svgX;
                     const endY = svgY;
                     const mx = (startX + endX) / 2, my = (startY + endY) / 2;
@@ -823,12 +858,16 @@
                 endDragConnectionCircle(event) {
                     if (!this.tempConnection.active) return;
 
-                    // 獲取當前滑鼠在 SVG 座標系統中的位置
-                    const tx = this.boardOffset.x;
-                    const ty = this.boardOffset.y;
-                    const s = this.scale;
-                    const svgX = (event.offsetX - tx) / s;
-                    const svgY = (event.offsetY - ty) / s;
+                    // 獲取 SVG 元素
+                    const svg = document.getElementById('mindmapSvg');
+                    const point = svg.createSVGPoint();
+                    point.x = event.clientX;
+                    point.y = event.clientY;
+
+                    // 將視窗座標轉換為 SVG 座標（考慮平移和縮放）
+                    const ctm = svg.getScreenCTM();
+                    const svgX = (point.x - ctm.e) / ctm.a;
+                    const svgY = (point.y - ctm.f) / ctm.d;
 
                     // 檢查滑鼠是否在另一個便利貼上方
                     const targetNode = this.nodes.find(node => {
@@ -839,8 +878,10 @@
                             width: this.noteWidth,
                             height: this.noteHeight,
                         };
-                        return svgX >= rect.x && svgX <= rect.x + rect.width &&
+                        const isInRect = svgX >= rect.x && svgX <= rect.x + rect.width &&
                             svgY >= rect.y && svgY <= rect.y + rect.height;
+                        console.log(`Checking node ${node.id}:`, rect, `Mouse: (${svgX}, ${svgY})`, `In rect: ${isInRect}`);
+                        return isInRect;
                     });
 
                     if (targetNode) {
@@ -1805,15 +1846,14 @@
                 },
                 // 拖曳中：若正進行群組移動，則更新所有拖曳便利貼的位置；否則更新框選矩形
                 dragMove(event) {
-                    /* ================ 圖表便利貼 ==================== */
+                    // 如果正在拖動臨時連線，則不執行其他拖動邏輯
+                    if (this.tempConnection.active) return;
+
                     if (this.resizingNode) {
                         this.resizeChart(event);
                     }
-                    /* ================ 圖表便利貼 ==================== */
-
 
                     if (this.draggingNodes.length > 0) {
-                        // 群組移動的邏輯保持不變
                         let dx = event.offsetX - this.dragStart.x;
                         let dy = event.offsetY - this.dragStart.y;
                         this.draggingNodes.forEach(n => {
@@ -1821,12 +1861,10 @@
                             n.y = n.initialY + dy;
                         });
                     } else if (this.selectionBox.active) {
-                        // 獲取當前平移和縮放值
                         const tx = this.boardOffset.x;
                         const ty = this.boardOffset.y;
                         const s = this.scale;
 
-                        // 將視窗座標轉換為 SVG 座標
                         const svgCurrentX = (event.offsetX - tx) / s;
                         const svgCurrentY = (event.offsetY - ty) / s;
 
@@ -2208,6 +2246,7 @@
                     // DELETE 按鍵：刪除所有已選取的便利貼與連線
                     if (event.key === 'Delete') {
 
+                        this.deleteConnection()
                         // 記錄所有被選取的節點 ID
                         const deletedIds = this.nodes.filter(node => node.selected).map(node => node.id);
 
@@ -2221,6 +2260,7 @@
                             const toExists = this.nodes.some(n => n.id === conn.to);
                             return fromExists && toExists && !conn.selected;
                         });
+
 
                         // 更新剩餘節點的 connectionsIn
                         this.deleteForEachNodes(deletedIds);
@@ -2271,8 +2311,6 @@
                         this.chartInstances[node.id].destroy();
                         delete this.chartInstances[node.id];
                     }
-
-
                     // 刪除該節點
                     this.nodes = this.nodes.filter(n => n.id !== node.id);
                     // 刪除所有與該節點相關的連線
@@ -2302,11 +2340,38 @@
                     });
                 },
                 // 刪除連線
-                deleteConnection(conn) {
-                    this.connections = this.connections.filter(c => c !== conn);
+                deleteConnection() {
+                    // 獲取所有選取的連線
+                    const selectedConnections = this.connections.filter(conn => conn.selected);
+                    if (selectedConnections.length === 0) {
+                        this.contextMenu.visible = false;
+                        return;
+                    }
+
+                    // 刪除選取的連線並更新 connectionsIn 和 connectionsOut
+                    selectedConnections.forEach(conn => {
+                        const fromNode = this.getNodeById(conn.from);
+                        const toNode = this.getNodeById(conn.to);
+
+                        if (fromNode) {
+                            fromNode.connectionsOut = fromNode.connectionsOut.filter(id => id !== conn.to);
+                        }
+                        if (toNode) {
+                            toNode.connectionsIn = toNode.connectionsIn.filter(id => id !== conn.from);
+                        }
+                    });
+
+                    // 從 connections 中移除選取的連線
+                    this.connections = this.connections.filter(conn => !conn.selected);
+
+                    // 關閉右鍵選單
                     this.contextMenu.visible = false;
-                    //儲存狀態
-                    this.saveState()
+
+                    // 重新計算總額
+                    this.calculateTotal();
+
+                    // 儲存狀態
+                    this.saveState();
                 },
                 // 點擊曲線時切換選取狀態（顏色從紅變藍）
                 toggleConnectionSelection(conn, event) {
