@@ -409,7 +409,8 @@
                         <g>
                             <circle :cx="getAdjustedArrowPosition(conn).x" :cy="getAdjustedArrowPosition(conn).y" r="8"
                                 fill="white" stroke="black" style="cursor: ns-resize;"
-                                @mousedown.stop="startDragArrow(conn, $event)">
+                                @mousedown.stop="startDragArrow(conn, $event)"
+                                @mouseover="console.log('Arrow circle visible for connection:', conn.connectionsId)">
                             </circle>
                             <!-- 雙連時顯示 A/B 標籤 -->
                             <text v-if="isDoubleConnection(conn)" :x="getAdjustedArrowPosition(conn).x"
@@ -829,17 +830,26 @@
                         return basePos;
                     }
 
-                    // 根據圓圈所在邊緣調整位置
+                    // 根據 node.type 動態選擇尺寸
+                    const width = toNode.type === 'chart' ? toNode.chartWidth : this.noteWidth;
+                    const height = toNode.type === 'chart' ? toNode.chartHeight : this.noteHeight;
                     const toRect = {
-                        x: toNode.x - this.noteWidth / 2,
-                        y: toNode.y - this.noteHeight / 2,
-                        width: this.noteWidth,
-                        height: this.noteHeight,
+                        x: toNode.x - width / 2,
+                        y: toNode.y - height / 2,
+                        width: width,
+                        height: height,
                     };
+
                     const left = toRect.x;
                     const right = toRect.x + toRect.width;
                     const top = toRect.y;
                     const bottom = toRect.y + toRect.height;
+
+                    // 20% 到 80% 範圍
+                    const minX = left + toRect.width * 0.2;
+                    const maxX = left + toRect.width * 0.8;
+                    const minY = top + toRect.height * 0.2;
+                    const maxY = top + toRect.height * 0.8;
 
                     let adjustedX = basePos.x;
                     let adjustedY = basePos.y;
@@ -848,22 +858,28 @@
                     const offset = 5.33;
 
                     if (Math.abs(basePos.x - left) < 1) {
-                        // 在左邊
                         adjustedX -= offset;
                     } else if (Math.abs(basePos.x - right) < 1) {
-                        // 在右邊
                         adjustedX += offset;
                     }
 
                     if (Math.abs(basePos.y - top) < 1) {
-                        // 在上邊
                         adjustedY -= offset;
                     } else if (Math.abs(basePos.y - bottom) < 1) {
-                        // 在下邊
                         adjustedY += offset;
                     }
 
-                    return { x: adjustedX, y: adjustedY };
+                    // 限制調整後的 X 和 Y 在 20% 到 80% 範圍內
+                    adjustedX = Math.max(minX, Math.min(maxX, adjustedX));
+                    adjustedY = Math.max(minY, Math.min(maxY, adjustedY));
+
+                    const result = { x: adjustedX, y: adjustedY };
+                    if (isNaN(result.x) || isNaN(result.y)) {
+                        console.warn('Invalid adjusted arrow position:', result, 'for connection:', conn);
+                        return basePos;
+                    }
+
+                    return result;
                 },
 
                 // 臨時線條
@@ -934,7 +950,6 @@
                     point.x = event.clientX;
                     point.y = event.clientY;
 
-                    // 將視窗座標轉換為 SVG 座標（考慮平移和縮放）
                     const ctm = svg.getScreenCTM();
                     const svgX = (point.x - ctm.e) / ctm.a;
                     const svgY = (point.y - ctm.f) / ctm.d;
@@ -942,11 +957,14 @@
                     // 檢查滑鼠是否在另一個便利貼上方
                     const targetNode = this.nodes.find(node => {
                         if (node === this.tempConnection.startNode) return false;
+                        // 根據 node.type 動態選擇尺寸
+                        const width = node.type === 'chart' ? node.chartWidth : this.noteWidth;
+                        const height = node.type === 'chart' ? node.chartHeight : this.noteHeight;
                         const rect = {
-                            x: node.x - this.noteWidth / 2,
-                            y: node.y - this.noteHeight / 2,
-                            width: this.noteWidth,
-                            height: this.noteHeight,
+                            x: node.x - width / 2,
+                            y: node.y - height / 2,
+                            width: width,
+                            height: height,
                         };
                         const isInRect = svgX >= rect.x && svgX <= rect.x + rect.width &&
                             svgY >= rect.y && svgY <= rect.y + rect.height;
@@ -955,7 +973,6 @@
                     });
 
                     if (targetNode) {
-                        // 檢查是否會形成循環
                         if (this.willCauseLoop(this.tempConnection.startNode.id, targetNode.id)) {
                             Swal.fire({
                                 icon: 'warning',
@@ -969,7 +986,6 @@
                                 text: '重複連線了唷，請檢查您的連線結構！',
                             });
                         } else {
-                            // 建立連線
                             this.connections.push({
                                 from: this.tempConnection.startNode.id,
                                 to: targetNode.id,
@@ -990,7 +1006,6 @@
                         }
                     }
 
-                    // 清理臨時連線
                     this.tempConnection.active = false;
                     this.tempConnection.startNode = null;
                     this.tempConnection.path = '';
@@ -1000,35 +1015,47 @@
                 //換位計算
                 getArrowPosition(conn) {
                     const toNode = this.getNodeById(conn.to);
-                    if (!toNode) return { x: 0, y: 0 };
+                    if (!toNode) {
+                        console.warn('toNode not found for connection:', conn);
+                        return { x: 0, y: 0 };
+                    }
 
-                    // 獲取終點邊緣座標
+                    // 根據 node.type 動態選擇尺寸
+                    const width = toNode.type === 'chart' ? toNode.chartWidth : this.noteWidth;
+                    const height = toNode.type === 'chart' ? toNode.chartHeight : this.noteHeight;
                     const toRect = {
-                        x: toNode.x - this.noteWidth / 2,
-                        y: toNode.y - this.noteHeight / 2,
-                        width: this.noteWidth,
-                        height: this.noteHeight,
+                        x: toNode.x - width / 2,
+                        y: toNode.y - height / 2,
+                        width: width,
+                        height: height,
                     };
+
                     const fromNode = this.getNodeById(conn.from);
+                    if (!fromNode) {
+                        console.warn('fromNode not found for connection:', conn);
+                        return { x: 0, y: 0 };
+                    }
+
                     const endEdge = this.getEdgePoint(toNode, fromNode, toRect);
 
-                    // 計算 Y 座標範圍（20% 到 80%）
-                    const top = toRect.y;
-                    const bottom = toRect.y + toRect.height;
-                    const rangeHeight = toRect.height * 0.6; // 80% - 20% = 60%
-                    const minY = top + toRect.height * 0.2; // 20% 位置
-                    const maxY = top + toRect.height * 0.8; // 80% 位置
+                    // 20% 到 80% 範圍
+                    const minY = toRect.y + toRect.height * 0.2;
+                    const maxY = toRect.y + toRect.height * 0.8;
 
-                    // 考慮 yOffset 並限制範圍
+                    // 應用 yOffset 並限制範圍
                     const yOffset = conn.yOffset || 0;
                     let y = endEdge.y + yOffset;
+                    y = Math.max(minY, Math.min(maxY, y));
 
-                    // 限制 Y 座標在 20% 到 80% 範圍內
-                    if (y < minY) y = minY;
-                    if (y > maxY) y = maxY;
+                    const result = { x: endEdge.x, y };
+                    if (isNaN(result.x) || isNaN(result.y)) {
+                        console.warn('Invalid arrow position:', result, 'for connection:', conn);
+                        return { x: 0, y: 0 };
+                    }
 
-                    return { x: endEdge.x, y };
+                    return result;
                 },
+
                 startDragArrow(conn, event) {
                     this.draggingArrow = conn;
                     this.dragArrowStartY = event.offsetY;
@@ -2490,23 +2517,30 @@
                     const toNode = this.getNodeById(conn.to);
                     if (!fromNode || !toNode) return '';
 
-                    // 計算起點邊緣座標
+                    // 根據 node.type 動態選擇尺寸
+                    const fromWidth = fromNode.type === 'chart' ? fromNode.chartWidth : this.noteWidth;
+                    const fromHeight = fromNode.type === 'chart' ? fromNode.chartHeight : this.noteHeight;
                     const fromRect = {
-                        x: fromNode.x - this.noteWidth / 2,
-                        y: fromNode.y - this.noteHeight / 2,
-                        width: this.noteWidth,
-                        height: this.noteHeight,
+                        x: fromNode.x - fromWidth / 2,
+                        y: fromNode.y - fromHeight / 2,
+                        width: fromWidth,
+                        height: fromHeight,
                     };
-                    const startEdge = this.getEdgePoint(fromNode, toNode, fromRect);
 
-                    // 計算終點邊緣座標，並考慮 yOffset
+                    // 修正參數順序：起點是 fromNode，終點是 toNode
+                    const startEdge = this.getEdgePoint(fromNode, toNode, fromRect);
                     const endEdge = this.getArrowPosition(conn);
 
-                    // 計算貝茲曲線控制點
+                    // 檢查起點和終點座標
+                    if (isNaN(startEdge.x) || isNaN(startEdge.y) || isNaN(endEdge.x) || isNaN(endEdge.y)) {
+                        console.warn('Invalid edge coordinates:', startEdge, endEdge);
+                        return '';
+                    }
+
                     const dx = endEdge.x - startEdge.x, dy = endEdge.y - startEdge.y;
                     const mx = (startEdge.x + endEdge.x) / 2, my = (startEdge.y + endEdge.y) / 2;
                     const len = Math.sqrt(dx * dx + dy * dy);
-                    let offset = 30;
+                    let offset = 50;
                     if (len === 0) offset = 0;
                     const px = -dy / (len || 1), py = dx / (len || 1);
                     const cx = mx + px * offset, cy = my + py * offset;
@@ -2519,20 +2553,28 @@
                     const x1 = fromNode.x, y1 = fromNode.y;
                     const x2 = toNode.x, y2 = toNode.y;
 
-                    // 計算方向向量
+                    // 計算方向向量和角度
                     const dx = x2 - x1, dy = y2 - y1;
                     const angle = Math.atan2(dy, dx);
 
-                    // 便利貼邊界
+                    // 便利貼邊界（使用傳入的 rect）
                     const left = rect.x;
                     const right = rect.x + rect.width;
                     const top = rect.y;
                     const bottom = rect.y + rect.height;
 
-                    // 根據方向選擇邊緣點
+                    // 20% 到 80% 範圍
+                    const minX = left + rect.width * 0.2;
+                    const maxX = left + rect.width * 0.8;
+                    const minY = top + rect.height * 0.2;
+                    const maxY = top + rect.height * 0.8;
+
+                    // 根據角度選擇邊緣點
                     let edgeX, edgeY;
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        // 水平方向優先
+                    const angleThreshold = Math.PI / 4; // 45 度
+
+                    if (Math.abs(angle) < angleThreshold || Math.abs(angle) > Math.PI - angleThreshold) {
+                        // 接近水平方向（左右）
                         if (dx > 0) {
                             // 向右
                             edgeX = right;
@@ -2542,11 +2584,8 @@
                             edgeX = left;
                             edgeY = y1 + (left - x1) * dy / (dx || 1);
                         }
-                        // 檢查 Y 是否超出邊界
-                        if (edgeY < top) edgeY = top;
-                        if (edgeY > bottom) edgeY = bottom;
                     } else {
-                        // 垂直方向優先
+                        // 接近垂直方向（上下）
                         if (dy > 0) {
                             // 向下
                             edgeY = bottom;
@@ -2556,10 +2595,11 @@
                             edgeY = top;
                             edgeX = x1 + (top - y1) * dx / (dy || 1);
                         }
-                        // 檢查 X 是否超出邊界
-                        if (edgeX < left) edgeX = left;
-                        if (edgeX > right) edgeX = right;
                     }
+
+                    // 限制 X 和 Y 在 20% 到 80% 範圍內
+                    edgeX = Math.max(minX, Math.min(maxX, edgeX));
+                    edgeY = Math.max(minY, Math.min(maxY, edgeY));
 
                     return { x: edgeX, y: edgeY };
                 },
