@@ -1688,10 +1688,67 @@
                         }
                     });
 
+                    // 選取連線
+                    this.connections.forEach(conn => {
+                        const fromNode = this.getNodeById(conn.from);
+                        const toNode = this.getNodeById(conn.to);
+                        if (!fromNode || !toNode) return;
+
+                        // 獲取連線的起點和終點（目前是中心點，後續會改為邊緣）
+                        const start = { x: fromNode.x, y: fromNode.y };
+                        const end = { x: toNode.x, y: toNode.y };
+
+                        // 簡單檢查：起點或終點是否在框選範圍內
+                        const inRect = (x, y) => x >= box.x && x <= box.x + box.width && y >= box.y && y <= box.y + box.height;
+                        const isStartInRect = inRect(start.x, start.y);
+                        const isEndInRect = inRect(end.x, end.y);
+
+                        // 如果起點或終點在框選範圍內，則選取該連線
+                        if (isStartInRect || isEndInRect) {
+                            conn.selected = true;
+                        } else {
+                            // 進階檢查：線段是否與框選矩形相交
+                            const intersects = this.lineIntersectsRect(start, end, box);
+                            if (intersects) {
+                                conn.selected = true;
+                            }
+                        }
+                    });
 
                     this.selectionBox.active = false;
                     this.selectionBox.width = 0;
                     this.selectionBox.height = 0;
+                },
+                // 取得線條本體選取
+                lineIntersectsRect(start, end, rect) {
+                    // 矩形的四條邊
+                    const left = rect.x;
+                    const right = rect.x + rect.width;
+                    const top = rect.y;
+                    const bottom = rect.y + rect.height;
+
+                    // 線段的起點和終點
+                    const x1 = start.x, y1 = start.y;
+                    const x2 = end.x, y2 = end.y;
+
+                    // 檢查線段是否與矩形的四條邊相交
+                    const lineIntersectsLine = (x1, y1, x2, y2, x3, y3, x4, y4) => {
+                        const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+                        if (denom === 0) return false; // 平行
+
+                        const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+                        const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+
+                        return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
+                    };
+
+                    // 檢查線段與矩形的四條邊
+                    return (
+                        lineIntersectsLine(x1, y1, x2, y2, left, top, right, top) || // 上邊
+                        lineIntersectsLine(x1, y1, x2, y2, right, top, right, bottom) || // 右邊
+                        lineIntersectsLine(x1, y1, x2, y2, right, bottom, left, bottom) || // 下邊
+                        lineIntersectsLine(x1, y1, x2, y2, left, bottom, left, top) // 左邊
+                    );
                 },
 
                 // 開始拖曳便利貼：如果該便利貼尚未選取，先清除其他選取；之後將所有已選取的便利貼作為拖曳群組
@@ -2119,16 +2176,89 @@
                     const fromNode = this.getNodeById(conn.from);
                     const toNode = this.getNodeById(conn.to);
                     if (!fromNode || !toNode) return '';
+
+                    // 計算便利貼的邊界
+                    const fromRect = {
+                        x: fromNode.x - this.noteWidth / 2,
+                        y: fromNode.y - this.noteHeight / 2,
+                        width: this.noteWidth,
+                        height: this.noteHeight,
+                    };
+                    const toRect = {
+                        x: toNode.x - this.noteWidth / 2,
+                        y: toNode.y - this.noteHeight / 2,
+                        width: this.noteWidth,
+                        height: this.noteHeight,
+                    };
+
+                    // 計算中心點（用於確定方向）
                     const x1 = fromNode.x, y1 = fromNode.y;
                     const x2 = toNode.x, y2 = toNode.y;
-                    const dx = x2 - x1, dy = y2 - y1;
-                    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+
+                    // 計算起點和終點的邊緣交點
+                    const startEdge = this.getEdgePoint(fromNode, toNode, fromRect);
+                    const endEdge = this.getEdgePoint(toNode, fromNode, toRect);
+
+                    // 計算貝茲曲線控制點
+                    const dx = endEdge.x - startEdge.x, dy = endEdge.y - startEdge.y;
+                    const mx = (startEdge.x + endEdge.x) / 2, my = (startEdge.y + endEdge.y) / 2;
                     const len = Math.sqrt(dx * dx + dy * dy);
                     let offset = 30;
                     if (len === 0) offset = 0;
                     const px = -dy / (len || 1), py = dx / (len || 1);
                     const cx = mx + px * offset, cy = my + py * offset;
-                    return `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+
+                    return `M ${startEdge.x} ${startEdge.y} Q ${cx} ${cy} ${endEdge.x} ${endEdge.y}`;
+                },
+
+                // 計算邊緣交點
+                getEdgePoint(fromNode, toNode, rect) {
+                    const x1 = fromNode.x, y1 = fromNode.y;
+                    const x2 = toNode.x, y2 = toNode.y;
+
+                    // 計算方向向量
+                    const dx = x2 - x1, dy = y2 - y1;
+                    const angle = Math.atan2(dy, dx);
+
+                    // 便利貼邊界
+                    const left = rect.x;
+                    const right = rect.x + rect.width;
+                    const top = rect.y;
+                    const bottom = rect.y + rect.height;
+
+                    // 根據方向選擇邊緣點
+                    let edgeX, edgeY;
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        // 水平方向優先
+                        if (dx > 0) {
+                            // 向右
+                            edgeX = right;
+                            edgeY = y1 + (right - x1) * dy / (dx || 1);
+                        } else {
+                            // 向左
+                            edgeX = left;
+                            edgeY = y1 + (left - x1) * dy / (dx || 1);
+                        }
+                        // 檢查 Y 是否超出邊界
+                        if (edgeY < top) edgeY = top;
+                        if (edgeY > bottom) edgeY = bottom;
+                    } else {
+                        // 垂直方向優先
+                        if (dy > 0) {
+                            // 向下
+                            edgeY = bottom;
+                            edgeX = x1 + (bottom - y1) * dx / (dy || 1);
+                        } else {
+                            // 向上
+                            edgeY = top;
+                            edgeX = x1 + (top - y1) * dx / (dy || 1);
+                        }
+                        // 檢查 X 是否超出邊界
+                        if (edgeX < left) edgeX = left;
+                        if (edgeX > right) edgeX = right;
+                    }
+
+                    return { x: edgeX, y: edgeY };
                 },
 
 
