@@ -388,19 +388,23 @@
                     <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
                         <path d="M 20 0 L 0 0 L 0 20" fill="none" stroke="#ddd" stroke-width="0.5"></path>
                     </pattern>
+
                 </defs>
                 <!-- 使用格紋背景覆蓋整個 SVG -->
                 <rect width="100%" height="100%" fill="url(#grid)" @dblclick="addNodeAtContext"
                     @mousedown="handleBackgroundMouseDown"></rect>
                 <!-- 將畫板內容包在 <g> 中，可統一進行平移與縮放 -->
                 <g :transform="boardTransform">
+                    <!-- 臨時連線 -->
+                    <path v-if="tempConnection.active" :d="tempConnection.path" stroke="grey" fill="none"
+                        stroke-width="3" stroke-dasharray="5,5"></path>
+
                     <!-- 連線：以二次貝茲曲線呈現，虛線且末端帶箭頭；點擊/右鍵可選取與刪除 -->
                     <g v-for="(conn, index) in connections" :key="'conn-' + index">
                         <path :d="getConnectionPath(conn)" :stroke="conn.selected ? 'blue' : conn.color" fill="none"
                             :stroke-dasharray="conn.type" stroke-width="3" :marker-end="'url(#arrow-' + index + ')'"
                             pointer-events="visibleStroke" @click.stop="toggleConnectionSelection(conn, $event)"
                             @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
-                        <!-- 可拖移的箭頭圓圈 -->
                         <circle :cx="getArrowPosition(conn).x" :cy="getArrowPosition(conn).y" r="8" fill="white"
                             stroke="black" style="cursor: ns-resize;" @mousedown.stop="startDragArrow(conn, $event)">
                         </circle>
@@ -408,7 +412,7 @@
                     <!-- 可拖動的便利貼 -->
                     <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
                         @click.stop="nodeClick(node, $event)" @contextmenu.prevent="handleNodeContextMenu(node, $event)"
-                        style="cursor: move;">
+                        @mouseenter="hoveredNode = node" @mouseleave="hoveredNode = null" style="cursor: move;">
                         <!-- 便利貼背景 -->
                         <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth"
                             :height="noteHeight" :fill="node.color" stroke="#ccc" stroke-width="0" rx="1" ry="5"
@@ -664,6 +668,15 @@
                     // 線條優化
                     draggingArrow: null, // 正在拖移的箭頭（連線）
                     dragArrowStartY: 0,  // 拖移起點 Y 座標
+                    //臨時線條拖移
+                    hoveredNode: null,
+                    tempConnection: {
+                        active: false,
+                        path: '',
+                        startNode: null,
+                        startX: 0,
+                        startY: 0,
+                    },
 
                 }
             },
@@ -772,7 +785,108 @@
             // 方法函式
             methods: {
                 /* ================ 線條優化 ==================== */
+                // 臨時線條
+                startDragConnectionCircle(node, event) {
+                    this.tempConnection.active = true;
+                    this.tempConnection.startNode = node;
+                    this.tempConnection.startX = node.x - this.noteWidth / 2 + 10; // 圓圈位置
+                    this.tempConnection.startY = node.y - this.noteHeight / 2 + 35;
 
+                    document.addEventListener('mousemove', this.dragConnectionCircle);
+                    document.addEventListener('mouseup', this.endDragConnectionCircle, { once: true });
+                },
+                dragConnectionCircle(event) {
+                    if (!this.tempConnection.active) return;
+
+                    // 獲取當前滑鼠在 SVG 座標系統中的位置
+                    const tx = this.boardOffset.x;
+                    const ty = this.boardOffset.y;
+                    const s = this.scale;
+                    const svgX = (event.offsetX - tx) / s;
+                    const svgY = (event.offsetY - ty) / s;
+
+                    // 計算臨時連線路徑
+                    const startX = this.tempConnection.startX;
+                    const startY = this.tempConnection.startY;
+                    const endX = svgX;
+                    const endY = svgY;
+                    const mx = (startX + endX) / 2, my = (startY + endY) / 2;
+                    const dx = endX - startX, dy = endY - startY;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    let offset = 30;
+                    if (len === 0) offset = 0;
+                    const px = -dy / (len || 1), py = dx / (len || 1);
+                    const cx = mx + px * offset, cy = my + py * offset;
+
+                    this.tempConnection.path = `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`;
+                },
+                endDragConnectionCircle(event) {
+                    if (!this.tempConnection.active) return;
+
+                    // 獲取當前滑鼠在 SVG 座標系統中的位置
+                    const tx = this.boardOffset.x;
+                    const ty = this.boardOffset.y;
+                    const s = this.scale;
+                    const svgX = (event.offsetX - tx) / s;
+                    const svgY = (event.offsetY - ty) / s;
+
+                    // 檢查滑鼠是否在另一個便利貼上方
+                    const targetNode = this.nodes.find(node => {
+                        if (node === this.tempConnection.startNode) return false;
+                        const rect = {
+                            x: node.x - this.noteWidth / 2,
+                            y: node.y - this.noteHeight / 2,
+                            width: this.noteWidth,
+                            height: this.noteHeight,
+                        };
+                        return svgX >= rect.x && svgX <= rect.x + rect.width &&
+                            svgY >= rect.y && svgY <= rect.y + rect.height;
+                    });
+
+                    if (targetNode) {
+                        // 檢查是否會形成循環
+                        if (this.willCauseLoop(this.tempConnection.startNode.id, targetNode.id)) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '無法連線',
+                                text: '此連線會導致循環，請檢查您的連線結構！',
+                            });
+                        } else if (this.tempConnection.startNode.connectionsOut.includes(targetNode.id)) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '無法連線',
+                                text: '重複連線了唷，請檢查您的連線結構！',
+                            });
+                        } else {
+                            // 建立連線
+                            this.connections.push({
+                                from: this.tempConnection.startNode.id,
+                                to: targetNode.id,
+                                selected: false,
+                                userId: this.userId,
+                                boardId: this.boardId,
+                                color: 'red',
+                                type: '12,6',
+                                connectionsId: Math.random().toString(36).substring(2, 12),
+                            });
+                            this.tempConnection.startNode.connectionsOut.push(targetNode.id);
+                            targetNode.connectionsIn.push(this.tempConnection.startNode.id);
+                            this.calculateTotal();
+
+                            if (targetNode.type === 'chart' && targetNode.connectionsIn.length >= 2) {
+                                this.renderChart(targetNode);
+                            }
+                        }
+                    }
+
+                    // 清理臨時連線
+                    this.tempConnection.active = false;
+                    this.tempConnection.startNode = null;
+                    this.tempConnection.path = '';
+                    document.removeEventListener('mousemove', this.dragConnectionCircle);
+                },
+
+                //換位計算
                 getArrowPosition(conn) {
                     const toNode = this.getNodeById(conn.to);
                     if (!toNode) return { x: 0, y: 0 };
@@ -787,15 +901,20 @@
                     const fromNode = this.getNodeById(conn.from);
                     const endEdge = this.getEdgePoint(toNode, fromNode, toRect);
 
-                    // 如果連線有自定義 Y 偏移（用於拖移後的位置），則使用它
+                    // 計算 Y 座標範圍（20% 到 80%）
+                    const top = toRect.y;
+                    const bottom = toRect.y + toRect.height;
+                    const rangeHeight = toRect.height * 0.6; // 80% - 20% = 60%
+                    const minY = top + toRect.height * 0.2; // 20% 位置
+                    const maxY = top + toRect.height * 0.8; // 80% 位置
+
+                    // 考慮 yOffset 並限制範圍
                     const yOffset = conn.yOffset || 0;
                     let y = endEdge.y + yOffset;
 
-                    // 限制 Y 座標在便利貼邊緣內
-                    const top = toRect.y;
-                    const bottom = toRect.y + toRect.height;
-                    if (y < top) y = top;
-                    if (y > bottom) y = bottom;
+                    // 限制 Y 座標在 20% 到 80% 範圍內
+                    if (y < minY) y = minY;
+                    if (y > maxY) y = maxY;
 
                     return { x: endEdge.x, y };
                 },
