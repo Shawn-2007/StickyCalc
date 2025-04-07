@@ -388,11 +388,6 @@
                     <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
                         <path d="M 20 0 L 0 0 L 0 20" fill="none" stroke="#ddd" stroke-width="0.5"></path>
                     </pattern>
-                    <!-- 箭頭 marker -->
-                    <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="3" orient="auto"
-                        markerUnits="strokeWidth">
-                        <path d="M0,0 L0,6 L9,3 z" fill="red"></path>
-                    </marker>
                 </defs>
                 <!-- 使用格紋背景覆蓋整個 SVG -->
                 <rect width="100%" height="100%" fill="url(#grid)" @dblclick="addNodeAtContext"
@@ -400,18 +395,20 @@
                 <!-- 將畫板內容包在 <g> 中，可統一進行平移與縮放 -->
                 <g :transform="boardTransform">
                     <!-- 連線：以二次貝茲曲線呈現，虛線且末端帶箭頭；點擊/右鍵可選取與刪除 -->
-                    <path v-for="(conn, index) in connections" :key="'conn-' + index" :d="getConnectionPath(conn)"
-                        :stroke="conn.selected ? 'blue' : conn.color" fill="none" :stroke-dasharray="conn.type"
-                        stroke-width="3" marker-end="url(#arrow)" pointer-events="visibleStroke"
-                        @click.stop="toggleConnectionSelection(conn, $event)"
-                        @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
-
-
+                    <g v-for="(conn, index) in connections" :key="'conn-' + index">
+                        <path :d="getConnectionPath(conn)" :stroke="conn.selected ? 'blue' : conn.color" fill="none"
+                            :stroke-dasharray="conn.type" stroke-width="3" :marker-end="'url(#arrow-' + index + ')'"
+                            pointer-events="visibleStroke" @click.stop="toggleConnectionSelection(conn, $event)"
+                            @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
+                        <!-- 可拖移的箭頭圓圈 -->
+                        <circle :cx="getArrowPosition(conn).x" :cy="getArrowPosition(conn).y" r="8" fill="white"
+                            stroke="black" style="cursor: ns-resize;" @mousedown.stop="startDragArrow(conn, $event)">
+                        </circle>
+                    </g>
                     <!-- 可拖動的便利貼 -->
                     <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
                         @click.stop="nodeClick(node, $event)" @contextmenu.prevent="handleNodeContextMenu(node, $event)"
                         style="cursor: move;">
-
                         <!-- 便利貼背景 -->
                         <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth"
                             :height="noteHeight" :fill="node.color" stroke="#ccc" stroke-width="0" rx="1" ry="5"
@@ -419,7 +416,6 @@
                         </rect>
                         <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth" :height="26"
                             :fill="node.colorTop" rx="0" ry="0"></rect>
-
                         <!-- 頂欄 -->
                         <template v-if="node.connectionsIn.length == 2">
                             <foreignObject :x="node.x - 50" :y="node.y - noteHeight / 2 - 4" width="100" height="32">
@@ -468,16 +464,13 @@
                                     <span v-else class="note-text">{{ node.label }}</span>
                                 </div>
                             </foreignObject>
-
                             <!-- 右下角「...」按鈕 -->
                             <text v-if="node.connectionsIn.length < 2 && !node.editing" :x="node.x + noteWidth/2 - 35"
                                 :y="node.y + noteHeight/2 - 6" font-size="40" fill="grey" font-weight="bold"
                                 style="cursor: pointer;" @click.stop="showFullText(node)">
                                 ...
                             </text>
-
                         </template>
-
 
                         <!-- 圖表便利貼 -->
                         <template v-else-if="node.type === 'chart'">
@@ -668,6 +661,9 @@
                     resizeStartY: 0,
                     chartInstances: {}, // 儲存每個圖表實例
 
+                    // 線條優化
+                    draggingArrow: null, // 正在拖移的箭頭（連線）
+                    dragArrowStartY: 0,  // 拖移起點 Y 座標
 
                 }
             },
@@ -776,6 +772,66 @@
             // 方法函式
             methods: {
                 /* ================ 線條優化 ==================== */
+
+                getArrowPosition(conn) {
+                    const toNode = this.getNodeById(conn.to);
+                    if (!toNode) return { x: 0, y: 0 };
+
+                    // 獲取終點邊緣座標
+                    const toRect = {
+                        x: toNode.x - this.noteWidth / 2,
+                        y: toNode.y - this.noteHeight / 2,
+                        width: this.noteWidth,
+                        height: this.noteHeight,
+                    };
+                    const fromNode = this.getNodeById(conn.from);
+                    const endEdge = this.getEdgePoint(toNode, fromNode, toRect);
+
+                    // 如果連線有自定義 Y 偏移（用於拖移後的位置），則使用它
+                    const yOffset = conn.yOffset || 0;
+                    let y = endEdge.y + yOffset;
+
+                    // 限制 Y 座標在便利貼邊緣內
+                    const top = toRect.y;
+                    const bottom = toRect.y + toRect.height;
+                    if (y < top) y = top;
+                    if (y > bottom) y = bottom;
+
+                    return { x: endEdge.x, y };
+                },
+                startDragArrow(conn, event) {
+                    this.draggingArrow = conn;
+                    this.dragArrowStartY = event.offsetY;
+                    document.addEventListener('mousemove', this.dragArrow);
+                    document.addEventListener('mouseup', this.endDragArrow, { once: true });
+                },
+                dragArrow(event) {
+                    if (!this.draggingArrow) return;
+
+                    const dy = (event.offsetY - this.dragArrowStartY) / this.scale; // 考慮縮放
+                    this.draggingArrow.yOffset = (this.draggingArrow.yOffset || 0) + dy;
+                    this.dragArrowStartY = event.offsetY;
+                },
+                endDragArrow() {
+                    if (this.draggingArrow) {
+                        const toNode = this.getNodeById(this.draggingArrow.to);
+                        if (toNode) {
+                            // 根據所有連入線條的 Y 座標重新排序 connectionsIn
+                            const incomingConnections = this.connections.filter(c => c.to === toNode.id);
+                            incomingConnections.sort((a, b) => {
+                                const posA = this.getArrowPosition(a).y;
+                                const posB = this.getArrowPosition(b).y;
+                                return posA - posB;
+                            });
+
+                            // 更新 connectionsIn 順序
+                            toNode.connectionsIn = incomingConnections.map(c => c.from);
+                            this.calculateTotal(); // 重新計算總額
+                        }
+                    }
+                    this.draggingArrow = null;
+                    document.removeEventListener('mousemove', this.dragArrow);
+                },
 
                 changeLineColor(conn, type) {
                     conn.color = type;
@@ -1754,8 +1810,6 @@
                 // 開始拖曳便利貼：如果該便利貼尚未選取，先清除其他選取；之後將所有已選取的便利貼作為拖曳群組
                 startDrag(node, event) {
                     const vm = this;
-                    // if (event.button !== 0) return; // 只處理左鍵
-                    // if (this.connectionStartNode) return; // 如果正在連線，忽略拖曳
                     // 確保初始值不會變成NAN
                     node.initialX = node.x || 0;
                     node.initialY = node.y || 0;
@@ -2137,7 +2191,15 @@
                 },
                 // 點擊曲線時切換選取狀態（顏色從紅變藍）
                 toggleConnectionSelection(conn, event) {
-                    conn.selected = !conn.selected;
+                    if (event.button === 0) { // 左鍵點擊
+                        conn.selected = !conn.selected;
+                        // 取消其他連線的選取（如果需要單選）
+                        if (!event.shiftKey) {
+                            this.connections.forEach(c => {
+                                if (c !== conn) c.selected = false;
+                            });
+                        }
+                    }
                 },
                 // ============== 連線相關 ===============
 
@@ -2177,27 +2239,17 @@
                     const toNode = this.getNodeById(conn.to);
                     if (!fromNode || !toNode) return '';
 
-                    // 計算便利貼的邊界
+                    // 計算起點邊緣座標
                     const fromRect = {
                         x: fromNode.x - this.noteWidth / 2,
                         y: fromNode.y - this.noteHeight / 2,
                         width: this.noteWidth,
                         height: this.noteHeight,
                     };
-                    const toRect = {
-                        x: toNode.x - this.noteWidth / 2,
-                        y: toNode.y - this.noteHeight / 2,
-                        width: this.noteWidth,
-                        height: this.noteHeight,
-                    };
-
-                    // 計算中心點（用於確定方向）
-                    const x1 = fromNode.x, y1 = fromNode.y;
-                    const x2 = toNode.x, y2 = toNode.y;
-
-                    // 計算起點和終點的邊緣交點
                     const startEdge = this.getEdgePoint(fromNode, toNode, fromRect);
-                    const endEdge = this.getEdgePoint(toNode, fromNode, toRect);
+
+                    // 計算終點邊緣座標，並考慮 yOffset
+                    const endEdge = this.getArrowPosition(conn);
 
                     // 計算貝茲曲線控制點
                     const dx = endEdge.x - startEdge.x, dy = endEdge.y - startEdge.y;
