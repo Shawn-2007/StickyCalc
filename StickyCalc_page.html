@@ -353,7 +353,7 @@
             </div>
             <!-- 垂直工具列（新增） -->
             <div class="toolbar toolbar-vertical" style="height: 600px;">
-                <!-- 測試用的按鈕 -->
+                <!-- 新增便利貼 -->
                 <button class="toolbar-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path fill-rule="evenodd" clip-rule="evenodd"
@@ -377,14 +377,17 @@
                             fill="#A7A7A7" />
                     </svg>
                 </button>
-                <button class="toolbar-button">
+                <!-- 刪除便利貼 -->
+                <button class="toolbar-button" @click="deleteBtn()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M0 4C0 1.79086 1.79086 0 4 0H26C28.2091 0 30 1.79086 30 4V10V11.5V12V19H28V12H26V14H24V12H22V18H20V14.5H16V16V17H15H14V25H12V17H10V22H8V17H6.5V19.5V20.5H5.5H2V23H0V20.5V20V18.5V4ZM28 4V10H20H19V11V12.5H15H14V13.5V15H5.5H4.5V16V18.5H2V4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4ZM5 5H25V3H5V5ZM0 24V26H2V24H0ZM16 18V20H18V18H16ZM28 21.5V25.5H30V21.5H28ZM24 20H26V16H24V20ZM20 24H22V20H20V24ZM4 22V28H6V22H4ZM16 22V28H18V22H16ZM24 22V27H26V22H24ZM8 24V27H10V24H8Z"
                             fill="#505050" />
                     </svg>
                 </button>
-                <button class="toolbar-button" style="margin: 0px;">
+                <!-- general換色粉紅 -->
+                <button class="toolbar-button" style="margin: 0px;"
+                    @click="changeNodeColor('general', '#ffc0cb', '#FCAFAA')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path
                             d="M1 4C1 2.34315 2.34315 1 4 1H26C27.6569 1 29 2.34315 29 4V24C29 25.6569 27.6569 27 26 27H4C2.34315 27 1 25.6569 1 24V4Z"
@@ -395,7 +398,9 @@
                         <path d="M5 4H25" stroke="#CFCFCF" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button" style="margin: 0px;">
+                <!-- general換色粉綠 -->
+                <button class="toolbar-button" style="margin: 0px;"
+                    @click="changeNodeColor('general', '#D3ED7F', '#C7DF7A')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path
                             d="M1 4C1 2.34315 2.34315 1 4 1H26C27.6569 1 29 2.34315 29 4V24C29 25.6569 27.6569 27 26 27H4C2.34315 27 1 25.6569 1 24V4Z"
@@ -406,7 +411,9 @@
                         <path d="M5 4H25" stroke="#CFCFCF" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button" style="margin: 0px;">
+                <!-- general換色粉藍 -->
+                <button class="toolbar-button" style="margin: 0px;"
+                    @click="changeNodeColor('general', '#CEEBFD', '#ADD8E6')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path
                             d="M1 4C1 2.34315 2.34315 1 4 1H26C27.6569 1 29 2.34315 29 4V24C29 25.6569 27.6569 27 26 27H4C2.34315 27 1 25.6569 1 24V4Z"
@@ -417,7 +424,9 @@
                         <path d="M5 4H25" stroke="#CFCFCF" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button" style="margin: 0px;">
+                <!-- general換色粉黃 -->
+                <button class="toolbar-button" style="margin: 0px;"
+                    @click="changeNodeColor('general', '#FFF8CA', '#FFF4B2')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path
                             d="M1 4C1 2.34315 2.34315 1 4 1H26C27.6569 1 29 2.34315 29 4V24C29 25.6569 27.6569 27 26 27H4C2.34315 27 1 25.6569 1 24V4Z"
@@ -428,7 +437,7 @@
                         <path d="M5 4H25" stroke="#CFCFCF" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button">
+                <button class="toolbar-button" @click="changeLineType('solid')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
                         <path
                             d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
@@ -437,7 +446,7 @@
                         <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button">
+                <button class="toolbar-button" @click="changeLineType('dashed')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
                         <path
                             d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
@@ -446,7 +455,7 @@
                         <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button">
+                <button class="toolbar-button" @click="changeLineType('dotted')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
                         <path
                             d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
@@ -455,28 +464,35 @@
                         <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button" style="margin: 0px;">
+                <!-- 線條顏色 粉紅 -->
+                <button class="toolbar-button" style="margin: 0px;" @click="changeLineColor('#FCAFAA')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
                             stroke="#FCAFAA" stroke-width="2" stroke-linecap="round" />
                     </svg>
                 </button>
-                <button class="toolbar-button" style="margin: 0px;">
+                <!-- 線條顏色 粉綠 -->
+
+                <button class="toolbar-button" style="margin: 0px;" @click="changeLineColor('#C7DF7A')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
                             stroke="#C7DF7A" stroke-width="2" stroke-linecap="round" />
                     </svg>
                 </button>
-                <button class="toolbar-button" style="margin: 0px;">
+                <!-- 線條顏色 粉藍 -->
+
+                <button class="toolbar-button" style="margin: 0px;" @click="changeLineColor('#ADD8E6')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
                             stroke="#ADD8E6" stroke-width="2" stroke-linecap="round" />
                     </svg>
                 </button>
-                <button class="toolbar-button" style="margin: 0px;">
+                <!-- 線條顏色 橘黃 -->
+
+                <button class="toolbar-button" style="margin: 0px;" @click="changeLineColor('#FFF4B2')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
@@ -617,40 +633,39 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <div class="">
-                                            <button type="button" class="btn btn-sm mt-1"
-                                                style="height: 30px; width: 30px;">
+                                            <button type="button" class="btn btn-sm "
+                                                style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" transform="scale(2)">
+                                                    viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
                                                     <circle cx="12" cy="12" r="11" fill="#ffc0cb" stroke="#CFCFCF"
                                                         stroke-width="2" />
                                                 </svg>
                                             </button>
-                                            <button type="button" class="btn btn-sm mt-1"
-                                                style="height: 30px; width: 30px;">
+                                            <button type="button" class="btn btn-sm "
+                                                style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" transform="scale(2)">
+                                                    viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
                                                     <circle cx="12" cy="12" r="11" fill="#D3ED7F" stroke="#CFCFCF"
                                                         stroke-width="2" />
                                                 </svg>
 
                                             </button>
-                                            <button type="button" class="btn btn-sm mt-1"
-                                                style="height: 30px; width: 30px;">
+                                            <button type="button" class="btn btn-sm"
+                                                style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" transform="scale(2)">
+                                                    viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
                                                     <circle cx="12" cy="12" r="11" fill="#CEEBFD" stroke="#CFCFCF"
                                                         stroke-width="2" />
                                                 </svg>
                                             </button>
-                                            <button type="button" class="btn btn-sm mt-1"
-                                                style="height: 30px; width: 30px;">
+                                            <button type="button" class="btn btn-sm "
+                                                style="height: 30px; width: 30px; margin-top: -50;">
                                                 <!-- transform="scale(1.8)" svg縮放大小 -->
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" transform="scale(2)">
+                                                    viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
                                                     <circle cx="12" cy="12" r="11" fill="#fdfdfd" stroke="#CFCFCF"
                                                         stroke-width="2" />
                                                 </svg>
-
                                             </button>
                                         </div>
                                     </div>
@@ -754,20 +769,13 @@
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
 
     <!-- 引入 Moment.js -->
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
     <!-- 引入 ApexCharts -->
     <script src="https://unpkg.com/apexcharts@latest/dist/apexcharts.min.js"></script>
-    <!-- 載入 Vue 3 全域版 -->
-    <!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
-    <!-- <script src="https://unpkg.com/vue-chartjs@latest/dist/index.js"></script> -->
-    <!-- 引入 Chart.js -->
-    <!-- <script src="https://unpkg.com/chart.js@4/dist/chart.umd.js"></script> -->
-    <!-- 引入 vue-chartjs -->
-    <!-- <script src="https://unpkg.com/vue-chartjs@5/dist/index.umd.js"></script> -->
+
     <script src="js/vue.global.js"></script>
     <script>
         var nodeChart;
@@ -1241,14 +1249,24 @@
                     document.removeEventListener('mousemove', this.dragArrow);
                 },
 
-                changeLineColor(conn, type) {
-                    conn.color = type;
-                    this.contextMenu.visible = false;
+                changeLineColor(color) {
+                    this.connections.forEach(conn => {
+                        if (conn.selected) {
+
+                            conn.color = color;
+                        }
+
+                    })
                 },
 
-                changeLineType(conn, type) {
-                    conn.type = this.getDashArray(type);
-                    this.contextMenu.visible = false;
+                changeLineType(type) {
+
+                    this.connections.forEach(conn => {
+                        if (conn.selected) {
+                            conn.type = this.getDashArray(type);
+
+                        }
+                    })
                 },
 
                 getDashArray(type) {
@@ -2634,10 +2652,19 @@
 
 
                 // 右鍵選單中更換便利貼顏色，將 node.color 改為指定顏色
-                changeNodeColor(node, color, colorTop) {
-                    node.color = color;
-                    node.colorTop = colorTop;
-                    this.contextMenu.visible = false;
+                changeNodeColor(nodeType, color, colorTop) {
+                    this.nodes.forEach(n => {
+                        if (n.selected) {
+                            if (n.type == "general" && n.type == nodeType) {
+                                // 換色
+                                n.color = color;
+                                n.colorTop = colorTop;
+                            } else {
+
+                            }
+                        }
+                    })
+
                 },
                 // 預留:分享功能
                 sendBoard() {
