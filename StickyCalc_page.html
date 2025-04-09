@@ -614,19 +614,64 @@
                             <!-- 圖表類型選擇（置於深色區） -->
                             <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 2"
                                 :width="node.chartWidth - 20" height="22">
-                                <select v-model="node.chartType" @change="renderChart(node)"
-                                    style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
-                                    <option value="bar">柱狀圖</option>
-                                    <option value="line">折線圖</option>
-                                    <option value="area">面積圖</option>
-                                    <option value="radar">雷達圖</option>
-                                    <option value="pie">圓餅圖</option>
-                                    <option value="polarArea">極座標圓餅圖</option>
-                                    <option value="donut">甜甜圈</option>
-                                    <option value="radialBar">跑道圖</option>
-                                    <!-- <option value="rangeBar">時間圖</option> -->
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="">
+                                            <button type="button" class="btn btn-sm mt-1"
+                                                style="height: 30px; width: 30px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" transform="scale(2)">
+                                                    <circle cx="12" cy="12" r="11" fill="#ffc0cb" stroke="#CFCFCF"
+                                                        stroke-width="2" />
+                                                </svg>
+                                            </button>
+                                            <button type="button" class="btn btn-sm mt-1"
+                                                style="height: 30px; width: 30px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" transform="scale(2)">
+                                                    <circle cx="12" cy="12" r="11" fill="#D3ED7F" stroke="#CFCFCF"
+                                                        stroke-width="2" />
+                                                </svg>
 
-                                </select>
+                                            </button>
+                                            <button type="button" class="btn btn-sm mt-1"
+                                                style="height: 30px; width: 30px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" transform="scale(2)">
+                                                    <circle cx="12" cy="12" r="11" fill="#CEEBFD" stroke="#CFCFCF"
+                                                        stroke-width="2" />
+                                                </svg>
+                                            </button>
+                                            <button type="button" class="btn btn-sm mt-1"
+                                                style="height: 30px; width: 30px;">
+                                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" transform="scale(2)">
+                                                    <circle cx="12" cy="12" r="11" fill="#fdfdfd" stroke="#CFCFCF"
+                                                        stroke-width="2" />
+                                                </svg>
+
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6" style="margin-top: -10px;">
+                                        <select v-model="node.chartType" @change="renderChart(node)"
+                                            style="width: 100%; height: 100%; font-size: 12px; border: none; outline: none; background: transparent; text-align: center;">
+                                            <option value="bar">柱狀圖</option>
+                                            <option value="line">折線圖</option>
+                                            <option value="area">面積圖</option>
+                                            <option value="radar">雷達圖</option>
+                                            <option value="pie">圓餅圖</option>
+                                            <option value="polarArea">極座標圓餅圖</option>
+                                            <option value="donut">甜甜圈</option>
+                                            <option value="radialBar">跑道圖</option>
+                                            <!-- <option value="rangeBar">時間圖</option> -->
+
+                                        </select>
+
+                                    </div>
+                                </div>
                             </foreignObject>
                             <!-- 圖表容器 -->
                             <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 30"
@@ -660,7 +705,7 @@
                     </g>
                     <!-- 框選的選取框 -->
                     <rect v-if="selectionBox.active" :x="selectionBox.x" :y="selectionBox.y" :width="selectionBox.width"
-                        :height="selectionBox.height" stroke="blue" stroke-dasharray="4,4" fill="none" />
+                        :height="selectionBox.height" stroke="#486BDE" stroke-dasharray="4,4" fill="none" />
                 </g>
             </svg>
 
