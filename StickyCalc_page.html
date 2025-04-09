@@ -351,34 +351,35 @@
 
                 </div>
             </div>
-            <!-- 垂直工具列（新增） -->
-            <div class="toolbar toolbar-vertical" style="height: 600px;">
+            <!-- 垂直工具列（新增） 全上462px 一般82px 貼246px 線348px -->
+            <div class="toolbar toolbar-vertical" :style="{height: computedToolbarHeight + 'px' }">
                 <!-- 新增便利貼 -->
-                <button class="toolbar-button">
+                <button class="toolbar-button" @click="addNodeAtContext">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M4 0C1.79086 0 0 1.79086 0 4V24C0 26.2091 1.79086 28 4 28H26C28.2091 28 30 26.2091 30 24V4C30 1.79086 28.2091 0 26 0H4ZM2 4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4V24C28 25.1046 27.1046 26 26 26H4C2.89543 26 2 25.1046 2 24V4ZM5 5H25V3H5V5ZM14 17H8V15H14V9H16V15H22V17H16V23H14V17Z"
                             fill="#505050" />
                     </svg>
                 </button>
-                <button class="toolbar-button">
+                <button class="toolbar-button" @click="addChartNode">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="28" viewBox="0 0 31 28" fill="none">
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M6 3C4.34315 3 3 4.34315 3 6V15C3 16.3062 3.83481 17.4175 5 17.8293V15V7V6C5 5.44772 5.44772 5 6 5H7H18H20.8293C20.4175 3.83481 19.3062 3 18 3H6Z"
-                            fill="#A7A7A7" />
+                            fill="#505050" />
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M9 6C7.34315 6 6 7.34315 6 9V19C6 20.3062 6.83481 21.4175 8 21.8293V19V10V9C8 8.44772 8.44772 8 9 8H10H22H24.8293C24.4175 6.83481 23.3062 6 22 6H9Z"
-                            fill="#A7A7A7" />
+                            fill="#505050" />
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M9 12C9 10.3431 10.3431 9 12 9H25C26.6569 9 28 10.3431 28 12V22C28 23.6569 26.6569 25 25 25H12C10.3431 25 9 23.6569 9 22V12ZM12 11C11.4477 11 11 11.4477 11 12V22C11 22.5523 11.4477 23 12 23H25C25.5523 23 26 22.5523 26 22V12C26 11.4477 25.5523 11 25 11H12Z"
-                            fill="#A7A7A7" />
+                            fill="#505050" />
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M10 0H2C0.895447 0 0 0.895432 0 2V10H2V2H10V0ZM29 10V2H21V0H29C30.1046 0 31 0.89543 31 2V10H29ZM21 26H29V18H31V26C31 27.1046 30.1046 28 29 28H21V26ZM2 18V26H10V28H2C0.895447 28 0 27.1046 0 26V18H2Z"
-                            fill="#A7A7A7" />
+                            fill="#505050" />
                     </svg>
                 </button>
                 <!-- 刪除便利貼 -->
-                <button class="toolbar-button" @click="deleteBtn()">
+                <button v-if="selectedNode || selectedConn || selectedChert" class="toolbar-button"
+                    @click="deleteBtn()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M0 4C0 1.79086 1.79086 0 4 0H26C28.2091 0 30 1.79086 30 4V10V11.5V12V19H28V12H26V14H24V12H22V18H20V14.5H16V16V17H15H14V25H12V17H10V22H8V17H6.5V19.5V20.5H5.5H2V23H0V20.5V20V18.5V4ZM28 4V10H20H19V11V12.5H15H14V13.5V15H5.5H4.5V16V18.5H2V4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4ZM5 5H25V3H5V5ZM0 24V26H2V24H0ZM16 18V20H18V18H16ZM28 21.5V25.5H30V21.5H28ZM24 20H26V16H24V20ZM20 24H22V20H20V24ZM4 22V28H6V22H4ZM16 22V28H18V22H16ZM24 22V27H26V22H24ZM8 24V27H10V24H8Z"
@@ -386,7 +387,7 @@
                     </svg>
                 </button>
                 <!-- general換色粉紅 -->
-                <button class="toolbar-button" style="margin: 0px;"
+                <button v-if="selectedNode" class="toolbar-button" style="margin: 0px;"
                     @click="changeNodeColor('general', '#ffc0cb', '#FCAFAA')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path
@@ -399,7 +400,7 @@
                     </svg>
                 </button>
                 <!-- general換色粉綠 -->
-                <button class="toolbar-button" style="margin: 0px;"
+                <button v-if="selectedNode" class="toolbar-button" style="margin: 0px;"
                     @click="changeNodeColor('general', '#D3ED7F', '#C7DF7A')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path
@@ -412,7 +413,7 @@
                     </svg>
                 </button>
                 <!-- general換色粉藍 -->
-                <button class="toolbar-button" style="margin: 0px;"
+                <button v-if="selectedNode" class="toolbar-button" style="margin: 0px;"
                     @click="changeNodeColor('general', '#CEEBFD', '#ADD8E6')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path
@@ -425,7 +426,7 @@
                     </svg>
                 </button>
                 <!-- general換色粉黃 -->
-                <button class="toolbar-button" style="margin: 0px;"
+                <button v-if="selectedNode" class="toolbar-button" style="margin: 0px;"
                     @click="changeNodeColor('general', '#FFF8CA', '#FFF4B2')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
                         <path
@@ -437,7 +438,7 @@
                         <path d="M5 4H25" stroke="#CFCFCF" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button" @click="changeLineType('solid')">
+                <button v-if="selectedConn" class="toolbar-button" @click="changeLineType('solid')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
                         <path
                             d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
@@ -446,7 +447,7 @@
                         <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button" @click="changeLineType('dashed')">
+                <button v-if="selectedConn" class="toolbar-button" @click="changeLineType('dashed')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
                         <path
                             d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
@@ -455,7 +456,7 @@
                         <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
                     </svg>
                 </button>
-                <button class="toolbar-button" @click="changeLineType('dotted')">
+                <button v-if="selectedConn" class="toolbar-button" @click="changeLineType('dotted')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
                         <path
                             d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
@@ -465,7 +466,8 @@
                     </svg>
                 </button>
                 <!-- 線條顏色 粉紅 -->
-                <button class="toolbar-button" style="margin: 0px;" @click="changeLineColor('#FCAFAA')">
+                <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
+                    @click="changeLineColor('#FCAFAA')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
@@ -474,7 +476,8 @@
                 </button>
                 <!-- 線條顏色 粉綠 -->
 
-                <button class="toolbar-button" style="margin: 0px;" @click="changeLineColor('#C7DF7A')">
+                <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
+                    @click="changeLineColor('#C7DF7A')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
@@ -483,7 +486,8 @@
                 </button>
                 <!-- 線條顏色 粉藍 -->
 
-                <button class="toolbar-button" style="margin: 0px;" @click="changeLineColor('#ADD8E6')">
+                <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
+                    @click="changeLineColor('#ADD8E6')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
@@ -492,7 +496,8 @@
                 </button>
                 <!-- 線條顏色 橘黃 -->
 
-                <button class="toolbar-button" style="margin: 0px;" @click="changeLineColor('#FFF4B2')">
+                <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
+                    @click="changeLineColor('#FFF4B2')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
@@ -568,8 +573,8 @@
                         </template>
 
                         <template v-else>
-                            <text :x="node.x + noteWidth / 2 - 5" :y="node.y - noteHeight / 2 + 15" text-anchor="end"
-                                font-size="12" fill="grey" font-weight="bold">
+                            <text :x="node.x + noteWidth / 2 - 5" :y="node.y - noteHeight / 2 + 20" text-anchor="end"
+                                font-size="18" fill="grey" font-weight="bold">
                                 {{ node.total }}
                             </text>
                         </template>
@@ -599,23 +604,35 @@
                                 </div>
                             </foreignObject>
                             <!-- 右下角「...」按鈕 -->
-                            <text v-if="node.connectionsIn.length < 2 && !node.editing" :x="node.x + noteWidth/2 - 35"
+                            <!-- <text v-if="node.connectionsIn.length < 2 && !node.editing" :x="node.x + noteWidth/2 - 35"
                                 :y="node.y + noteHeight/2 - 6" font-size="40" fill="grey" font-weight="bold"
                                 style="cursor: pointer;" @click.stop="showFullText(node)">
                                 ...
-                            </text>
+                            </text> -->
+                            <svg v-if="node.connectionsIn.length < 2 && !node.editing" @click.stop="showFullText(node)"
+                                :x="node.x + noteWidth/2 - 34" :y="node.y + noteHeight/2 - 20"
+                                xmlns="http://www.w3.org/2000/svg" width="30" height="18" viewBox="0 0 30 18"
+                                fill="none">
+                                <rect width="30" height="18" rx="5" fill="#D9D9D9" fill-opacity="0" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M2 9C2 7.89543 2.89543 7 4 7H6C7.10457 7 8 7.89543 8 9V10C8 11.1046 7.10457 12 6 12H4C2.89543 12 2 11.1046 2 10V9ZM12 9C12 7.89543 12.8954 7 14 7H16C17.1046 7 18 7.89543 18 9V10C18 11.1046 17.1046 12 16 12H14C12.8954 12 12 11.1046 12 10V9ZM24 7C22.8954 7 22 7.89543 22 9V10C22 11.1046 22.8954 12 24 12H26C27.1046 12 28 11.1046 28 10V9C28 7.89543 27.1046 7 26 7H24Z"
+                                    fill="grey" />
+                            </svg>
+
+                            <!-- 選取邊框 -->
+                            <rect v-if="node.selected && node.type != 'chart'" :x="node.x - noteWidth/2"
+                                :y="node.y - noteHeight/2" :width="noteWidth" :height="noteHeight" fill="none"
+                                stroke="blue" stroke-width="2" rx="1" ry="5" />
+
+                            <!-- 連線圓圈 -->
+                            <circle v-if="hoveredNode === node || node.selected" :cx="node.x - noteWidth/2 + 130"
+                                :cy="node.y - noteHeight/2 + 62" r="8" fill="white" stroke="black"
+                                style="cursor: pointer;" @mousedown.stop="startDragConnectionCircle(node, $event)"
+                                @mouseover="console.log('Circle visible for node:', node.id)"></circle>
                         </template>
 
-                        <!-- 右上角隱藏圓圈（總額下方） -->
-                        <circle v-if="hoveredNode === node || node.selected" :cx="node.x - noteWidth/2 + 130"
-                            :cy="node.y - noteHeight/2 + 62" r="8" fill="white" stroke="black" style="cursor: pointer;"
-                            @mousedown.stop="startDragConnectionCircle(node, $event)"
-                            @mouseover="console.log('Circle visible for node:', node.id)"></circle>
 
-                        <!-- 選取邊框 -->
-                        <rect v-if="node.selected && node.type != 'chart'" :x="node.x - noteWidth/2"
-                            :y="node.y - noteHeight/2" :width="noteWidth" :height="noteHeight" fill="none" stroke="blue"
-                            stroke-width="2" rx="1" ry="5" />
+
 
                         <!-- 圖表便利貼 -->
                         <template v-else-if="node.type === 'chart'">
@@ -634,6 +651,7 @@
                                     <div class="col-6">
                                         <div class="">
                                             <button type="button" class="btn btn-sm "
+                                                @click="changeNodeColor('chart', '#FFE6EB', '#FCAFAA')"
                                                 style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                     viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
@@ -642,6 +660,7 @@
                                                 </svg>
                                             </button>
                                             <button type="button" class="btn btn-sm "
+                                                @click="changeNodeColor('chart', '#F7FFDB', '#C7DF7A')"
                                                 style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                     viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
@@ -651,6 +670,7 @@
 
                                             </button>
                                             <button type="button" class="btn btn-sm"
+                                                @click="changeNodeColor('chart', '#E5F5FF', '#ADD8E6')"
                                                 style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                     viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
@@ -659,6 +679,7 @@
                                                 </svg>
                                             </button>
                                             <button type="button" class="btn btn-sm "
+                                                @click="changeNodeColor('chart', '#fdfdfd', '#dddddd')"
                                                 style="height: 30px; width: 30px; margin-top: -50;">
                                                 <!-- transform="scale(1.8)" svg縮放大小 -->
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -682,9 +703,7 @@
                                             <option value="donut">甜甜圈</option>
                                             <option value="radialBar">跑道圖</option>
                                             <!-- <option value="rangeBar">時間圖</option> -->
-
                                         </select>
-
                                     </div>
                                 </div>
                             </foreignObject>
@@ -696,15 +715,11 @@
                             <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
                                 height="15" fill="grey" stroke="black" stroke-width="1" style="cursor: se-resize;"
                                 @mousedown.stop="startResize(node, $event)" />
+                            <!-- 選取邊框 -->
                             <rect v-if="node.selected" :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
                                 :width="node.chartWidth" :height="node.chartHeight" fill="none" stroke="blue"
                                 stroke-width="2" rx="5" ry="5" />
                         </template>
-
-                        <!-- 若便利貼被選取，畫一層藍色邊框提示 -->
-                        <rect v-if=" node.selected && node.type != 'chart'" :x="node.x - noteWidth/2"
-                            :y="node.y - noteHeight/2" :width="noteWidth" :height="noteHeight" fill="none" stroke="blue"
-                            stroke-width="2" rx="1" ry="5" />
                     </g>
 
                     <!-- 畫板邊緣浮動箭頭（若有便條紙超出可見範圍則顯示） -->
@@ -720,11 +735,11 @@
                     </g>
                     <!-- 框選的選取框 -->
                     <rect v-if="selectionBox.active" :x="selectionBox.x" :y="selectionBox.y" :width="selectionBox.width"
-                        :height="selectionBox.height" stroke="#486BDE" stroke-dasharray="4,4" fill="none" />
+                        :height="selectionBox.height" stroke="#4D74F4" stroke-dasharray="4,4" fill="none" />
                 </g>
             </svg>
 
-
+            <!-- 考慮留存 -->
             <!-- 右鍵選單 -->
             <div v-if="contextMenu.visible" class="context-menu"
                 :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
@@ -856,6 +871,7 @@
                         startY: 0,
                     },
 
+
                 }
             },
             // 生命週期 : 起始
@@ -932,6 +948,29 @@
             },
             // 計算、運算
             computed: {
+                selectedNode() {
+                    return this.nodes.some(n => n.selected && n.type !== "chart")
+                },
+                selectedChert() {
+                    return this.nodes.some(n => n.selected && n.type === "chart")
+                },
+                selectedConn() {
+                    // some() 有任一個 node.selected 為 true 就設為 true，否則 false
+                    return this.connections.some(c => c.selected)
+                },
+                computedToolbarHeight() {
+                    if (this.selectedNode && this.selectedConn) {
+                        return 462
+                    } else if (this.selectedConn) {
+                        return 348
+                    } else if (this.selectedNode) {
+                        return 246
+                    } else if (this.selectedChert) {
+                        return 122
+                    } else {
+                        return 82
+                    }
+                },
                 /* 畫板 transform */
                 boardTransform() {
                     return `translate(${this.boardOffset.x}, ${this.boardOffset.y}) scale(${this.scale})`;
@@ -1370,7 +1409,7 @@
                                     horizontal: true,
                                 }
                             },
-                            colors: ['#ff6384'],
+                            colors: ['#ff6384'], // Bar顏色
                             dataLabels: {
                                 enabled: true,
                                 style: {
@@ -2156,6 +2195,7 @@
                 },
                 // 框選結束：檢查哪些便利貼的中心落在選取框內，並標記為 selected
                 finishSelection() {
+                    const vm = this;
                     const box = this.selectionBox;
                     this.nodes.forEach(n => {
                         if (n.x >= box.x && n.x <= box.x + box.width &&
@@ -2659,8 +2699,9 @@
                                 // 換色
                                 n.color = color;
                                 n.colorTop = colorTop;
-                            } else {
-
+                            } else if (n.type == "chart" && n.type == nodeType) {
+                                n.color = color;
+                                n.colorTop = colorTop;
                             }
                         }
                     })
