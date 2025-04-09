@@ -1,6 +1,6 @@
 # 🗂️ 專案技術總覽
 
-| 🔧 前端技術 | 🖥️ 後端技術 | 💾 資料庫 | 🛠️ 其他工具 |
+| 🔧 前端 | 🖥️ 後端 | 💾 資料庫 | 🛠️ 其他工具 |
 |-------------|---------------|------------|----------------|
 | HTML5       | PHP           | Linux (Ubuntu) | Figma         |
 | JavaScript  | SQL           | MySQL         | Git / GitHub   |
@@ -31,6 +31,18 @@
 - 🔗 節點連線計算功能  
 - 📊 圖表展示 (ApexCharts)  
 - 💰 記帳與資金管理  
+
+
+---
+
+# 📷 專案畫面展示
+
+
+
+![圖片預留](https://your-image-url.com/image.png)
+<!-- 若使用本地圖片可改為 ./images/filename.png，需與 Markdown 同目錄 -->
+
+
 
 ---
 
