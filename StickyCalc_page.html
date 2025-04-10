@@ -530,8 +530,7 @@
                     <g v-for="(conn, index) in connections" :key="'conn-' + index">
                         <path :d="getConnectionPath(conn)" :stroke="conn.selected ? 'blue' : conn.color" fill="none"
                             :stroke-dasharray="conn.type" stroke-width="3" pointer-events="visibleStroke"
-                            @click.stop="toggleConnectionSelection(conn, $event)"
-                            @contextmenu.prevent="handleCurveContextMenu(conn, $event)"></path>
+                            @click.stop="toggleConnectionSelection(conn, $event)"></path>
                         <!-- 終端圓圈 -->
                         <g v-if="getAdjustedArrowPosition(conn).x !== 0 && getAdjustedArrowPosition(conn).y !== 0">
                             <circle :cx="getAdjustedArrowPosition(conn).x" :cy="getAdjustedArrowPosition(conn).y" r="8"
@@ -548,8 +547,8 @@
                     </g>
                     <!-- 可拖動的便利貼 -->
                     <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
-                        @click.stop="nodeClick(node, $event)" @contextmenu.prevent="handleNodeContextMenu(node, $event)"
-                        @mouseenter="hoveredNode = node" @mouseleave="hoveredNode = null" style="cursor: move;">
+                        @click.stop="nodeClick(node, $event)" @mouseenter="hoveredNode = node"
+                        @mouseleave="hoveredNode = null" style="cursor: move;">
                         <!-- 便利貼背景 -->
                         <rect :x="node.x - noteWidth/2" :y="node.y - noteHeight/2" :width="noteWidth"
                             :height="noteHeight" :fill="node.color" stroke="#ccc" stroke-width="0" rx="1" ry="5"
@@ -772,18 +771,12 @@
                                 fill="#505050" />
                         </svg>
                     </button>
-                    <button @click="addNodeAtContext">新增 便利貼</button>
-                    <button @click="addChartNode">新增 圖表便利貼</button>
-                </template>
-                <template v-else-if="contextMenu.type === 'node'">
-                    <button v-if="contextMenu.node.type != 'chart'"
-                        @click="startConnection(contextMenu.node)">開始連線</button>
-                    <button @click="deleteNode(contextMenu.node)">刪除此便利貼</button>
-                    <div>
+                    <div v-if="selectedNode">
+                        <button @click="startConnection(contextMenu.node)">開始連線</button>
+                        <button @click="deleteBtn">刪除此便利貼</button>
                         <div class="">
-                            <!-- 按鈕 粉紅 -->
                             <button type="button" class="btn btn-sm "
-                                @click="changeNodeColor(contextMenu.node.type, '#FFE6EB', '#FCAFAA')"
+                                @click="changeNodeColor('general', '#FFE6EB', '#FCAFAA')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" transform="scale(1)">
@@ -792,7 +785,7 @@
                             </button>
                             <!-- 按鈕 粉綠 -->
                             <button type="button" class="btn btn-sm "
-                                @click="changeNodeColor(contextMenu.node.type, '#F7FFDB', '#C7DF7A')"
+                                @click="changeNodeColor('general', '#F7FFDB', '#C7DF7A')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" transform="scale(1)">
@@ -801,7 +794,7 @@
                             </button>
                             <!-- 按鈕 粉藍 -->
                             <button type="button" class="btn btn-sm"
-                                @click="changeNodeColor(contextMenu.node.type, '#E5F5FF', '#ADD8E6')"
+                                @click="changeNodeColor('general', '#E5F5FF', '#ADD8E6')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" transform="scale(1)">
@@ -810,7 +803,7 @@
                             </button>
                             <!-- 按鈕 白 -->
                             <button type="button" class="btn btn-sm "
-                                @click="changeNodeColor(contextMenu.node.type, '#fdfdfd', '#dddddd')"
+                                @click="changeNodeColor('general', '#fdfdfd', '#dddddd')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <!-- transform="scale(1.8)" svg縮放大小 -->
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -820,102 +813,104 @@
                             </button>
                         </div>
                     </div>
-                </template>
-                <template v-else-if="contextMenu.type === 'curve'">
-                    <button @click="deleteConnection()">刪除此連線</button>
-                    <div class="">
-                        更換類型：
-                    </div>
-                    <div class="">
-                        <button v-if="selectedConn" type="button" class="btn btn-sm " @click="changeLineType('solid')"
-                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
-                            <!-- transform="scale(1.8)" svg縮放大小 -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
-                                fill="none">
-                                <path
-                                    d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
-                                    stroke="#A7A7A7" stroke-width="2" />
-                                <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
-                                <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
-                            </svg>
-                        </button>
-                        <button v-if="selectedConn" type="button" class="btn btn-sm " @click="changeLineType('dashed')"
-                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
-                            <!-- transform="scale(1.8)" svg縮放大小 -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
-                                fill="none">
-                                <path
-                                    d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
-                                    stroke="#A7A7A7" stroke-width="2" stroke-dasharray="6 2" />
-                                <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
-                                <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
-                            </svg>
-                        </button>
-                        <button v-if="selectedConn" type="button" class="btn btn-sm " @click="changeLineType('dotted')"
-                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
-                            <!-- transform="scale(1.8)" svg縮放大小 -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
-                                fill="none">
-                                <path
-                                    d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
-                                    stroke="#A7A7A7" stroke-width="2" stroke-dasharray="2 2" />
-                                <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
-                                <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
-                            </svg>
-                        </button>
-
-                    </div>
-
-                    <div>
+                    <div class="" v-if="selectedConn">
+                        <button @click="deleteConnection()">刪除此連線</button>
                         <div class="">
-                            更換顏色：
+                            更換類型：
                         </div>
-                        <button v-if="selectedConn" type="button" class="btn btn-sm "
-                            @click="changeLineColor('#FCAFAA')"
-                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
-                            <!-- transform="scale(1.8)" svg縮放大小 -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
-                                fill="none">
-                                <path
-                                    d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                                    stroke="#FCAFAA" stroke-width="2" stroke-linecap="round" />
-                            </svg>
-                        </button>
-                        <button v-if="selectedConn" type="button" class="btn btn-sm "
-                            @click="changeLineColor('#C7DF7A')"
-                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
-                            <!-- transform="scale(1.8)" svg縮放大小 -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
-                                fill="none">
-                                <path
-                                    d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                                    stroke="#C7DF7A" stroke-width="2" stroke-linecap="round" />
-                            </svg>
-                        </button>
-                        <button v-if="selectedConn" type="button" class="btn btn-sm "
-                            @click="changeLineColor('#ADD8E6')"
-                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
-                            <!-- transform="scale(1.8)" svg縮放大小 -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
-                                fill="none">
-                                <path
-                                    d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                                    stroke="#ADD8E6" stroke-width="2" stroke-linecap="round" />
-                            </svg>
-                        </button>
+                        <div class="">
+                            <button type="button" class="btn btn-sm " @click="changeLineType('solid')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
+                                    fill="none">
+                                    <path
+                                        d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                        stroke="#A7A7A7" stroke-width="2" />
+                                    <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                    <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                </svg>
+                            </button>
+                            <button v-if="selectedConn" type="button" class="btn btn-sm "
+                                @click="changeLineType('dashed')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
+                                    fill="none">
+                                    <path
+                                        d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                        stroke="#A7A7A7" stroke-width="2" stroke-dasharray="6 2" />
+                                    <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                    <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                </svg>
+                            </button>
+                            <button v-if="selectedConn" type="button" class="btn btn-sm "
+                                @click="changeLineType('dotted')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
+                                    fill="none">
+                                    <path
+                                        d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                        stroke="#A7A7A7" stroke-width="2" stroke-dasharray="2 2" />
+                                    <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                    <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                </svg>
+                            </button>
 
-                        <!-- 線條顏色 橘黃 -->
-                        <button v-if="selectedConn" type="button" class="btn btn-sm "
-                            @click="changeLineColor('#FFF4B2')"
-                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
-                            <!-- transform="scale(1.8)" svg縮放大小 -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
-                                fill="none">
-                                <path
-                                    d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                                    stroke="#FFF4B2" stroke-width="2" stroke-linecap="round" />
-                            </svg>
-                        </button>
+                        </div>
+
+                        <div>
+                            <div v-if="selectedConn" class="">
+                                更換顏色：
+                            </div>
+                            <button v-if="selectedConn" type="button" class="btn btn-sm "
+                                @click="changeLineColor('#FCAFAA')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
+                                    fill="none">
+                                    <path
+                                        d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                        stroke="#FCAFAA" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </button>
+                            <button v-if="selectedConn" type="button" class="btn btn-sm "
+                                @click="changeLineColor('#C7DF7A')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
+                                    fill="none">
+                                    <path
+                                        d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                        stroke="#C7DF7A" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </button>
+                            <button v-if="selectedConn" type="button" class="btn btn-sm "
+                                @click="changeLineColor('#ADD8E6')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
+                                    fill="none">
+                                    <path
+                                        d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                        stroke="#ADD8E6" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </button>
+
+                            <!-- 線條顏色 橘黃 -->
+                            <button v-if="selectedConn" type="button" class="btn btn-sm "
+                                @click="changeLineColor('#FFF4B2')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
+                                    fill="none">
+                                    <path
+                                        d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                        stroke="#FFF4B2" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </template>
             </div>
@@ -2604,6 +2599,7 @@
                 // 空白處右鍵選單
                 handleSvgContextMenu(event) {
                     if (event.button === 2) {
+                        console.log(node)
                         this.contextMenu.visible = true;
                         this.contextMenu.x = event.clientX;
                         this.contextMenu.y = event.clientY;
@@ -2611,28 +2607,6 @@
                         this.contextMenu.node = null;
                         this.contextMenu.connection = null;
                         this.connectionStartNode = null;
-                    }
-                },
-                // 便利貼右鍵選單：顯示開始連線、更換顏色與刪除功能
-                handleNodeContextMenu(node, event) {
-                    if (event.button === 2) {
-                        this.contextMenu.visible = true;
-                        this.contextMenu.x = event.clientX;
-                        this.contextMenu.y = event.clientY;
-                        this.contextMenu.type = 'node';
-                        this.contextMenu.node = node;
-                        event.stopPropagation();
-                    }
-                },
-                // 曲線右鍵選單：僅顯示刪除
-                handleCurveContextMenu(conn, event) {
-                    if (event.button === 2) {
-                        this.contextMenu.visible = true;
-                        this.contextMenu.x = event.clientX;
-                        this.contextMenu.y = event.clientY;
-                        this.contextMenu.type = 'curve';
-                        this.contextMenu.connection = conn;
-                        event.stopPropagation();
                     }
                 },
                 hideContextMenu() {
