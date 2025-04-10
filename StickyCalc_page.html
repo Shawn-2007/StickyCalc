@@ -235,9 +235,9 @@
                                 fill="#D9D9D9" />
                         </svg>
                     </div>
-                    <div class="ms-1">
+                    <!-- 存檔 -->
+                    <!-- <div class="ms-1">
                         <a href="#" @click="nodes_upload" class="nav-link">
-                            <!-- 存檔 -->
                             <svg xmlns="http://www.w3.org/2000/svg" width="35" height="28" viewBox="0 0 35 28"
                                 transform="scale(0.8)" fill="none">
                                 <path fill-rule="evenodd" clip-rule="evenodd"
@@ -245,10 +245,10 @@
                                     fill="#505050" />
                             </svg>
                         </a>
-                    </div>
-                    <div class="ms-2">
+                    </div> -->
+                    <!-- 讀檔 -->
+                    <!-- <div class="ms-2">
                         <a href="#" @click="get_nodes" class="nav-link">
-                            <!-- 讀檔 -->
                             <svg xmlns="http://www.w3.org/2000/svg" width="34" height="28" fill="none"
                                 transform="scale(0.8)" viewBox="0 0 34 28">
                                 <path fill-rule="evenodd" clip-rule="evenodd"
@@ -256,19 +256,19 @@
                                     fill="#505050" />
                             </svg>
                         </a>
-                    </div>
-                    <div class="ms-auto me-2" @click="undo">
-                        <!-- 上一步 -->
+                    </div> -->
+                    <!-- 上一步 -->
+                    <!-- <div class="ms-auto me-2" @click="undo">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="25" fill="none" viewBox="0 0 20 25"
                             transform="scale(0.8)">
                             <path fill-rule="evenodd" clip-rule="evenodd"
                                 d="M7.03085 0L7.9652 1.98877H8.6247L8.62557 3.28822L8.62552 4.58768H7.96578L7.03085 6.57645L0 3.28822L7.03085 0ZM8.62557 3.28822L8.62552 4.58768C13.4499 4.58768 17.3952 8.55628 17.3952 13.4944C17.3952 18.4325 13.4499 22.4011 8.62557 22.4011H6.5417V25H8.62557C14.9265 25 20 19.8297 20 13.4944C20 7.15907 14.9256 1.98877 8.6247 1.98877L8.62557 3.28822Z"
                                 fill="#505050" />
                         </svg>
-                    </div>
-                    <div class="me-2">
+                    </div> -->
+                    <!-- 下一步 -->
+                    <!-- <div class="me-2">
                         <a href="#" @click="redo" class="nav-link  disabled">
-                            <!-- 下一步 -->
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="25" viewBox="0 0 20 25"
                                 transform="scale(0.8)" fill="none">
                                 <path fill-rule="evenodd" clip-rule="evenodd"
@@ -276,7 +276,7 @@
                                     fill="#505050" />
                             </svg>
                         </a>
-                    </div>
+                    </div> -->
                 </div>
             </div>
 
@@ -650,34 +650,37 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <div class="">
+                                            <!-- 按鈕 粉紅 -->
                                             <button type="button" class="btn btn-sm "
                                                 @click="changeNodeColor('chart', '#FFE6EB', '#FCAFAA')"
                                                 style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                     viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
-                                                    <circle cx="12" cy="12" r="11" fill="#ffc0cb" stroke="#CFCFCF"
+                                                    <circle cx="12" cy="12" r="11" fill="#FFE6EB" stroke="#CFCFCF"
                                                         stroke-width="2" />
                                                 </svg>
                                             </button>
+                                            <!-- 按鈕 粉綠 -->
                                             <button type="button" class="btn btn-sm "
                                                 @click="changeNodeColor('chart', '#F7FFDB', '#C7DF7A')"
                                                 style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                     viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
-                                                    <circle cx="12" cy="12" r="11" fill="#D3ED7F" stroke="#CFCFCF"
+                                                    <circle cx="12" cy="12" r="11" fill="#F7FFDB" stroke="#CFCFCF"
                                                         stroke-width="2" />
                                                 </svg>
-
                                             </button>
+                                            <!-- 按鈕 粉藍 -->
                                             <button type="button" class="btn btn-sm"
                                                 @click="changeNodeColor('chart', '#E5F5FF', '#ADD8E6')"
                                                 style="height: 30px; width: 30px; margin-top: -50">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                     viewBox="0 7 24 24" fill="none" transform="scale(1.6)">
-                                                    <circle cx="12" cy="12" r="11" fill="#CEEBFD" stroke="#CFCFCF"
+                                                    <circle cx="12" cy="12" r="11" fill="#E5F5FF" stroke="#CFCFCF"
                                                         stroke-width="2" />
                                                 </svg>
                                             </button>
+                                            <!-- 按鈕 白 -->
                                             <button type="button" class="btn btn-sm "
                                                 @click="changeNodeColor('chart', '#fdfdfd', '#dddddd')"
                                                 style="height: 30px; width: 30px; margin-top: -50;">
@@ -744,6 +747,31 @@
             <div v-if="contextMenu.visible" class="context-menu"
                 :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
                 <template v-if="contextMenu.type === 'blank'">
+                    <button type="button" class="btn btn-sm " @click="addNodeAtContext"
+                        style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M4 0C1.79086 0 0 1.79086 0 4V24C0 26.2091 1.79086 28 4 28H26C28.2091 28 30 26.2091 30 24V4C30 1.79086 28.2091 0 26 0H4ZM2 4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4V24C28 25.1046 27.1046 26 26 26H4C2.89543 26 2 25.1046 2 24V4ZM5 5H25V3H5V5ZM14 17H8V15H14V9H16V15H22V17H16V23H14V17Z"
+                                fill="#505050" />
+                        </svg>
+                    </button>
+                    <button type="button" class="btn btn-sm " @click="addChartNode"
+                        style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="31" height="28" viewBox="0 0 31 28" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M6 3C4.34315 3 3 4.34315 3 6V15C3 16.3062 3.83481 17.4175 5 17.8293V15V7V6C5 5.44772 5.44772 5 6 5H7H18H20.8293C20.4175 3.83481 19.3062 3 18 3H6Z"
+                                fill="#505050" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M9 6C7.34315 6 6 7.34315 6 9V19C6 20.3062 6.83481 21.4175 8 21.8293V19V10V9C8 8.44772 8.44772 8 9 8H10H22H24.8293C24.4175 6.83481 23.3062 6 22 6H9Z"
+                                fill="#505050" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M9 12C9 10.3431 10.3431 9 12 9H25C26.6569 9 28 10.3431 28 12V22C28 23.6569 26.6569 25 25 25H12C10.3431 25 9 23.6569 9 22V12ZM12 11C11.4477 11 11 11.4477 11 12V22C11 22.5523 11.4477 23 12 23H25C25.5523 23 26 22.5523 26 22V12C26 11.4477 25.5523 11 25 11H12Z"
+                                fill="#505050" />
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M10 0H2C0.895447 0 0 0.895432 0 2V10H2V2H10V0ZM29 10V2H21V0H29C30.1046 0 31 0.89543 31 2V10H29ZM21 26H29V18H31V26C31 27.1046 30.1046 28 29 28H21V26ZM2 18V26H10V28H2C0.895447 28 0 27.1046 0 26V18H2Z"
+                                fill="#505050" />
+                        </svg>
+                    </button>
                     <button @click="addNodeAtContext">新增 便利貼</button>
                     <button @click="addChartNode">新增 圖表便利貼</button>
                 </template>
@@ -751,30 +779,143 @@
                     <button v-if="contextMenu.node.type != 'chart'"
                         @click="startConnection(contextMenu.node)">開始連線</button>
                     <button @click="deleteNode(contextMenu.node)">刪除此便利貼</button>
-                    <button v-if="contextMenu.node.type === 'chart'" @click="resetChart(contextMenu.node)">重整圖表</button>
                     <div>
-                        更換顏色：
-                        <button @click="changeNodeColor(contextMenu.node, '#ffc0cb', '#FCAFAA')">粉紅</button>
-                        <button @click="changeNodeColor(contextMenu.node, '#D3ED7F', '#C7DF7A')">粉綠</button>
-                        <button @click="changeNodeColor(contextMenu.node, '#CEEBFD', '#ADD8E6')">粉藍</button>
-                        <button @click="changeNodeColor(contextMenu.node, '#FFF8CA', '#FFF4B2')">粉黃</button>
-                        <button @click="changeNodeColor(contextMenu.node, '#fdfdfd', '#dddddd')">白色</button>
+                        <div class="">
+                            <!-- 按鈕 粉紅 -->
+                            <button type="button" class="btn btn-sm "
+                                @click="changeNodeColor(contextMenu.node.type, '#FFE6EB', '#FCAFAA')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" transform="scale(1)">
+                                    <circle cx="12" cy="12" r="11" fill="#FFE6EB" stroke="#CFCFCF" stroke-width="2" />
+                                </svg>
+                            </button>
+                            <!-- 按鈕 粉綠 -->
+                            <button type="button" class="btn btn-sm "
+                                @click="changeNodeColor(contextMenu.node.type, '#F7FFDB', '#C7DF7A')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" transform="scale(1)">
+                                    <circle cx="12" cy="12" r="11" fill="#F7FFDB" stroke="#CFCFCF" stroke-width="2" />
+                                </svg>
+                            </button>
+                            <!-- 按鈕 粉藍 -->
+                            <button type="button" class="btn btn-sm"
+                                @click="changeNodeColor(contextMenu.node.type, '#E5F5FF', '#ADD8E6')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" transform="scale(1)">
+                                    <circle cx="12" cy="12" r="11" fill="#E5F5FF" stroke="#CFCFCF" stroke-width="2" />
+                                </svg>
+                            </button>
+                            <!-- 按鈕 白 -->
+                            <button type="button" class="btn btn-sm "
+                                @click="changeNodeColor(contextMenu.node.type, '#fdfdfd', '#dddddd')"
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                <!-- transform="scale(1.8)" svg縮放大小 -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" transform="scale(1)">
+                                    <circle cx="12" cy="12" r="11" fill="#fdfdfd" stroke="#CFCFCF" stroke-width="2" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </template>
                 <template v-else-if="contextMenu.type === 'curve'">
                     <button @click="deleteConnection()">刪除此連線</button>
-                    <div>
+                    <div class="">
                         更換類型：
-                        <button @click="changeLineType(contextMenu.connection, 'solid')">實線</button>
-                        <button @click="changeLineType(contextMenu.connection, 'dashed')">虛線</button>
-                        <button @click="changeLineType(contextMenu.connection, 'dotted')">點線</button>
                     </div>
+                    <div class="">
+                        <button v-if="selectedConn" type="button" class="btn btn-sm " @click="changeLineType('solid')"
+                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                            <!-- transform="scale(1.8)" svg縮放大小 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
+                                fill="none">
+                                <path
+                                    d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                    stroke="#A7A7A7" stroke-width="2" />
+                                <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                            </svg>
+                        </button>
+                        <button v-if="selectedConn" type="button" class="btn btn-sm " @click="changeLineType('dashed')"
+                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                            <!-- transform="scale(1.8)" svg縮放大小 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
+                                fill="none">
+                                <path
+                                    d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                    stroke="#A7A7A7" stroke-width="2" stroke-dasharray="6 2" />
+                                <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                            </svg>
+                        </button>
+                        <button v-if="selectedConn" type="button" class="btn btn-sm " @click="changeLineType('dotted')"
+                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                            <!-- transform="scale(1.8)" svg縮放大小 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26"
+                                fill="none">
+                                <path
+                                    d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                    stroke="#A7A7A7" stroke-width="2" stroke-dasharray="2 2" />
+                                <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                                <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                            </svg>
+                        </button>
+
+                    </div>
+
                     <div>
-                        更換顏色：
-                        <button @click="changeLineColor(contextMenu.connection, '#FCAFAA')">粉紅</button>
-                        <button @click="changeLineColor(contextMenu.connection, '#C7DF7A')">粉綠</button>
-                        <button @click="changeLineColor(contextMenu.connection, '#ADD8E6')">粉藍</button>
-                        <button @click="changeLineColor(contextMenu.connection, '#FFF4B2')">粉黃</button>
+                        <div class="">
+                            更換顏色：
+                        </div>
+                        <button v-if="selectedConn" type="button" class="btn btn-sm "
+                            @click="changeLineColor('#FCAFAA')"
+                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                            <!-- transform="scale(1.8)" svg縮放大小 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
+                                fill="none">
+                                <path
+                                    d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                    stroke="#FCAFAA" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                        <button v-if="selectedConn" type="button" class="btn btn-sm "
+                            @click="changeLineColor('#C7DF7A')"
+                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                            <!-- transform="scale(1.8)" svg縮放大小 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
+                                fill="none">
+                                <path
+                                    d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                    stroke="#C7DF7A" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
+                        <button v-if="selectedConn" type="button" class="btn btn-sm "
+                            @click="changeLineColor('#ADD8E6')"
+                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                            <!-- transform="scale(1.8)" svg縮放大小 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
+                                fill="none">
+                                <path
+                                    d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                    stroke="#ADD8E6" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
+
+                        <!-- 線條顏色 橘黃 -->
+                        <button v-if="selectedConn" type="button" class="btn btn-sm "
+                            @click="changeLineColor('#FFF4B2')"
+                            style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                            <!-- transform="scale(1.8)" svg縮放大小 -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
+                                fill="none">
+                                <path
+                                    d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                    stroke="#FFF4B2" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                        </button>
                     </div>
                 </template>
             </div>
@@ -2461,7 +2602,7 @@
                 },
 
                 // 空白處右鍵選單
-                handleSvgContextMenu(event) {
+                handleSvgContextMenu(node, event) {
                     if (event.button === 2) {
                         this.contextMenu.visible = true;
                         this.contextMenu.x = event.clientX;
@@ -2695,11 +2836,8 @@
                 changeNodeColor(nodeType, color, colorTop) {
                     this.nodes.forEach(n => {
                         if (n.selected) {
-                            if (n.type == "general" && n.type == nodeType) {
+                            if (n.type == nodeType) {
                                 // 換色
-                                n.color = color;
-                                n.colorTop = colorTop;
-                            } else if (n.type == "chart" && n.type == nodeType) {
                                 n.color = color;
                                 n.colorTop = colorTop;
                             }
