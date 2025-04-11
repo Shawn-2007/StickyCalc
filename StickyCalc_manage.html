@@ -285,7 +285,7 @@
                 JSONdata["uid01"] = getCookie("Uid01");
                 $.ajax({
                     type: "POST",
-                    url: "https://18.183.45.90/api/member_control_api_v1.php?action=checkuid",
+                    url: "https://shawn4x4.com/api/member_control_api_v1.php?action=checkuid",
                     data: JSON.stringify(JSONdata),
                     dataType: "json",
                     success: showdata_checkuid,
@@ -326,7 +326,7 @@
 
                     $.ajax({
                         type: "POST",
-                        url: "https://18.183.45.90/api/member_control_api_v1.php?action=login",
+                        url: "https://shawn4x4.com/api/member_control_api_v1.php?action=login",
                         data: JSON.stringify(JSONdata01),
                         dataType: "json",
                         success: showdata_login,
@@ -424,7 +424,7 @@
                 // 渲染帳號資料
                 $.ajax({
                     type: "GET",
-                    url: "https://18.183.45.90/api/member_control_api_v1.php?action=getalldata",
+                    url: "https://shawn4x4.com/api/member_control_api_v1.php?action=getalldata",
                     dataType: "json",
                     async: false,
                     success: showdata,
@@ -487,7 +487,7 @@
 
                             $.ajax({
                                 type: "DELETE",
-                                url: "https://18.183.45.90/api/member_control_api_v1.php?action=delete",
+                                url: "https://shawn4x4.com/api/member_control_api_v1.php?action=delete",
                                 data: JSON.stringify(JSONdata02),
                                 dataType: "json",
                                 async: false,
@@ -527,7 +527,7 @@
 
                         $.ajax({
                             type: "POST",
-                            url: "https://18.183.45.90/api/member_control_api_v1.php?action=update",
+                            url: "https://shawn4x4.com/api/member_control_api_v1.php?action=update",
                             data: JSON.stringify(JSONdata01),
                             dataType: "json",
                             async: false,
