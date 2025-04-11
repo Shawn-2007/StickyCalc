@@ -1716,8 +1716,8 @@
                             // 渲染帳號資料
                             $.ajax({
                                 type: "POST",
-                                url: "http://18.183.45.90/api/member_control_api_v1.php?action=deleteBoard",
-                                // url: "http://18.183.45.90/api/member_control_api_v1.php?action=advanceDeleteBoard",
+                                url: "https://18.183.45.90/api/member_control_api_v1.php?action=deleteBoard",
+                                // url: "https://18.183.45.90/api/member_control_api_v1.php?action=advanceDeleteBoard",
                                 data: JSON.stringify(JSONdata),
                                 dataType: "json",
                                 async: false,
@@ -1748,7 +1748,7 @@
                         JSONdata["uid01"] = vm.getCookie("Uid01");
                         $.ajax({
                             type: "POST",
-                            url: "http://18.183.45.90/api/member_control_api_v1.php?action=checkuid",
+                            url: "https://18.183.45.90/api/member_control_api_v1.php?action=checkuid",
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: vm.showdata_checkuid,
@@ -1808,7 +1808,7 @@
                         JSONdata["boardId"] = vm.boardId;
                         $.ajax({
                             type: "POST",
-                            url: "http://18.183.45.90/api/member_control_api_v1.php?action=get_nodes",
+                            url: "https://18.183.45.90/api/member_control_api_v1.php?action=get_nodes",
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: vm.showNodes,
@@ -1899,7 +1899,7 @@
                         JSONdata["boardId"] = vm.boardId;
                         $.ajax({
                             type: "POST",
-                            url: "http://18.183.45.90/api/member_control_api_v1.php?action=get_Connections",
+                            url: "https://18.183.45.90/api/member_control_api_v1.php?action=get_Connections",
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: vm.showConnections,
@@ -1960,7 +1960,7 @@
 
                         $.ajax({
                             type: "POST",
-                            url: "http://18.183.45.90/api/member_control_api_v1.php?action=nodes_upload",
+                            url: "https://18.183.45.90/api/member_control_api_v1.php?action=nodes_upload",
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: function (data) {
@@ -1969,7 +1969,7 @@
                             error: function () {
                                 Swal.fire({
                                     title: "API串接錯誤",
-                                    text: "http://18.183.45.90/api/member_control_api_v1.php",
+                                    text: "https://18.183.45.90/api/member_control_api_v1.php",
                                     icon: "error"
                                 });
                             }
@@ -2006,7 +2006,7 @@
 
                     $.ajax({
                         type: "POST",
-                        url: "http://18.183.45.90/api/member_control_api_v1.php?action=connections_upload",
+                        url: "https://18.183.45.90/api/member_control_api_v1.php?action=connections_upload",
                         data: JSON.stringify(JSONdata),
                         dataType: "json",
                         success: function (data) {
@@ -2040,7 +2040,7 @@
                     console.log(JSONdata02);
                     $.ajax({
                         type: "POST",
-                        url: "http://18.183.45.90/api/member_control_api_v1.php?action=board_upload",
+                        url: "https://18.183.45.90/api/member_control_api_v1.php?action=board_upload",
                         data: JSON.stringify(JSONdata02),
                         dataType: "json",
                         success: function (data) {

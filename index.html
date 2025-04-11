@@ -364,7 +364,7 @@
 
                         $.ajax({
                             type: "POST",
-                            url: "http://18.183.45.90/api/member_control_api_v1.php?action=checkuni",
+                            url: "https://18.183.45.90/api/member_control_api_v1.php?action=checkuni",
                             data: JSON.stringify(JSONdata01),
                             dataType: "json",
                             success: function (deta) {
@@ -438,7 +438,7 @@
                         JSONdata["email"] = vm.email_vue;
                         $.ajax({
                             type: "POST",
-                            url: "http://18.183.45.90/api/member_control_api_v1.php?action=register",
+                            url: "https://18.183.45.90/api/member_control_api_v1.php?action=register",
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: showdata_reg,
@@ -469,7 +469,7 @@
 
                         $.ajax({
                             type: "POST",
-                            url: "http://18.183.45.90/api/member_control_api_v1.php?action=login",
+                            url: "https://18.183.45.90/api/member_control_api_v1.php?action=login",
                             data: JSON.stringify(JSONdata01),
                             dataType: "json",
                             success: this.showdata_login,
@@ -566,7 +566,7 @@
                 JSONdata["uid01"] = getCookie("Uid01");
                 $.ajax({
                     type: "POST",
-                    url: "http://18.183.45.90/api/member_control_api_v1.php?action=checkuid",
+                    url: "https://18.183.45.90/api/member_control_api_v1.php?action=checkuid",
                     data: JSON.stringify(JSONdata),
                     dataType: "json",
                     success: showdata_checkuid,
