@@ -16,12 +16,12 @@
 
 # 🧰 技術使用
 
-- 🐬 MySQL儲存與預存程序比對資料後進行存檔匯入與更新
-- 🔀 使用PHP MySQLI作為後端API建置
-- 📂 使用Git版控
-- 🖼️ 使用vue3 cdn進行前端互動建置
-- 💻 善用chatGPT與Grok3等AI Chat推動專案進程
 - 📟 具有基礎美感且使用figma設計UI UX版面與SVG ICON繪製
+- 🐬 MySQL儲存與預存程序比對資料後進行存檔匯入與更新
+- 💻 善用chatGPT與Grok3等AI Chat推動專案進程
+- 🔀 使用PHP MySQLI作為後端API建置
+- 🖼️ 使用vue3 cdn進行前端互動建置
+- 📂 使用Git版控
 
 ---
 
