@@ -21,6 +21,7 @@
 - 📂 使用Git版控
 - 🖼️ 使用vue3 cdn進行前端互動建置
 - 💻 善用chatGPT與Grok3等AI Chat推動專案進程
+- 📟 具有基礎美感且使用figma設計UI UX版面與SVG ICON繪製
 
 ---
 
