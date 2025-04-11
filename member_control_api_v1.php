@@ -1,4 +1,13 @@
 <?php
+// 限定連線
+// header("Access-Control-Allow-Origin: http://127.0.0.1:5500");
+
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// mysqli_report(flags: MYSQLI_REPORT_OFF); //關閉異常拋出模式
+
 const DB_SERVER   = "localhost";
 const DB_USERNAME = "owner01";
 const DB_PASSWORD = "123456";
@@ -71,7 +80,7 @@ function login_user()
         if ($username && $password) {
             $conn = create_connection();
             $stmt = $conn->prepare("SELECT * FROM member WHERE Username = ?");
-            // s是字串 i是整數
+                                               // s是字串 i是整數
             $stmt->bind_param("s", $username); //一定要傳遞變數
             $stmt->execute();
             $result = $stmt->get_result();
@@ -115,14 +124,14 @@ function nodes_upload()
 {
     $input = get_json_input();
     if (isset($input["nodes"]) && isset($input["userId"]) && isset($input["boardId"])) {
-        $nodes = $input["nodes"];
-        $user_id = $input["userId"];
+        $nodes    = $input["nodes"];
+        $user_id  = $input["userId"];
         $board_id = $input["boardId"];
 
         if (is_array($nodes)) {
-            $conn = create_connection();
+            $conn      = create_connection();
             $json_data = json_encode($nodes); // 只傳 nodes 陣列給預存程序
-            $stmt = $conn->prepare("CALL sync_nodes(?, ?, ?)");
+            $stmt      = $conn->prepare("CALL sync_nodes(?, ?, ?)");
             $stmt->bind_param("sss", $json_data, $user_id, $board_id);
             if ($stmt->execute()) {
                 respond(true, "同步成功");
@@ -146,13 +155,13 @@ function connections_upload()
     $input = get_json_input();
     if (isset($input["connections"]) && isset($input["userId"]) && isset($input["boardId"])) {
         $connections = $input["connections"];
-        $user_id = $input["userId"];
-        $board_id = $input["boardId"];
+        $user_id     = $input["userId"];
+        $board_id    = $input["boardId"];
 
         if (is_array($connections)) {
-            $conn = create_connection();
+            $conn      = create_connection();
             $json_data = json_encode($connections); // 只傳 connections 陣列給預存程序
-            $stmt = $conn->prepare("CALL sync_connections(?, ?, ?)");
+            $stmt      = $conn->prepare("CALL sync_connections(?, ?, ?)");
             $stmt->bind_param("sss", $json_data, $user_id, $board_id);
             if ($stmt->execute()) {
                 respond(true, "同步成功");
@@ -170,23 +179,22 @@ function connections_upload()
 }
 // 連線上傳
 
-
 // 貼板上傳
 function board_upload()
 {
     $input = get_json_input();
     if (isset($input["userId"], $input["boardId"])) {
-        $userId   = trim($input["userId"]);
-        $boardId  = trim($input["boardId"]);
-        $alterTime  = trim($input["alterTime"]);
-        $boardName  = trim($input["boardName"]);
+        $userId    = trim($input["userId"]);
+        $boardId   = trim($input["boardId"]);
+        $alterTime = trim($input["alterTime"]);
+        $boardName = trim($input["boardName"]);
 
         if ($userId && $boardId) {
             $conn = create_connection();
             $stmt = $conn->prepare("
-                INSERT INTO Board (UserId, BoardId, AlterTime,BoardName) 
-                VALUES (?, ?, ?, ?) 
-                ON DUPLICATE KEY UPDATE 
+                INSERT INTO Board (UserId, BoardId, AlterTime,BoardName)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
                 AlterTime = VALUES(AlterTime),
                 BoardName = VALUES(BoardName);
             ");
@@ -213,85 +221,213 @@ function board_upload()
 // 取得便利貼
 function get_Nodes()
 {
+    // 開啟錯誤日誌以便除錯
+    ini_set('log_errors', 1);
+    ini_set('error_log', '/var/log/php_errors.log');
+
     $input = get_json_input();
+
+    // 檢查 JSON 輸入
+    if ($input === null) {
+        respond(false, "無效的 JSON 輸入");
+        return;
+    }
 
     if (isset($input["userId"]) && isset($input["boardId"])) {
         $userId  = trim($input["userId"]);
         $boardId = trim($input["boardId"]);
         if ($userId && $boardId) {
-            $conn = create_connection();
-            $stmt = $conn->prepare("SELECT * FROM Nodes WHERE UserId = ? AND BoardId = ?");
-            $stmt->bind_param("ss", $userId, $boardId); //一定要傳遞變數
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $mydata = [];
-                while ($row = $result->fetch_assoc()) {
-                    $row['ConnectionsOut'] = json_decode($row['ConnectionsOut'], true) ?: [];
-                    $row['ConnectionsIn'] = json_decode($row['ConnectionsIn'], true) ?: [];
-                    $row['Connections'] = json_decode($row['Connections'], true) ?: [];
-                    $mydata[] = $row;
+            $conn = null;
+            $stmt = null;
+            try {
+                $conn = create_connection();
+                if (! $conn) {
+                    throw new Exception("無法建立資料庫連線");
                 }
-                respond(true, "取得所有便利貼成功", $mydata);
-            } else {
-                // 查無資料
-                respond(false, "取得所有便利貼資料失敗");
-            }
 
-            $stmt->close();
-            $conn->close();
+                $stmt = $conn->prepare("SELECT * FROM Nodes WHERE UserId = ? AND BoardId = ?");
+                if (! $stmt) {
+                    throw new Exception("SQL 準備失敗: " . $conn->error);
+                }
+
+                $stmt->bind_param("ss", $userId, $boardId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                if ($result->num_rows > 0) {
+                    $mydata = [];
+                    while ($row = $result->fetch_assoc()) {
+                        $row['ConnectionsOut'] = ! empty($row['ConnectionsOut']) ? json_decode($row['ConnectionsOut'], true) ?: []: [];
+                        $row['ConnectionsIn']  = ! empty($row['ConnectionsIn']) ? json_decode($row['ConnectionsIn'], true) ?: []: [];
+                        $row['Connections']    = ! empty($row['Connections']) ? json_decode($row['Connections'], true) ?: []: [];
+                        $mydata[]              = $row;
+                    }
+                    respond(true, "取得所有便利貼成功", $mydata);
+                } else {
+                    respond(false, "取得所有便利貼資料失敗");
+                }
+            } catch (Exception $e) {
+                error_log("get_Nodes 錯誤: " . $e->getMessage());
+                respond(false, "伺服器錯誤: " . $e->getMessage());
+            } finally {
+                // 確保資源關閉
+                if ($stmt instanceof mysqli_stmt) {
+                    $stmt->close();
+                }
+                if ($conn instanceof mysqli) {
+                    $conn->close();
+                }
+            }
         } else {
             respond(false, "欄位不得為空白");
         }
     } else {
         respond(false, "欄位錯誤");
     }
-
-    $stmt->close();
-    $conn->close();
 }
-// 取得便利貼
+// function get_Nodes()
+// {
+//     $input = get_json_input();
 
+//     if (isset($input["userId"]) && isset($input["boardId"])) {
+//         $userId  = trim($input["userId"]);
+//         $boardId = trim($input["boardId"]);
+//         if ($userId && $boardId) {
+//             $conn = create_connection();
+//             $stmt = $conn->prepare("SELECT * FROM Nodes WHERE UserId = ? AND BoardId = ?");
+//             $stmt->bind_param("ss", $userId, $boardId); //一定要傳遞變數
+//             $stmt->execute();
+//             $result = $stmt->get_result();
+
+//             if ($result->num_rows > 0) {
+//                 $mydata = [];
+//                 while ($row = $result->fetch_assoc()) {
+//                     $row['ConnectionsOut'] = json_decode($row['ConnectionsOut'], true) ?: [];
+//                     $row['ConnectionsIn']  = json_decode($row['ConnectionsIn'], true) ?: [];
+//                     $row['Connections']    = json_decode($row['Connections'], true) ?: [];
+//                     $mydata[]              = $row;
+//                 }
+//                 respond(true, "取得所有便利貼成功", $mydata);
+//             } else {
+//                 // 查無資料
+//                 respond(false, "取得所有便利貼資料失敗");
+//             }
+
+//             $stmt->close();
+//             $conn->close();
+//         } else {
+//             respond(false, "欄位不得為空白");
+//         }
+//     } else {
+//         respond(false, "欄位錯誤");
+//     }
+
+//     // $stmt->close();
+//     // $conn->close();
+// }
+// 取得便利貼
 
 // 取得便利貼
 function get_Connections()
 {
+    // 開啟錯誤日誌
+    ini_set('log_errors', 1);
+    ini_set('error_log', '/var/log/php_errors.log');
+
     $input = get_json_input();
+
+    // 檢查 JSON 輸入
+    if ($input === null) {
+        respond(false, "無效的 JSON 輸入");
+        return;
+    }
 
     if (isset($input["userId"]) && isset($input["boardId"])) {
         $userId  = trim($input["userId"]);
         $boardId = trim($input["boardId"]);
         if ($userId && $boardId) {
-            $conn = create_connection();
-            $stmt = $conn->prepare("SELECT * FROM connections WHERE UserId = ? AND BoardId = ?");
-            $stmt->bind_param("ss", $userId, $boardId); //一定要傳遞變數
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $mydata = [];
-                while ($row = $result->fetch_assoc()) {
-                    $mydata[] = $row;
+            $conn = null;
+            $stmt = null;
+            try {
+                $conn = create_connection();
+                if (! $conn) {
+                    throw new Exception("無法建立資料庫連線");
                 }
-                respond(true, "取得所有便利貼連線成功", $mydata);
-            } else {
-                // 查無資料
-                respond(false, "取得所有便利貼連線資料失敗");
-            }
 
-            $stmt->close();
-            $conn->close();
+                $stmt = $conn->prepare("SELECT * FROM connections WHERE UserId = ? AND BoardId = ?");
+                if (! $stmt) {
+                    throw new Exception("SQL 準備失敗: " . $conn->error);
+                }
+
+                $stmt->bind_param("ss", $userId, $boardId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                if ($result->num_rows > 0) {
+                    $mydata = [];
+                    while ($row = $result->fetch_assoc()) {
+                        $mydata[] = $row;
+                    }
+                    respond(true, "取得所有便利貼連線成功", $mydata);
+                } else {
+                    respond(false, "取得所有便利貼連線資料失敗");
+                }
+            } catch (Exception $e) {
+                error_log("get_Connections 錯誤: " . $e->getMessage());
+                respond(false, "伺服器錯誤: " . $e->getMessage());
+            } finally {
+                // 確保資源關閉
+                if ($stmt instanceof mysqli_stmt) {
+                    $stmt->close();
+                }
+                if ($conn instanceof mysqli) {
+                    $conn->close();
+                }
+            }
         } else {
             respond(false, "欄位不得為空白");
         }
     } else {
         respond(false, "欄位錯誤");
     }
-
-    $stmt->close();
-    $conn->close();
 }
+// function get_Connections()
+// {
+//     $input = get_json_input();
+
+//     if (isset($input["userId"]) && isset($input["boardId"])) {
+//         $userId  = trim($input["userId"]);
+//         $boardId = trim($input["boardId"]);
+//         if ($userId && $boardId) {
+//             $conn = create_connection();
+//             $stmt = $conn->prepare("SELECT * FROM connections WHERE UserId = ? AND BoardId = ?");
+//             $stmt->bind_param("ss", $userId, $boardId); //一定要傳遞變數
+//             $stmt->execute();
+//             $result = $stmt->get_result();
+
+//             if ($result->num_rows > 0) {
+//                 $mydata = [];
+//                 while ($row = $result->fetch_assoc()) {
+//                     $mydata[] = $row;
+//                 }
+//                 respond(true, "取得所有便利貼連線成功", $mydata);
+//             } else {
+//                 // 查無資料
+//                 respond(false, "取得所有便利貼連線資料失敗");
+//             }
+
+//             $stmt->close();
+//             $conn->close();
+//         } else {
+//             respond(false, "欄位不得為空白");
+//         }
+//     } else {
+//         respond(false, "欄位錯誤");
+//     }
+
+//     // $stmt->close();
+//     // $conn->close();
+// }
 // 取得便利貼
 
 // 取得所有貼版資料
@@ -328,7 +464,7 @@ function deleteBoard()
 {
     $input = get_json_input();
     if (isset($input["userId"]) && isset($input["boardId"])) {
-        $userId = trim($input["userId"]);
+        $userId  = trim($input["userId"]);
         $boardId = trim($input["boardId"]);
 
         if ($userId && $boardId) {
@@ -339,13 +475,13 @@ function deleteBoard()
             $stmt2 = $conn->prepare("DELETE FROM connections WHERE UserId = ? AND BoardId = ?");
             $stmt3 = $conn->prepare("DELETE FROM Nodes WHERE UserId = ? AND BoardId = ?");
 
-            // 綁定參數
+                                                         // 綁定參數
             $stmt1->bind_param("ss", $userId, $boardId); // "ss" 表示兩個字串
             $stmt2->bind_param("ss", $userId, $boardId);
             $stmt3->bind_param("ss", $userId, $boardId);
 
             // 執行三個刪除操作
-            $success = true;
+            $success      = true;
             $affectedRows = 0;
 
             if ($stmt1->execute()) {
@@ -394,7 +530,7 @@ function advanceDeleteBoard()
 {
     $input = get_json_input();
     if (isset($input["userId"]) && isset($input["boardId"])) {
-        $userId = trim($input["userId"]);
+        $userId  = trim($input["userId"]);
         $boardId = trim($input["boardId"]);
 
         if ($userId && $boardId) {
@@ -523,7 +659,7 @@ function updateEmail()
         if ($id && $email) {
             $conn = create_connection();
             $stmt = $conn->prepare("UPDATE member SET Email= ? WHERE ID = ?");
-            // s是字串 i是整數
+                                                  // s是字串 i是整數
             $stmt->bind_param("si", $email, $id); //一定要傳遞變數
             if ($stmt->execute()) {
                 if (mysqli_affected_rows($conn) == 1) {
@@ -554,7 +690,7 @@ function deleteUser()
             $conn = create_connection();
 
             $stmt = $conn->prepare("DELETE FROM member WHERE ID = ?");
-            // s是字串 i是整數
+                                         // s是字串 i是整數
             $stmt->bind_param("i", $id); //一定要傳遞變數
 
             if ($stmt->execute()) {
@@ -607,7 +743,6 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         case 'connections_upload':
             connections_upload();
             break;
-
 
         case 'board_upload':
             board_upload();
