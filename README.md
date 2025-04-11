@@ -39,9 +39,9 @@
 | 🔧 前端 | 🖥️ 後端 | 💾 資料庫 | 🛠️ 其他工具 |
 |-------------|---------------|------------|----------------|
 | HTML5       | PHP           | Linux (Ubuntu) | Figma         |
-| JavaScript  | SQL           | MySQL         | Git / GitHub   |
-| Vue 3       |               |               |                |
-| jQuery      |               |               |                |
+| JavaScript  | SQL           | MySQL         | Git            |
+| Vue 3       |               |               | GitHub         |
+| jQuery      |               |               | AWS EC2        |
 | Bootstrap   |               |               |                |
 | SweetAlert  |               |               |                |
 | ApexCharts  |               |               |                |
