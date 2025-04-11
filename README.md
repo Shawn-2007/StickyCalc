@@ -21,7 +21,7 @@
 - 💻 善用chatGPT與Grok3等AI Chat推動專案進程
 - 🔀 使用PHP MySQLI作為後端API建置
 - 🖼️ 使用vue3 cdn進行前端互動建置
-- 📂 使用Git版控
+- 📂 使用Git版控、Github異地作業
 
 ---
 
