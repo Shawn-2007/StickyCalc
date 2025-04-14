@@ -369,11 +369,9 @@
                             dataType: "json",
                             success: function (deta) {
                                 if (deta.state) {
-                                    console.log("無重複")
                                     vm.flag_username_reg = true;
 
                                 } else {
-                                    console.log("重複不可用")
                                     vm.flag_username_reg = false;
                                 }
 
@@ -421,7 +419,6 @@
             // 函式區
             methods: {
                 newBoard() {
-                    console.log("RRRRRRRRRRRRRRRRRR")
                     localStorage.setItem('boardId', "newBoard")
                     localStorage.setItem('boardName', "newBoard")
 
@@ -492,7 +489,6 @@
                 },
                 showdata_login(data) {
                     // location.href = "SPA-index.html";
-                    console.log(data);
                     if (data.state) {
                         Swal.fire({
                             title: data.message,
@@ -614,7 +610,6 @@
         })
 
         function showdata_reg(data) {
-            console.log(data);
             if (data.state) {
                 Swal.fire({
                     title: data.message,
@@ -637,7 +632,6 @@
 
 
         function showdata_checkuid(data) {
-            console.log(data)
             if (data.state) {
                 $("#username_showtext").removeClass("d-none");
 

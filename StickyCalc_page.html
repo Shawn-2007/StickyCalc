@@ -535,8 +535,7 @@
                         <g v-if="getAdjustedArrowPosition(conn).x !== 0 && getAdjustedArrowPosition(conn).y !== 0">
                             <circle :cx="getAdjustedArrowPosition(conn).x" :cy="getAdjustedArrowPosition(conn).y" r="8"
                                 fill="white" stroke="black" style="cursor: ns-resize;"
-                                @mousedown.stop="startDragArrow(conn, $event)"
-                                @mouseover="console.log('Arrow circle visible for connection:', conn.connectionsId)">
+                                @mousedown.stop="startDragArrow(conn, $event)">
                             </circle>
                             <text v-if="isDoubleConnection(conn)" :x="getAdjustedArrowPosition(conn).x"
                                 :y="getAdjustedArrowPosition(conn).y + 3" text-anchor="middle" font-size="10"
@@ -626,8 +625,8 @@
                             <!-- 連線圓圈 -->
                             <circle v-if="hoveredNode === node || node.selected" :cx="node.x - noteWidth/2 + 130"
                                 :cy="node.y - noteHeight/2 + 62" r="8" fill="white" stroke="black"
-                                style="cursor: pointer;" @mousedown.stop="startDragConnectionCircle(node, $event)"
-                                @mouseover="console.log('Circle visible for node:', node.id)"></circle>
+                                style="cursor: pointer;" @mousedown.stop="startDragConnectionCircle(node, $event)">
+                            </circle>
                         </template>
 
 
@@ -1208,7 +1207,6 @@
                     }
 
                     const result = { x: adjustedX, y: adjustedY };
-                    console.log('Adjusted arrow position:', result, 'for connection:', conn.connectionsId);
                     return result;
                 },
 
@@ -1226,11 +1224,6 @@
                     this.tempConnection.startX = circleX;
                     this.tempConnection.startY = circleY;
 
-                    console.log('Start drag connection circle:', {
-                        startX: this.tempConnection.startX,
-                        startY: this.tempConnection.startY,
-                        node: node.id,
-                    });
 
                     document.addEventListener('mousemove', this.dragConnectionCircle);
                     document.addEventListener('mouseup', this.endDragConnectionCircle, { once: true });
@@ -1303,7 +1296,6 @@
                         };
                         const isInRect = svgX >= rect.x && svgX <= rect.x + rect.width &&
                             svgY >= rect.y && svgY <= rect.y + rect.height;
-                        console.log(`Checking node ${node.id}:`, rect, `Mouse: (${svgX}, ${svgY})`, `In rect: ${isInRect}`);
                         return isInRect;
                     });
 
@@ -1381,7 +1373,6 @@
                     y = Math.max(minY, Math.min(maxY, y));
 
                     const result = { x: endEdge.x, y };
-                    console.log('Arrow position for connection:', conn.connectionsId, result);
                     if (isNaN(result.x) || isNaN(result.y)) {
                         console.warn('Invalid arrow position:', result, 'for connection:', conn);
                         return { x: toNode.x, y: toNode.y };
@@ -1722,7 +1713,6 @@
                                 dataType: "json",
                                 async: false,
                                 success: function (data) {
-                                    console.log(data.state);
                                     location.href = "StickyCalc_board.html";
                                 },
                                 error: function () {
@@ -1766,7 +1756,6 @@
                 },
                 showdata_checkuid(data) {
                     const vm = this;
-                    console.log(data)
                     if (data.state) {
                         vm.userId = data.data.Username;
 
@@ -1802,7 +1791,6 @@
                 get_nodes() {
                     const vm = this;
                     var JSONdata = {};
-                    console.log("name: " + vm.userId + "board: " + vm.boardId)
                     if (vm.userId && vm.boardId) {
                         JSONdata["userId"] = vm.userId;
                         JSONdata["boardId"] = vm.boardId;
@@ -1964,7 +1952,7 @@
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: function (data) {
-                                console.log("便利貼" + data.state + data.message);
+                                // console.log("便利貼" + data.state + data.message);
                             },
                             error: function () {
                                 Swal.fire({
@@ -2010,7 +1998,7 @@
                         data: JSON.stringify(JSONdata),
                         dataType: "json",
                         success: function (data) {
-                            console.log("線段" + data.state + data.message);
+                            // console.log("線段" + data.state + data.message);
                         },
                         error: function () {
                             Swal.fire({
@@ -2037,14 +2025,13 @@
                         boardName: vm.boardName,
                     }
 
-                    console.log(JSONdata02);
                     $.ajax({
                         type: "POST",
                         url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=board_upload",
                         data: JSON.stringify(JSONdata02),
                         dataType: "json",
                         success: function (data) {
-                            console.log("畫板名稱" + data.state);
+                            // console.log("畫板名稱" + data.state);
                         },
                         error: function () {
                             Swal.fire({
@@ -2559,7 +2546,6 @@
                         return false;
                     };
 
-                    console.log('Checking loop from', fromId, 'to', toId);
                     return dfs(fromId);
                 },
 
@@ -2690,10 +2676,8 @@
 
                     if (event.ctrlKey && event.key === 'z' || event.key === 'Z') {
                         if (event.shiftKey) {
-                            console.log("CTRL+SHIFT+Z 重做")
                             this.redo(); // CTRL+SHIFT+Z 重做
                         } else {
-                            console.log("CTRL+Z 撤銷")
                             this.undo(); // CTRL+Z 撤銷
                         }
                     };
@@ -2876,7 +2860,6 @@
                     const cx = mx + px * offset, cy = my + py * offset;
 
                     const path = `M ${startEdge.x} ${startEdge.y} Q ${cx} ${cy} ${endEdge.x} ${endEdge.y}`;
-                    console.log('Connection path:', path, 'for connection:', conn.connectionsId);
                     return path;
                 },
 
@@ -2938,7 +2921,6 @@
                     }
 
                     const result = { x: edgeX, y: edgeY };
-                    console.log('Edge point:', result, 'from:', fromNode.id, 'to:', toNode.id);
                     return result;
                 },
 
