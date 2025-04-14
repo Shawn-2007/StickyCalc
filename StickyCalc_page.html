@@ -497,7 +497,7 @@
                 <!-- 線條顏色 橘黃 -->
 
                 <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
-                    @click="changeLineColor('#FFF4B2')">
+                    @click="changeLineColor('#FFB53E')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
                         <path
                             d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
@@ -535,8 +535,7 @@
                         <g v-if="getAdjustedArrowPosition(conn).x !== 0 && getAdjustedArrowPosition(conn).y !== 0">
                             <circle :cx="getAdjustedArrowPosition(conn).x" :cy="getAdjustedArrowPosition(conn).y" r="8"
                                 fill="white" stroke="black" style="cursor: ns-resize;"
-                                @mousedown.stop="startDragArrow(conn, $event)"
-                                @mouseover="console.log('Arrow circle visible for connection:', conn.connectionsId)">
+                                @mousedown.stop="startDragArrow(conn, $event)">
                             </circle>
                             <text v-if="isDoubleConnection(conn)" :x="getAdjustedArrowPosition(conn).x"
                                 :y="getAdjustedArrowPosition(conn).y + 3" text-anchor="middle" font-size="10"
@@ -626,8 +625,8 @@
                             <!-- 連線圓圈 -->
                             <circle v-if="hoveredNode === node || node.selected" :cx="node.x - noteWidth/2 + 130"
                                 :cy="node.y - noteHeight/2 + 62" r="8" fill="white" stroke="black"
-                                style="cursor: pointer;" @mousedown.stop="startDragConnectionCircle(node, $event)"
-                                @mouseover="console.log('Circle visible for node:', node.id)"></circle>
+                                style="cursor: pointer;" @mousedown.stop="startDragConnectionCircle(node, $event)">
+                            </circle>
                         </template>
 
 
@@ -772,11 +771,11 @@
                         </svg>
                     </button>
                     <div v-if="selectedNode">
-                        <button @click="startConnection(contextMenu.node)">開始連線</button>
+                        <!-- <button @click="startConnection(contextMenu.node)">開始連線</button> -->
                         <button @click="deleteBtn">刪除此便利貼</button>
                         <div class="">
                             <button type="button" class="btn btn-sm "
-                                @click="changeNodeColor('general', '#FFE6EB', '#FCAFAA')"
+                                @click="changeNodeColor('general', '#ffc0cb', '#FCAFAA')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" transform="scale(1)">
@@ -794,21 +793,21 @@
                             </button>
                             <!-- 按鈕 粉藍 -->
                             <button type="button" class="btn btn-sm"
-                                @click="changeNodeColor('general', '#E5F5FF', '#ADD8E6')"
+                                @click="changeNodeColor('general', '#CEEBFD', '#ADD8E6')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" transform="scale(1)">
-                                    <circle cx="12" cy="12" r="11" fill="#E5F5FF" stroke="#CFCFCF" stroke-width="2" />
+                                    <circle cx="12" cy="12" r="11" fill="#CEEBFD" stroke="#CFCFCF" stroke-width="2" />
                                 </svg>
                             </button>
-                            <!-- 按鈕 白 -->
+                            <!-- 按鈕 粉黃 -->
                             <button type="button" class="btn btn-sm "
-                                @click="changeNodeColor('general', '#fdfdfd', '#dddddd')"
+                                @click="changeNodeColor('general', '#FFF8CA', '#FFF4B2')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <!-- transform="scale(1.8)" svg縮放大小 -->
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" transform="scale(1)">
-                                    <circle cx="12" cy="12" r="11" fill="#fdfdfd" stroke="#CFCFCF" stroke-width="2" />
+                                    <circle cx="12" cy="12" r="11" fill="#FFF8CA" stroke="#CFCFCF" stroke-width="2" />
                                 </svg>
                             </button>
                         </div>
@@ -900,14 +899,14 @@
 
                             <!-- 線條顏色 橘黃 -->
                             <button v-if="selectedConn" type="button" class="btn btn-sm "
-                                @click="changeLineColor('#FFF4B2')"
+                                @click="changeLineColor('#FFB53E')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <!-- transform="scale(1.8)" svg縮放大小 -->
                                 <svg xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27"
                                     fill="none">
                                     <path
                                         d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                                        stroke="#FFF4B2" stroke-width="2" stroke-linecap="round" />
+                                        stroke="#FFB53E" stroke-width="2" stroke-linecap="round" />
                                 </svg>
                             </button>
                         </div>
@@ -1208,7 +1207,6 @@
                     }
 
                     const result = { x: adjustedX, y: adjustedY };
-                    console.log('Adjusted arrow position:', result, 'for connection:', conn.connectionsId);
                     return result;
                 },
 
@@ -1225,12 +1223,6 @@
                     // 考慮畫板縮放和位移
                     this.tempConnection.startX = circleX;
                     this.tempConnection.startY = circleY;
-
-                    console.log('Start drag connection circle:', {
-                        startX: this.tempConnection.startX,
-                        startY: this.tempConnection.startY,
-                        node: node.id,
-                    });
 
                     document.addEventListener('mousemove', this.dragConnectionCircle);
                     document.addEventListener('mouseup', this.endDragConnectionCircle, { once: true });
@@ -1303,11 +1295,11 @@
                         };
                         const isInRect = svgX >= rect.x && svgX <= rect.x + rect.width &&
                             svgY >= rect.y && svgY <= rect.y + rect.height;
-                        console.log(`Checking node ${node.id}:`, rect, `Mouse: (${svgX}, ${svgY})`, `In rect: ${isInRect}`);
                         return isInRect;
                     });
 
                     if (targetNode) {
+                        // 現有邏輯：拖曳到另一個節點，建立連線
                         if (this.willCauseLoop(this.tempConnection.startNode.id, targetNode.id)) {
                             Swal.fire({
                                 icon: 'warning',
@@ -1339,8 +1331,65 @@
                                 this.renderChart(targetNode);
                             }
                         }
+                    } else {
+                        // 新功能：拖曳到空白位置，新增便利貼
+                        const newNode = {
+                            x: svgX, // 新便利貼的 X 坐標
+                            y: svgY, // 新便利貼的 Y 坐標
+
+                            userId: this.userId,
+                            boardId: this.boardId,
+                            // 其他必要的節點屬性...
+                            id: Math.random().toString(36).substring(2, 12), //取隨機8字元
+                            label: 'New Node',
+                            type: 'general',
+                            color: '#FFF8CA',
+                            colorTop: '#FFF4B2',
+                            editing: false,
+                            selected: false,
+                            operation: "sum",  // 預設值
+                            connectionsOut: [],
+                            connectionsIn: [],
+                            connections: [],
+                            total: 0,
+                            count: 0,
+                        };
+
+                        // 將新便利貼添加到 nodes 數組
+                        this.nodes.push(newNode);
+
+                        // 建立與起始節點的連線
+                        this.connections.push({
+                            from: this.tempConnection.startNode.id,
+                            to: newNode.id,
+                            selected: false,
+                            userId: this.userId,
+                            boardId: this.boardId,
+                            color: '#FFB53E',
+                            type: '12,6',
+                            connectionsId: Math.random().toString(36).substring(2, 12),
+                        });
+
+                        // 更新起始節點和目標節點的連線關係
+                        this.tempConnection.startNode.connectionsOut.push(newNode.id);
+                        newNode.connectionsIn.push(this.tempConnection.startNode.id);
+
+
+                        const node = this.nodes.find(n => n.id === newNode.id);
+                        node.editing = true;
+                        this.$nextTick(() => {
+                            const textarea = document.querySelector(`#app textarea`);
+                            if (textarea) {
+                                textarea.focus();
+                                textarea.select();
+                            }
+                        });
+
+                        // 重新計算總計（如果需要）
+                        this.calculateTotal();
                     }
 
+                    // 清理臨時連線
                     this.tempConnection.active = false;
                     this.tempConnection.startNode = null;
                     this.tempConnection.path = '';
@@ -1381,7 +1430,6 @@
                     y = Math.max(minY, Math.min(maxY, y));
 
                     const result = { x: endEdge.x, y };
-                    console.log('Arrow position for connection:', conn.connectionsId, result);
                     if (isNaN(result.x) || isNaN(result.y)) {
                         console.warn('Invalid arrow position:', result, 'for connection:', conn);
                         return { x: toNode.x, y: toNode.y };
@@ -1427,10 +1475,15 @@
                 changeLineColor(color) {
                     this.connections.forEach(conn => {
                         if (conn.selected) {
-
                             conn.color = color;
-                        }
+                            conn.selected = false;
 
+                        }
+                    })
+                    this.nodes.forEach(n => {
+                        if (n.selected) {
+                            n.selected = false;
+                        }
                     })
                 },
 
@@ -1439,9 +1492,15 @@
                     this.connections.forEach(conn => {
                         if (conn.selected) {
                             conn.type = this.getDashArray(type);
+                            conn.selected = false;
 
                         }
-                    })
+                    });
+                    this.nodes.forEach(n => {
+                        if (n.selected) {
+                            n.selected = false;
+                        }
+                    });
                 },
 
                 getDashArray(type) {
@@ -1505,26 +1564,25 @@
                     // 確保銷毀舊實例
                     if (this.chartInstances[node.id]) {
                         this.chartInstances[node.id].destroy();
-                        delete this.chartInstances[node.id]; // 清除引用
+                        delete this.chartInstances[node.id];
                     }
 
-                    let categories = ['範例1', '範例2', '範例3'];
-                    let data = [10, 20, 30];
+                    let categories = ['範例1', '範例2', '範例3']; // 預設值
+                    let data = [10, 20, 30]; // 預設值
                     if (node.connectionsIn.length >= 2) {
                         const firstNode = this.getNodeById(node.connectionsIn[0]);
                         const secondNode = this.getNodeById(node.connectionsIn[1]);
-                        if (firstNode && firstNode.label) {
-                            // 按空格分割，並濾除空字串
-                            // categories = firstNode.label.split(/\s+/).filter(Boolean);
-                            categories = vm.regularSplitString(firstNode);
+                        if (firstNode) {
+                            categories = vm.regularSplitString(firstNode) || categories;
                         }
-                        if (secondNode && secondNode.label) {
+                        if (secondNode) {
                             const matches = vm.regularSplitNumbers(secondNode);
-                            data = matches ? matches.map(num => parseFloat(num)) : [];
+                            data = matches ? matches.map(num => parseFloat(num)) : data; // 如果 matches 為 null，使用預設值
                         }
                     }
 
                     if (node.chartType == 'bar' || node.chartType == 'line' || node.chartType == 'area' || node.chartType == 'radar') {
+
                         const options = {
                             chart: {
                                 type: node.chartType || 'pie',
@@ -1545,18 +1603,18 @@
                                     horizontal: true,
                                 }
                             },
-                            colors: ['#ff6384'], // Bar顏色
+                            colors: ['#ff6384'],
                             dataLabels: {
                                 enabled: true,
                                 style: {
-                                    colors: ['#dddddd']  // 文字顏色
+                                    colors: ['#dddddd']
                                 }
                             }
                         };
                         this.chartInstances[node.id] = new ApexCharts(container, options);
                         this.chartInstances[node.id].render();
-
                     } else if (node.chartType == 'pie' || node.chartType == 'polarArea' || node.chartType == 'donut' || node.chartType == 'radialBar') {
+
                         const options = {
                             chart: {
                                 type: node.chartType || 'pie',
@@ -1565,34 +1623,32 @@
                             },
                             series: data,
                             labels: categories,
-
                             colors: ['#ff6384'],
                             dataLabels: {
                                 enabled: true,
                                 style: {
-                                    colors: ['#dddddd']  // 文字顏色
+                                    colors: ['#dddddd']
                                 }
                             }
                         };
                         this.chartInstances[node.id] = new ApexCharts(container, options);
                         this.chartInstances[node.id].render();
                     } else {
+
                         // 時間類型
                         const firstNode = this.getNodeById(node.connectionsIn[0]);
                         const secondNode = this.getNodeById(node.connectionsIn[1]);
 
-                        // 取得資料
-                        // const labels = vm.regularSplitNumbers(firstNode); // 這會是 ['-22600', '-22600', ...]
-                        // const dateStrings = vm.regularSplitTime(secondNode); // 這會是 ['2016/12/23 01:45:00 PM', '2016/12/30 01:45:00 PM', ...]
+                        const labels = firstNode ? vm.regularSplitNumbers(firstNode) : [];
+                        const dateStrings = secondNode ? vm.regularSplitTime(secondNode) : [];
 
                         const timelineData = [];
                         for (let i = 0; i < labels.length; i++) {
                             const startStr = dateStrings[i * 2];
                             const endStr = dateStrings[i * 2 + 1];
-                            if (!startStr || !endStr) continue; // 防呆
+                            if (!startStr || !endStr) continue;
                             const start = new Date(vm.convertToISOWithMoment(startStr)).getTime();
                             const end = new Date(vm.convertToISOWithMoment(endStr)).getTime();
-                            // 確保 start < end，否則跳過
                             if (start >= end) continue;
                             timelineData.push({
                                 x: labels[i],
@@ -1601,11 +1657,9 @@
                         }
 
                         const options = {
-                            series: [
-                                {
-                                    data: timelineData
-                                }
-                            ],
+                            series: [{
+                                data: timelineData
+                            }],
                             chart: {
                                 height: 350,
                                 type: 'rangeBar'
@@ -1613,10 +1667,10 @@
                             dataLabels: {
                                 enabled: true,
                                 formatter: function (val) {
-                                    var a = moment(val[0])
-                                    var b = moment(val[1])
-                                    var diff = b.diff(a, 'days')
-                                    return diff + (diff > 1 ? ' days' : ' day')
+                                    var a = moment(val[0]);
+                                    var b = moment(val[1]);
+                                    var diff = b.diff(a, 'days');
+                                    return diff + (diff > 1 ? ' days' : ' day');
                                 }
                             },
                             plotOptions: {
@@ -1631,7 +1685,6 @@
                         this.chartInstances[node.id] = new ApexCharts(container, options);
                         this.chartInstances[node.id].render();
                     }
-
                 },
                 // time
                 regularSplitTime(node) {
@@ -1650,12 +1703,17 @@
                  * 按空格分割，並濾除空字串
                  * */
                 regularSplitString(node) {
-                    return node.label.split(/\s+/).filter(Boolean);
+                    // 確保 node.label 是字符串，若不是則返回預設值
+                    const label = typeof node.label === 'string' ? node.label : '';
+                    return label.split(/\s+/).filter(Boolean);
                 },
                 // 正則:分割數字
                 regularSplitNumbers(node) {
-                    return node.label.match(/-?\d*\.?\d+/g);
+                    // 確保 node.label 是字符串，若不是則返回 null
+                    const label = typeof node.label === 'string' ? node.label : '';
+                    return label.match(/-?\d*\.?\d+/g); // 返回匹配的數字數組，或 null
                 },
+
                 refreshChartsConnectedTo(node) {
                     this.nodes.forEach(chartNode => {
                         if (chartNode.type === 'chart' && chartNode.connectionsIn.includes(node.id)) {
@@ -1722,7 +1780,7 @@
                                 dataType: "json",
                                 async: false,
                                 success: function (data) {
-                                    console.log(data.state);
+
                                     location.href = "StickyCalc_board.html";
                                 },
                                 error: function () {
@@ -1737,6 +1795,14 @@
                 edittodo() {
                     // this.cacheTitle = title;
                     this.editName = !this.editName;
+                    this.$nextTick(() => {
+                        const textarea = document.querySelector(`#app input`);
+                        if (textarea) {
+                            textarea.focus();
+                            textarea.select();
+                        }
+                    });
+
                 },
                 checkuid() {
                     //確認UID是否存在
@@ -1766,7 +1832,6 @@
                 },
                 showdata_checkuid(data) {
                     const vm = this;
-                    console.log(data)
                     if (data.state) {
                         vm.userId = data.data.Username;
 
@@ -1781,6 +1846,17 @@
                             if (localStorage.getItem('nodes')) {
                                 try {
                                     vm.nodes = JSON.parse(localStorage.getItem('nodes'));
+
+                                    // 延遲渲染以確保 DOM 準備好
+                                    this.$nextTick(() => {
+                                        vm.nodes.forEach(chartNode => {
+                                            if (chartNode.type === 'chart') {
+                                                // this.renderChart(chartNode);
+                                                setTimeout(() => this.renderChart(chartNode), 50); // 延遲渲染以確保 DOM 準備好
+
+                                            }
+                                        });
+                                    });
                                 } catch (e) {
                                     localStorage.removeItem('nodes');
                                 }
@@ -1802,7 +1878,6 @@
                 get_nodes() {
                     const vm = this;
                     var JSONdata = {};
-                    console.log("name: " + vm.userId + "board: " + vm.boardId)
                     if (vm.userId && vm.boardId) {
                         JSONdata["userId"] = vm.userId;
                         JSONdata["boardId"] = vm.boardId;
@@ -1884,10 +1959,14 @@
                     this.$nextTick(() => {
                         vm.nodes.forEach(chartNode => {
                             if (chartNode.type === 'chart') {
-                                this.renderChart(chartNode);
+                                // this.renderChart(chartNode);
+                                setTimeout(() => this.renderChart(chartNode), 50); // 延遲渲染以確保 DOM 準備好
+
                             }
                         });
                     });
+
+
                 },
                 getConnections() {
                     //取得後端的連線資料      
@@ -1964,7 +2043,6 @@
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: function (data) {
-                                console.log("便利貼" + data.state + data.message);
                             },
                             error: function () {
                                 Swal.fire({
@@ -2010,7 +2088,6 @@
                         data: JSON.stringify(JSONdata),
                         dataType: "json",
                         success: function (data) {
-                            console.log("線段" + data.state + data.message);
                         },
                         error: function () {
                             Swal.fire({
@@ -2037,14 +2114,12 @@
                         boardName: vm.boardName,
                     }
 
-                    console.log(JSONdata02);
                     $.ajax({
                         type: "POST",
                         url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=board_upload",
                         data: JSON.stringify(JSONdata02),
                         dataType: "json",
                         success: function (data) {
-                            console.log("畫板名稱" + data.state);
                         },
                         error: function () {
                             Swal.fire({
@@ -2223,6 +2298,7 @@
                         const b = node.count || 0;
                         values = a + b;
                         node.label = node.label; // 保留原有 label
+                        values = Math.round(values * 100) / 100;
                         node.total = values;
                     } else if (node.connectionsIn.length === 2) {
                         const a = this.getNodeById(node.connectionsIn[0]).total || 0;
@@ -2235,6 +2311,7 @@
                             case "modulusAB": values = b !== 0 ? a % b : 0; break;
                             default: values = 0;
                         }
+                        values = Math.round(values * 100) / 100;
                         node.label = values;
                         node.total = values;
                     } else if (node.connectionsIn.length >= 3) {
@@ -2243,11 +2320,12 @@
                             const a = this.getNodeById(node.connectionsIn[i]).total || 0;
                             values += a;
                         }
+                        values = Math.round(values * 100) / 100;
                         node.label = values;
                         node.total = values;
                     }
 
-                    return values;
+                    return Math.round(values * 100) / 100;;
                 },
 
 
@@ -2262,15 +2340,22 @@
                                 this.connections.forEach(n => n.selected = false);
                             }
                             this.selectionBox.active = true;
+                            this.editName = false;
 
-                            // 獲取當前平移和縮放值
-                            const tx = this.boardOffset.x;
-                            const ty = this.boardOffset.y;
-                            const s = this.scale;
+                            // 獲取 SVG 元素
+                            const svg = document.getElementById('mindmapSvg');
+                            const point = svg.createSVGPoint();
+                            point.x = event.clientX;
+                            point.y = event.clientY;
 
-                            // 將視窗座標轉換為 SVG 座標
-                            const svgStartX = (event.offsetX - tx) / s;
-                            const svgStartY = (event.offsetY - ty) / s;
+                            // 將視窗坐標轉換為 SVG 坐標
+                            const ctm = svg.getScreenCTM();
+                            let svgStartX = (point.x - ctm.e) / ctm.a;
+                            let svgStartY = (point.y - ctm.f) / ctm.d;
+
+                            // 考慮畫板縮放和位移
+                            svgStartX = (svgStartX - this.boardOffset.x) / this.scale;
+                            svgStartY = (svgStartY - this.boardOffset.y) / this.scale;
 
                             this.selectionBox.startX = svgStartX;
                             this.selectionBox.startY = svgStartY;
@@ -2299,12 +2384,20 @@
                             n.y = n.initialY + dy;
                         });
                     } else if (this.selectionBox.active) {
-                        const tx = this.boardOffset.x;
-                        const ty = this.boardOffset.y;
-                        const s = this.scale;
+                        // 獲取 SVG 元素
+                        const svg = document.getElementById('mindmapSvg');
+                        const point = svg.createSVGPoint();
+                        point.x = event.clientX;
+                        point.y = event.clientY;
 
-                        const svgCurrentX = (event.offsetX - tx) / s;
-                        const svgCurrentY = (event.offsetY - ty) / s;
+                        // 將視窗坐標轉換為 SVG 坐標
+                        const ctm = svg.getScreenCTM();
+                        let svgCurrentX = (point.x - ctm.e) / ctm.a;
+                        let svgCurrentY = (point.y - ctm.f) / ctm.d;
+
+                        // 考慮畫板縮放和位移
+                        svgCurrentX = (svgCurrentX - this.boardOffset.x) / this.scale;
+                        svgCurrentY = (svgCurrentY - this.boardOffset.y) / this.scale;
 
                         const startX = this.selectionBox.startX;
                         const startY = this.selectionBox.startY;
@@ -2559,7 +2652,6 @@
                         return false;
                     };
 
-                    console.log('Checking loop from', fromId, 'to', toId);
                     return dfs(fromId);
                 },
 
@@ -2640,6 +2732,17 @@
                     };
                     this.nodes.push(newNode);
                     this.contextMenu.visible = false;
+
+                    const node = this.nodes.find(n => n.id === newNode.id);
+                    node.editing = true;
+                    this.$nextTick(() => {
+                        const textarea = document.querySelector(`#app textarea`);
+                        if (textarea) {
+                            textarea.focus();
+                            textarea.select();
+                        }
+                    });
+
                 },
 
                 // ============== 連線相關 ===============
@@ -2690,10 +2793,10 @@
 
                     if (event.ctrlKey && event.key === 'z' || event.key === 'Z') {
                         if (event.shiftKey) {
-                            console.log("CTRL+SHIFT+Z 重做")
+
                             this.redo(); // CTRL+SHIFT+Z 重做
                         } else {
-                            console.log("CTRL+Z 撤銷")
+
                             this.undo(); // CTRL+Z 撤銷
                         }
                     };
@@ -2814,6 +2917,12 @@
                                 n.color = color;
                                 n.colorTop = colorTop;
                             }
+                            n.selected = false;
+                        }
+                    })
+                    this.connections.forEach(conn => {
+                        if (conn.selected) {
+                            conn.selected = false;
                         }
                     })
 
@@ -2876,7 +2985,6 @@
                     const cx = mx + px * offset, cy = my + py * offset;
 
                     const path = `M ${startEdge.x} ${startEdge.y} Q ${cx} ${cy} ${endEdge.x} ${endEdge.y}`;
-                    console.log('Connection path:', path, 'for connection:', conn.connectionsId);
                     return path;
                 },
 
@@ -2938,7 +3046,6 @@
                     }
 
                     const result = { x: edgeX, y: edgeY };
-                    console.log('Edge point:', result, 'from:', fromNode.id, 'to:', toNode.id);
                     return result;
                 },
 

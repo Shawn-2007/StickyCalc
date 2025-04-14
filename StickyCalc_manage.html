@@ -381,7 +381,6 @@
 
         function showdata_login(data) {
             // location.href = "SPA-index.html";
-            console.log(data);
             if (data.state) {
                 Swal.fire({
                     title: data.message,
@@ -411,7 +410,6 @@
         }
 
         function showdata_checkuid(data) {
-            console.log(data)
             if (data.state) {
                 $("#username_showtext").removeClass("d-none");
 
@@ -436,7 +434,6 @@
         }
 
         function showdata(data) {
-            console.log(data);
             if (data.state) {
                 // $("#mydata").empty();
                 data.data.forEach(function (item01) {
@@ -455,8 +452,6 @@
                 })
 
                 $("#mydata #updata_btn").click(function () {
-                    console.log($(this).data("username"));
-                    console.log($(this).data("email"));
 
                     $("#username").val($(this).data("username"));
                     $("#email").val($(this).data("email"));
@@ -483,7 +478,6 @@
                             //{"id" : "26", "price" : "90", "remark" : "高品質鮮乳"}
                             var JSONdata02 = {};
                             JSONdata02["id"] = uid;
-                            console.log(JSONdata02);
 
                             $.ajax({
                                 type: "DELETE",
@@ -523,7 +517,6 @@
                         var JSONdata01 = {};
                         JSONdata01["id"] = uid;
                         JSONdata01["email"] = $("#email").val();
-                        console.log(JSONdata01);
 
                         $.ajax({
                             type: "POST",
@@ -551,7 +544,6 @@
 
 
         function showdata_delete(data) {
-            console.log(data);
 
             if (data.state) {
                 alert(data.message);//練習階段，一切皆用sweetalert
@@ -564,7 +556,6 @@
         }
 
         function showdata_update(data) {
-            // console.log(data);
             if (data.state) {
                 alert(data.message);//練習階段，一切皆用sweetalert
                 location.href = "StickyCalc_manage.html";

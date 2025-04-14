@@ -369,11 +369,9 @@
                             dataType: "json",
                             success: function (deta) {
                                 if (deta.state) {
-                                    console.log("無重複")
                                     vm.flag_username_reg = true;
 
                                 } else {
-                                    console.log("重複不可用")
                                     vm.flag_username_reg = false;
                                 }
 
@@ -411,7 +409,11 @@
                 },
                 email_vue: function (newValue) {
                     const vm = this;
-                    if (newValue.length > 3 && newValue.length < 30) {
+
+                    //Regular expression Testing
+                    const emailRule = /^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z]+$/;
+
+                    if (newValue.length > 3 && newValue.length < 30 && newValue.search(emailRule) != -1) {
                         vm.flag_email_reg = true;
                     } else {
                         vm.flag_email_reg = false;
@@ -421,7 +423,6 @@
             // 函式區
             methods: {
                 newBoard() {
-                    console.log("RRRRRRRRRRRRRRRRRR")
                     localStorage.setItem('boardId', "newBoard")
                     localStorage.setItem('boardName', "newBoard")
 
@@ -492,7 +493,6 @@
                 },
                 showdata_login(data) {
                     // location.href = "SPA-index.html";
-                    console.log(data);
                     if (data.state) {
                         Swal.fire({
                             title: data.message,
@@ -614,7 +614,6 @@
         })
 
         function showdata_reg(data) {
-            console.log(data);
             if (data.state) {
                 Swal.fire({
                     title: data.message,
@@ -637,7 +636,6 @@
 
 
         function showdata_checkuid(data) {
-            console.log(data)
             if (data.state) {
                 $("#username_showtext").removeClass("d-none");
 
