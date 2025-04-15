@@ -1837,7 +1837,7 @@
                         vm.userId = data.data.Username;
 
                         // 訂閱會員才可使用雲端存儲資料
-                        if (data.data.Level >= 30) {
+                        if (data.data.Level >= 10) {
                             // 後端取得
                             vm.get_nodes()
                         }
