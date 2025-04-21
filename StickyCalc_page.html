@@ -536,7 +536,6 @@
                             <circle :cx="getAdjustedArrowPosition(conn).x" :cy="getAdjustedArrowPosition(conn).y" r="8"
                                 fill="white" stroke="black" style="cursor: ns-resize;"
                                 @mousedown.stop="startDragArrow(conn, $event)">
-                                @mousedown.stop="startDragArrow(conn, $event)">
                             </circle>
                             <text v-if="isDoubleConnection(conn)" :x="getAdjustedArrowPosition(conn).x"
                                 :y="getAdjustedArrowPosition(conn).y + 3" text-anchor="middle" font-size="10"
@@ -1781,7 +1780,6 @@
                                 dataType: "json",
                                 async: false,
                                 success: function (data) {
-
                                     location.href = "StickyCalc_board.html";
                                 },
                                 error: function () {
@@ -1836,8 +1834,8 @@
                     if (data.state) {
                         vm.userId = data.data.Username;
 
-                        // 訂閱會員才可使用雲端存儲資料
-                        if (data.data.Level >= 10) {
+                        // 訂閱會員才可使用雲端存儲資料(會員等級30以上)
+                        if (data.data.Level >= 30) {
                             // 後端取得
                             vm.get_nodes()
                         }
@@ -1891,7 +1889,7 @@
                             error: function () {
                                 Swal.fire({
                                     title: "API串接錯誤",
-                                    text: "member_register_api_v1.php 取得便利貼資料",
+                                    text: "取得便利貼資料失敗 請聯繫作者",
                                     icon: "error"
                                 });
                             }
@@ -1986,7 +1984,7 @@
                             error: function () {
                                 Swal.fire({
                                     title: "API串接錯誤",
-                                    text: "member_register_api_v1.php 取得線條資料",
+                                    text: "取得線條資料失敗 請聯繫作者",
                                     icon: "error"
                                 });
                             }
@@ -2048,7 +2046,7 @@
                             error: function () {
                                 Swal.fire({
                                     title: "API串接錯誤",
-                                    text: "https://api.shawn4x4.com/api/member_control_api_v1.php",
+                                    text: "保存便利貼失敗 請聯繫作者",
                                     icon: "error"
                                 });
                             }
@@ -2093,7 +2091,7 @@
                         error: function () {
                             Swal.fire({
                                 title: "API串接錯誤",
-                                text: "member_register_api_v1.php",
+                                text: "保存線段失敗 請聯繫作者",
                                 icon: "error"
                             });
                         }
@@ -2124,8 +2122,8 @@
                         },
                         error: function () {
                             Swal.fire({
-                                title: "畫板上傳API串接錯誤",
-                                text: "member_register_api_v1.php",
+                                title: "API串接錯誤",
+                                text: "保存貼版失敗 請聯繫作者",
                                 icon: "error"
                             });
                         }
@@ -2720,7 +2718,7 @@
                         color: '#FFF8CA',
                         colorTop: '#FFF4B2',
                         editing: false,
-                        selected: false,
+                        selected: true,
                         operation: "sum",  // 預設值
                         connectionsOut: [],
                         connectionsIn: [],
@@ -2745,6 +2743,82 @@
                     });
 
                 },
+                // 按下 Tab 鍵時，在選取的一般便利貼右邊新增一個便利貼並連線
+                addNodeOnTab() {
+                    const vm = this;
+
+                    // 獲取所有選取的便利貼
+                    const selectedNodes = this.nodes.filter(n => n.selected);
+
+                    // 如果沒有選取的便利貼，則不執行
+                    if (selectedNodes.length === 0) {
+                        return;
+                    }
+
+                    // 找到第一個一般便利貼（type: 'general'）
+                    const baseNode = selectedNodes.find(n => n.type === 'general');
+                    if (!baseNode) {
+                        return; // 如果選取的便利貼中沒有一般便利貼，則不執行
+                    }
+
+                    // 新增便利貼，位置在基準便利貼右邊 200px
+                    const newNode = {
+                        id: Math.random().toString(36).substring(2, 12),
+                        label: 'New Node',
+                        type: 'general',
+                        x: baseNode.x + 200, // 右邊 200px
+                        y: baseNode.y, // 與基準便利貼的 y 坐標相同
+                        color: '#FFF8CA',
+                        colorTop: '#FFF4B2',
+                        editing: false,
+                        selected: false,
+                        operation: "sum",
+                        connectionsOut: [],
+                        connectionsIn: [],
+                        connections: [],
+                        total: 0,
+                        count: 0,
+                        userId: vm.userId,
+                        boardId: vm.boardId,
+                    };
+
+                    // 將新便利貼添加到 nodes 數組
+                    this.nodes.push(newNode);
+
+                    // 建立連線（從基準便利貼到新便利貼）
+                    this.connections.push({
+                        from: baseNode.id,
+                        to: newNode.id,
+                        selected: true,
+                        userId: this.userId,
+                        boardId: this.boardId,
+                        color: '#FFB53E',
+                        type: '12,6',
+                        connectionsId: Math.random().toString(36).substring(2, 12),
+                    });
+
+                    // 更新連線關係
+                    baseNode.connectionsOut.push(newNode.id);
+                    newNode.connectionsIn.push(baseNode.id);
+                    baseNode.selected = false;
+
+                    // 重新計算總計（如果需要）
+                    this.calculateTotal();
+
+
+
+                    // 進入新便利貼的編輯模式
+                    const node = this.nodes.find(n => n.id === newNode.id);
+                    node.selected = true;
+                    node.editing = true;
+                    this.$nextTick(() => {
+                        const textarea = document.querySelector(`#app textarea`);
+                        if (textarea) {
+                            textarea.focus();
+                            textarea.select();
+                        }
+                    });
+                },
 
                 // ============== 連線相關 ===============
                 // 右鍵選單中「開始連線」
@@ -2756,11 +2830,30 @@
 
 
                 handleKeyDown(event) {
-                    // Enter 按鍵：關閉編輯模式
+                    // Enter 按鍵：關閉編輯模式 加SHIFT則換行
+                    if (event.key === 'Enter' && event.shiftKey) {
+
+
+                        return;
+                    }
+
                     if (event.key === 'Enter') {
+
+
+                        event.preventDefault();
                         const editingNode = this.nodes.find(n => n.editing);
                         if (editingNode) {
                             this.finishEdit(editingNode);
+                        }
+                    }
+
+                    // Tab 按鍵：新增便利貼並連線
+                    else if (event.key === 'Tab') {
+                        event.preventDefault(); // 防止 Tab 鍵切換焦點
+                        if (this.nodes.some(n => n.editing)) {
+                            this.nodes.find(n => n.editing).editing = false
+                        } else {
+                            this.addNodeOnTab();
                         }
                     }
 
@@ -2794,10 +2887,8 @@
 
                     if (event.ctrlKey && event.key === 'z' || event.key === 'Z') {
                         if (event.shiftKey) {
-
                             this.redo(); // CTRL+SHIFT+Z 重做
                         } else {
-
                             this.undo(); // CTRL+Z 撤銷
                         }
                     };
@@ -3079,38 +3170,7 @@
 
         var nodeChart;
 
-        // 測試jquery
-        $(function () {
-            // const canvas = document.getElementById("test0001");
-            // if (!canvas) return;
-            // nodeChart = new Chart(canvas, {
-            //     type: 'line', // 預設折線圖
-            //     data: {
-            //         labels: ['範例1', '範例2', '範例3'], // 預設數據
-            //         datasets: [{
-            //             label: '數據',
-            //             data: [10, 20, 30],
-            //             borderColor: 'red',
-            //             fill: false
-            //         }]
-            //     },
-            //     options: {
-            //         scales: {
-            //             y: { title: { display: true, text: 'Y 軸' } }
-            //         }
-            //     }
-            // });
-        })
 
-        function testShowData() {
-            // nodeChart.data.labels = [];
-            // nodeChart.data.datasets[0].data = [];
-            // nodeChart.data.labels = ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'];
-            // nodeChart.data.datasets[0].data = [12, 19, 3, 5, 2, 3];
-            // nodeChart.data.labels.push("紅色");
-            // nodeChart.data.datasets[0].data.push(12);
-            // nodeChart.update();
-        }
 
 
     </script>
