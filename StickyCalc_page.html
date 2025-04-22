@@ -506,9 +506,9 @@
                 </button>
             </div>
 
-            <svg id="mindmapSvg" :width="width" :height="height" @pointerdown="handleSvgMouseDown"
-                @pointermove="dragMove" @wheel.prevent="handleWheel" @pointerup="endDrag" @mouseleave="endDrag"
-                @contextmenu.prevent="handleSvgContextMenu($event)" touch-action: none;>
+            <svg id="mindmapSvg" :width="width" :height="height" @mousedown="handleSvgMouseDown" @mousemove="dragMove"
+                @wheel.prevent="handleWheel" @mouseup="endDrag" @mouseleave="endDrag"
+                @contextmenu.prevent="handleSvgContextMenu($event)">
                 <!-- 定義 SVG 內部資源：格紋背景與箭頭 marker -->
                 <defs>
                     <!-- 格紋背景，每格 20x20 -->
@@ -519,7 +519,7 @@
                 </defs>
                 <!-- 使用格紋背景覆蓋整個 SVG -->
                 <rect width="100%" height="100%" fill="url(#grid)" @dblclick="addNodeAtContext"
-                    @pointerdown="handleBackgroundMouseDown"></rect>
+                    @mousedown="handleBackgroundMouseDown"></rect>
                 <!-- 將畫板內容包在 <g> 中，可統一進行平移與縮放 -->
                 <g :transform="boardTransform">
                     <!-- 臨時連線 -->
@@ -535,7 +535,7 @@
                         <g v-if="getAdjustedArrowPosition(conn).x !== 0 && getAdjustedArrowPosition(conn).y !== 0">
                             <circle :cx="getAdjustedArrowPosition(conn).x" :cy="getAdjustedArrowPosition(conn).y" r="8"
                                 fill="white" stroke="black" style="cursor: ns-resize;"
-                                @pointerdown.stop="startDragArrow(conn, $event)">
+                                @mousedown.stop="startDragArrow(conn, $event)">
                             </circle>
                             <text v-if="isDoubleConnection(conn)" :x="getAdjustedArrowPosition(conn).x"
                                 :y="getAdjustedArrowPosition(conn).y + 3" text-anchor="middle" font-size="10"
@@ -545,7 +545,7 @@
                         </g>
                     </g>
                     <!-- 可拖動的便利貼 -->
-                    <g v-for="(node, index) in nodes" :key="node.id" @pointerdown="startDrag(node, $event)"
+                    <g v-for="(node, index) in nodes" :key="node.id" @mousedown="startDrag(node, $event)"
                         @click.stop="nodeClick(node, $event)" @mouseenter="hoveredNode = node"
                         @mouseleave="hoveredNode = null" style="cursor: move;">
                         <!-- 便利貼背景 -->
@@ -625,7 +625,7 @@
                             <!-- 連線圓圈 -->
                             <circle v-if="hoveredNode === node || node.selected" :cx="node.x - noteWidth/2 + 130"
                                 :cy="node.y - noteHeight/2 + 62" r="8" fill="white" stroke="black"
-                                style="cursor: pointer;" @pointerdown.stop="startDragConnectionCircle(node, $event)">
+                                style="cursor: pointer;" @mousedown.stop="startDragConnectionCircle(node, $event)">
                             </circle>
                         </template>
 
@@ -715,7 +715,7 @@
                             </foreignObject>
                             <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
                                 height="15" fill="grey" stroke="black" stroke-width="1" style="cursor: se-resize;"
-                                @pointerdown.stop="startResize(node, $event)" />
+                                @mousedown.stop="startResize(node, $event)" />
                             <!-- 選取邊框 -->
                             <rect v-if="node.selected" :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
                                 :width="node.chartWidth" :height="node.chartHeight" fill="none" stroke="blue"
