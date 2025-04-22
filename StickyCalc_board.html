@@ -366,7 +366,7 @@
                     JSONdata["uid01"] = vm.getCookie("Uid01");
                     $.ajax({
                         type: "POST",
-                        url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=checkuid",
+                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuid",
                         data: JSON.stringify(JSONdata),
                         dataType: "json",
                         success: vm.showdata_checkuid,
@@ -403,8 +403,8 @@
                     // 渲染帳號資料
                     $.ajax({
                         type: "POST",
-                        url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=deleteBoard",
-                        // url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=advanceDeleteBoard",
+                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=deleteBoard",
+                        // url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=advanceDeleteBoard",
                         data: JSON.stringify(JSONdata),
                         dataType: "json",
                         async: false,
@@ -434,7 +434,7 @@
                         // 渲染帳號資料
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=getAllUserBoard",
+                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=getAllUserBoard",
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             async: false,
@@ -514,7 +514,7 @@
 
                                     $.ajax({
                                         type: "DELETE",
-                                        url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=delete",
+                                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=delete",
                                         data: JSON.stringify(JSONdata02),
                                         dataType: "json",
                                         async: false,
@@ -553,7 +553,7 @@
 
                                 $.ajax({
                                     type: "POST",
-                                    url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=update",
+                                    url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=update",
                                     data: JSON.stringify(JSONdata01),
                                     dataType: "json",
                                     async: false,
@@ -641,7 +641,7 @@
 
                     $.ajax({
                         type: "POST",
-                        url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=login",
+                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login",
                         data: JSON.stringify(JSONdata01),
                         dataType: "json",
                         success: showdata_login,
@@ -739,7 +739,7 @@
                 // 渲染帳號資料
                 $.ajax({
                     type: "GET",
-                    url: "https://api.shawn4x4.com/api/member_control_api_v1.php?action=getAllUserBoard",
+                    url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=getAllUserBoard",
                     data: JSON.stringify(JSONdata),
                     dataType: "json",
                     async: false,
