@@ -1397,7 +1397,7 @@
                         const timeDiff = now - this.lastPointerDown.time;
 
                         if (dx < moveThreshold && dy < moveThreshold && timeDiff < clickThreshold) {
-                            alert("移動設備上模擬按鈕")
+                            alert("移動設備上模擬雙擊按鈕")
                             const simulatedEvent = { ...event, simulated: true };
                             if (event.target.id === 'mindmapSvg' ||
                                 (event.target.tagName === 'rect' && event.target.getAttribute('fill') === 'url(#grid)')) {
