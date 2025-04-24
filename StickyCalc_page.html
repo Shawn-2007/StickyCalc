@@ -1385,7 +1385,7 @@
 
                     // 只有在移動設備上模擬 click 和 dblclick
                     if (this.isMobile) {
-                        alert("移動設備上模擬按鈕")
+
 
                         const now = Date.now();
                         const clickThreshold = 300; // 點擊的最大時間間隔（毫秒）
@@ -1397,7 +1397,7 @@
                         const timeDiff = now - this.lastPointerDown.time;
 
                         if (dx < moveThreshold && dy < moveThreshold && timeDiff < clickThreshold) {
-                            console.log("移動設備上模擬按鈕")
+                            alert("移動設備上模擬按鈕")
                             const simulatedEvent = { ...event, simulated: true };
                             if (event.target.id === 'mindmapSvg' ||
                                 (event.target.tagName === 'rect' && event.target.getAttribute('fill') === 'url(#grid)')) {
