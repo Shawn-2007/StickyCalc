@@ -394,7 +394,7 @@
                     </g>
                     <!-- 可拖動的便利貼 -->
                     <g v-for="(node, index) in nodes" :key="node.id" :data-id="node.id"
-                        @pointerdown="startDrag(node, $event)" @click.stop="nodeClick(node, $event)"
+                        @pointerdown.stop="startDrag(node, $event)" @click.stop="nodeClick(node, $event)"
                         @mouseenter="hoveredNode = node" @mouseleave="hoveredNode = null" style="cursor: move;">
                         <!-- 便利貼背景 -->
                         <g>
@@ -445,7 +445,7 @@
                             <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 30">
                                 <div class="note-text-container" :style="foreignObjectTransformStyle"
-                                    @dblclick="editNode(node)">
+                                    @dblclick="draggingNodes.length ? null : editNode(node)">
                                     <!-- 一連以下顯示此段，label無內容顯示雙擊編輯 -->
                                     <span v-if="node.connectionsIn.length < 2" class="note-text">{{ node.label || "雙擊編輯"
                                         }}</span>
@@ -471,7 +471,7 @@
 
                             <!-- 連線圓圈 -->
                             <circle v-if="hoveredNode === node || node.selected" :cx="node.x - noteWidth/2 + 130"
-                                :cy="node.y - noteHeight/2 + 62" r="8" fill="white" stroke="black"
+                                :cy="node.y - noteHeight/2 + 62" r="12" fill="white" stroke="black"
                                 style="cursor: pointer;" @pointerdown.stop="startDragConnectionCircle(node, $event)">
                             </circle>
                         </template>
@@ -1060,9 +1060,11 @@
                     },
                     isMobile: false, // 是否為移動設備
                     lastPointerDown: { time: 0, x: 0, y: 0, target: null }, // 記錄最近一次 pointerdown
-                    lastClick: { time: 0, node: null }, // 記錄最近一次點擊
-
+                    lastClick: { time: 0, node: null }, // 記錄上一次點擊的資訊
                     touchPoints: new Map(), // 記錄觸控點，確保可以正確追蹤手指的移動。
+                    processedEvents: new Set(), // 用於避免重複處理事件
+                    lastDistance: null, // 記錄雙指間距離
+                    isDragging: false,
 
                 }
             },
@@ -1105,9 +1107,6 @@
                     vm.connections = [];
 
                 }
-
-
-
             },
             // 生命週期 : 初始化完成後
             mounted() {
@@ -1217,14 +1216,19 @@
                 /* ================ 移動相關 ==================== */
 
 
-                /* ===== 左鍵平移：背景 Pointer ===== */
-                handleBackgroundPointerDown(event) {
-                    this.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
-                    if (event.button === 0 && !event.ctrlKey) {
-                        this.isRightPanning = true;
-                        this.rightPanStart = { x: event.clientX, y: event.clientY };
-                        this.rightPanMoved = false;
-                    }
+
+                // 滾輪縮放
+                handleWheel(event) {
+                    const zoomFactor = 1 - event.deltaY * 0.001;
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const mouseX = event.clientX - rect.left;
+                    const mouseY = event.clientY - rect.top;
+                    const prevScale = this.scale;
+                    this.scale *= zoomFactor;
+                    this.scale = Math.max(0.5, Math.min(2, this.scale));
+                    // 使縮放以滑鼠位置為中心
+                    this.boardOffset.x -= (mouseX / prevScale - mouseX / this.scale);
+                    this.boardOffset.y -= (mouseY / prevScale - mouseY / this.scale);
                 },
 
                 /* ===== 左鍵平移與一般 mousemove ===== */
@@ -1261,23 +1265,66 @@
 
                 },
 
-                // 滾輪縮放
-                handleWheel(event) {
-                    const zoomFactor = 1 - event.deltaY * 0.001;
-                    const rect = event.currentTarget.getBoundingClientRect();
-                    const mouseX = event.clientX - rect.left;
-                    const mouseY = event.clientY - rect.top;
-                    const prevScale = this.scale;
-                    this.scale *= zoomFactor;
-                    this.scale = Math.max(0.5, Math.min(2, this.scale));
-                    // 使縮放以滑鼠位置為中心
-                    this.boardOffset.x -= (mouseX / prevScale - mouseX / this.scale);
-                    this.boardOffset.y -= (mouseY / prevScale - mouseY / this.scale);
+                /*
+                出現BUG 
+                1 電腦端 : 點擊便利貼後會選擇狀態會瞬間取消
+                2 電腦端 : event.preventDefault(); 加上這個後，點擊其他地方無法取消編輯模式
+                */
+
+                // 對應背景網格
+                /* ===== 左鍵平移：背景 Pointer ===== */
+                handleBackgroundPointerDown(event) {
+                    // event.preventDefault();
+                    this.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+                    if (event.button === 0 && !event.ctrlKey) {
+                        this.isRightPanning = true;
+                        this.rightPanStart = { x: event.clientX, y: event.clientY };
+                        this.rightPanMoved = false;
+                    }
+
+                    this.lastPointerDown = {
+                        time: Date.now(),
+                        x: event.clientX,
+                        y: event.clientY,
+                        target: event.target
+                    };
+
+                    // 記錄 pointerdown 事件
+                    this.lastPointerDown = {
+                        time: Date.now(),
+                        x: event.clientX,
+                        y: event.clientY,
+                        target: event.target
+                    };
+
+                    if (event.pointerType === 'touch' && this.touchPoints.size === 1) {
+                        this.lastTouchTime = Date.now();
+                        this.longPressTimer = setTimeout(() => {
+                            this.handleSvgContextMenu(event);
+                        }, this.longPressThreshold);
+                    }
+
+                    if (event.pointerType === 'touch' && this.touchPoints.size === 2) {
+                        clearTimeout(this.longPressTimer);
+                        this.isPanning = true;
+                        const touches = Array.from(this.touchPoints.values());
+                        const center = this.getTouchCenter(touches[0], touches[1]);
+                        this.panStart = { x: center.x, y: center.y };
+                        this.lastDistance = this.getTouchDistance(touches[0], touches[1]);
+                    }
+
                 },
 
-                // Pointer 框選
+                // Pointer 框選 對應SVG
                 handleSvgPointerDown(event) {
                     this.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
+                    this.lastPointerDown = {
+                        time: Date.now(),
+                        x: event.clientX,
+                        y: event.clientY,
+                        target: event.target
+                    };
+
                     if (event.button === 0 && !event.ctrlKey) {
                         this.nodes.forEach(n => n.selected = false);
                         this.connections.forEach(n => n.selected = false);
@@ -1316,7 +1363,6 @@
                             this.selectionBox.width = 0;
                             this.selectionBox.height = 0;
                             this.draggingNodes = [];
-
                         }
                     }
                 },
@@ -1324,16 +1370,71 @@
                 // 拖曳中：若正進行群組移動，則更新所有拖曳便利貼的位置；否則更新框選矩形
                 dragMove(event) {
                     this.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
-                    // 如果正在拖動臨時連線，則不執行其他拖動邏輯
-                    if (this.tempConnection.active) return;
+
+
+
+                    // 處理臨時連線拖動
+                    if (this.tempConnection.active) {
+                        const svg = document.getElementById('mindmapSvg');
+                        const point = svg.createSVGPoint();
+                        point.x = event.clientX;
+                        point.y = event.clientY;
+
+                        const ctm = svg.getScreenCTM();
+                        let svgX = (point.x - ctm.e) / ctm.a;
+                        let svgY = (point.y - ctm.f) / ctm.d;
+
+                        svgX = (svgX - this.boardOffset.x) / this.scale;
+                        svgY = (svgY - this.boardOffset.y) / this.scale;
+
+                        if (isNaN(svgX) || isNaN(svgY)) {
+                            console.warn('Invalid SVG coordinates:', svgX, svgY);
+                            return;
+                        }
+
+                        const startX = this.tempConnection.startX;
+                        const startY = this.tempConnection.startY;
+                        if (isNaN(startX) || isNaN(startY)) {
+                            console.warn('Invalid start coordinates:', startX, startY);
+                            return;
+                        }
+
+                        const endX = svgX;
+                        const endY = svgY;
+                        const mx = (startX + endX) / 2, my = (startY + endY) / 2;
+                        const dx = endX - startX, dy = endY - startY;
+                        const len = Math.sqrt(dx * dx + dy * dy);
+                        let offset = 30;
+                        if (len === 0) offset = 0;
+                        const px = -dy / (len || 1), py = dx / (len || 1);
+                        const cx = mx + px * offset, cy = my + py * offset;
+
+                        this.tempConnection.path = `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`;
+                        return; // 優先處理臨時連線
+                    }
+
+                    if (this.isMobile && event.pointerType === 'touch') {
+                        const dx = Math.abs(event.clientX - this.lastPointerDown.x);
+                        const dy = Math.abs(event.clientY - this.lastPointerDown.y);
+                        const moveThreshold = 10;
+                        if (dx > moveThreshold || dy > moveThreshold) {
+                            clearTimeout(this.longPressTimer);
+                        }
+                    }
 
                     if (this.resizingNode) {
                         this.resizeChart(event);
                     }
 
                     if (this.draggingNodes.length > 0) {
-                        let dx = event.offsetX - this.dragStart.x;
-                        let dy = event.offsetY - this.dragStart.y;
+                        const tx = this.boardOffset.x;
+                        const ty = this.boardOffset.y;
+                        const s = this.scale;
+                        const svgX = (event.clientX - tx) / s;
+                        const svgY = (event.clientY - ty) / s;
+
+                        const dx = svgX - this.dragStart.x;
+                        const dy = svgY - this.dragStart.y;
                         this.draggingNodes.forEach(n => {
                             n.x = n.initialX + dx;
                             n.y = n.initialY + dy;
@@ -1344,19 +1445,14 @@
                         const point = svg.createSVGPoint();
                         point.x = event.clientX;
                         point.y = event.clientY;
-
                         // 將視窗坐標轉換為 SVG 坐標
                         const ctm = svg.getScreenCTM();
                         let svgCurrentX = (point.x - ctm.e) / ctm.a;
                         let svgCurrentY = (point.y - ctm.f) / ctm.d;
-
-                        // 考慮畫板縮放和位移
                         svgCurrentX = (svgCurrentX - this.boardOffset.x) / this.scale;
                         svgCurrentY = (svgCurrentY - this.boardOffset.y) / this.scale;
-
                         const startX = this.selectionBox.startX;
                         const startY = this.selectionBox.startY;
-
                         this.selectionBox.x = Math.min(startX, svgCurrentX);
                         this.selectionBox.y = Math.min(startY, svgCurrentY);
                         this.selectionBox.width = Math.abs(svgCurrentX - startX);
@@ -1364,6 +1460,223 @@
                     }
                     this.handleMouseMove(event);
                 },
+
+
+                // 研究一下
+                endDrag(event) {
+
+                    event.preventDefault();
+
+                    // 鼠標左鍵釋放後的結束處理(放到下面就會出問題)
+                    this.resizingNode = null;
+                    if (event.button === 0) {
+                        if (this.draggingNodes.length > 0) {
+                            this.draggingNodes = [];
+                        }
+                        if (this.selectionBox.active) {
+                            this.finishSelection();
+                        }
+                        this.isPanning = false;
+                    }
+                    this.handleMouseUp(event);
+
+
+                    // 避免重複執行：如果已經處理過此 pointerId，則跳過
+                    if (this.processedEvents?.has(event.pointerId)) {
+                        return;
+                    }
+                    if (!this.processedEvents) {
+                        this.processedEvents = new Set();
+                    }
+                    this.processedEvents.add(event.pointerId);
+                    this.touchPoints.delete(event.pointerId); // 移除觸控點
+
+                    // 只有在移動設備上模擬 click 和 dblclick
+                    if (this.isMobile && event.pointerType === 'touch') {
+                        const now = Date.now();
+                        const clickThreshold = 300; // 點擊的最大時間間隔（毫秒）
+                        const moveThreshold = 10; // 允許的最大移動距離（像素）
+                        const doubleClickThreshold = 500; // 雙擊的最大時間間隔（毫秒）
+
+                        const dx = Math.abs(event.clientX - this.lastPointerDown.x);
+                        const dy = Math.abs(event.clientY - this.lastPointerDown.y);
+                        const timeDiff = now - this.lastPointerDown.time;
+
+                        if (dx < moveThreshold && dy < moveThreshold && timeDiff < clickThreshold) {
+                            const simulatedEvent = { ...event, simulated: true };
+                            const timeSinceLastClick = now - this.lastClick.time; // 計算與上一次點擊的時間差
+
+                            if (event.target.id === 'mindmapSvg' ||
+                                (event.target.tagName === 'rect' && event.target.getAttribute('fill') === 'url(#grid)')) {
+                                if (timeSinceLastClick < doubleClickThreshold && this.lastClick.node === null) {
+                                    this.addNodeAtContext(simulatedEvent);
+                                    this.lastClick.time = 0; // 重置時間，避免連續觸發
+                                    console.log("畫布雙擊");
+                                } else {
+                                    this.lastClick = { time: now, node: null }; // 更新上一次點擊資訊
+                                    console.log("畫布單擊");
+                                }
+                            } else {
+                                const nodeGroup = event.target.closest('g');
+                                if (nodeGroup) {
+                                    const nodeId = nodeGroup.getAttribute('data-id');
+                                    const node = this.nodes.find(n => n.id === nodeId);
+                                    if (node) {
+                                        if (timeSinceLastClick < doubleClickThreshold && this.lastClick.node === node) {
+                                            console.log("便利貼雙擊");
+                                            this.editNode(node);
+                                            this.lastClick.time = 0; // 重置時間
+                                        } else {
+                                            this.nodeClick(node);
+                                            this.lastClick = { time: now, node: node }; // 更新上一次點擊資訊
+                                            console.log("便利貼單擊");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+                    // ========================
+
+                    // 處理臨時連線結束
+                    if (this.tempConnection.active) {
+                        const svg = document.getElementById('mindmapSvg');
+                        const point = svg.createSVGPoint();
+                        point.x = event.clientX;
+                        point.y = event.clientY;
+
+                        const ctm = svg.getScreenCTM();
+                        let svgX = (point.x - ctm.e) / ctm.a;
+                        let svgY = (point.y - ctm.f) / ctm.d;
+
+                        svgX = (svgX - this.boardOffset.x) / this.scale;
+                        svgY = (svgY - this.boardOffset.y) / this.scale;
+
+                        const targetNode = this.nodes.find(node => {
+                            if (node === this.tempConnection.startNode) return false;
+                            const width = node.type === 'chart' ? node.chartWidth : this.noteWidth;
+                            const height = node.type === 'chart' ? node.chartHeight : this.noteHeight;
+                            const rect = {
+                                x: node.x - width / 2,
+                                y: node.y - height / 2,
+                                width: width,
+                                height: height,
+                            };
+                            const isInRect = svgX >= rect.x && svgX <= rect.x + rect.width &&
+                                svgY >= rect.y && svgY <= rect.y + rect.height;
+                            return isInRect;
+                        });
+
+                        if (targetNode) {
+                            if (this.willCauseLoop(this.tempConnection.startNode.id, targetNode.id)) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '無法連線',
+                                    text: '此連線會導致循環，請檢查您的連線結構！',
+                                });
+                            } else if (this.tempConnection.startNode.connectionsOut.includes(targetNode.id)) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: '無法連線',
+                                    text: '重複連線了唷，請檢查您的連線結構！',
+                                });
+                            } else {
+                                this.connections.push({
+                                    from: this.tempConnection.startNode.id,
+                                    to: targetNode.id,
+                                    selected: false,
+                                    userId: this.userId,
+                                    boardId: this.boardId,
+                                    color: '#FFB53E',
+                                    type: '12,6',
+                                    connectionsId: Math.random().toString(36).substring(2, 12),
+                                });
+                                this.tempConnection.startNode.connectionsOut.push(targetNode.id);
+                                targetNode.connectionsIn.push(this.tempConnection.startNode.id);
+                                this.calculateTotal();
+
+                                if (targetNode.type === 'chart' && targetNode.connectionsIn.length >= 2) {
+                                    this.renderChart(targetNode);
+                                }
+                            }
+                        } else {
+                            const newNode = {
+                                x: svgX,
+                                y: svgY,
+                                userId: this.userId,
+                                boardId: this.boardId,
+                                id: Math.random().toString(36).substring(2, 12),
+                                label: 'New Node',
+                                type: 'general',
+                                color: '#FFF8CA',
+                                colorTop: '#FFF4B2',
+                                editing: false,
+                                selected: false,
+                                operation: "sum",
+                                connectionsOut: [],
+                                connectionsIn: [],
+                                connections: [],
+                                total: 0,
+                                count: 0,
+                            };
+
+                            this.nodes.push(newNode);
+
+                            this.connections.push({
+                                from: this.tempConnection.startNode.id,
+                                to: newNode.id,
+                                selected: false,
+                                userId: this.userId,
+                                boardId: this.boardId,
+                                color: '#FFB53E',
+                                type: '12,6',
+                                connectionsId: Math.random().toString(36).substring(2, 12),
+                            });
+
+                            this.tempConnection.startNode.connectionsOut.push(newNode.id);
+                            newNode.connectionsIn.push(this.tempConnection.startNode.id);
+
+                            const node = this.nodes.find(n => n.id === newNode.id);
+                            node.editing = true;
+                            this.$nextTick(() => {
+                                const textarea = document.querySelector(`#app textarea`);
+                                if (textarea) {
+                                    textarea.focus();
+                                    textarea.select();
+                                }
+                            });
+
+                            this.calculateTotal();
+                        }
+
+                        // 清理臨時連線
+                        this.tempConnection.active = false;
+                        this.tempConnection.startNode = null;
+                        this.tempConnection.path = '';
+                    }
+
+                    // ========================
+
+
+                    // 行動裝置的觸控結束後的狀態清理
+                    if (event.pointerType === 'touch') {
+                        clearTimeout(this.longPressTimer);
+                        if (this.touchPoints.size < 2) {
+                            this.isPanning = false;
+                            this.lastDistance = null;
+                        }
+                    }
+                    // 清理 processedEvents
+                    if (event.type === 'pointerup') {
+                        setTimeout(() => {
+                            this.processedEvents.delete(event.pointerId);
+                        }, 0);
+                    }
+
+                },
+
                 // 結束拖曳或框選，若處於框選狀態則根據選取框更新各便利貼選取狀態
                 // endDrag(event) {  // 注意：這裡需要加上 event 參數
                 //     this.resizingNode = null; //圖表便利貼
@@ -1377,95 +1690,6 @@
                 //     }
                 //     this.handleMouseUp(event);
                 // },
-
-                // 研究一下
-                endDrag(event) {
-                    event.preventDefault();
-                    this.touchPoints.delete(event.pointerId);
-
-                    // 只有在移動設備上模擬 click 和 dblclick
-                    if (this.isMobile) {
-
-
-                        const now = Date.now();
-                        const clickThreshold = 300; // 點擊的最大時間間隔（毫秒）
-                        const moveThreshold = 10; // 允許的最大移動距離（像素）
-                        const doubleClickThreshold = 500; // 雙擊的最大時間間隔（毫秒）
-
-                        const dx = Math.abs(event.clientX - this.lastPointerDown.x);
-                        const dy = Math.abs(event.clientY - this.lastPointerDown.y);
-                        const timeDiff = now - this.lastPointerDown.time;
-                        //可以進到這邊 但雙擊判定應該是有問題
-
-                        if (dx < moveThreshold && dy < moveThreshold && timeDiff < clickThreshold) {
-                            alert("移動設備上模擬按鈕")
-                            const simulatedEvent = { ...event, simulated: true };
-                            if (event.target.id === 'mindmapSvg' ||
-                                (event.target.tagName === 'rect' && event.target.getAttribute('fill') === 'url(#grid)')) {
-                                const timeSinceLastClick = now - this.lastClick.time;
-                                if (timeSinceLastClick < doubleClickThreshold && this.lastClick.node === null) {
-                                    // 增加新的便利貼
-                                    this.addNodeAtContext(simulatedEvent);
-                                    this.lastClick.time = 0;
-                                    console.log("新增便利貼")
-                                } else {
-                                    this.lastClick = { time: now, node: null };
-                                    console.log("長按?")
-
-                                }
-                            } else {
-                                const nodeGroup = event.target.closest('g');
-                                if (nodeGroup) {
-                                    const nodeId = nodeGroup.getAttribute('data-id');
-                                    const node = this.nodes.find(n => n.id === nodeId);
-                                    if (node) {
-                                        const timeSinceLastClick = now - this.lastClick.time;
-                                        if (timeSinceLastClick < doubleClickThreshold && this.lastClick.node === node) {
-                                            // 雙擊編輯 (暫無作用)
-                                            console.log("雙擊編輯")
-                                            this.editNode(node);
-                                            this.lastClick.time = 0;
-
-
-                                        } else {
-                                            // 選取物件
-                                            this.nodeClick(node);
-                                            this.lastClick = { time: now, node: node };
-                                            console.log("選取物件")
-
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // 行動裝置的觸控結束後的狀態清理
-                    if (event.pointerType === 'touch') {
-                        clearTimeout(this.longPressTimer);
-                        if (this.touchPoints.size < 2) {
-                            this.isPanning = false;
-                            this.lastDistance = null;
-                        }
-                    }
-
-
-                    // 鼠標左鍵釋放後的結束處理(原本的功能被移到這邊了)
-
-                    this.resizingNode = null;
-                    if (event.button === 0) {
-                        if (this.draggingNodes.length > 0) {
-                            this.draggingNodes = [];
-                        }
-                        if (this.selectionBox.active) {
-                            this.finishSelection();
-                        }
-                        this.isPanning = false;
-                    }
-
-                    this.handleMouseUp(event);
-
-                },
 
 
                 // 框選結束：檢查哪些便利貼的中心落在選取框內，並標記為 selected
@@ -1510,6 +1734,7 @@
                     this.selectionBox.width = 0;
                     this.selectionBox.height = 0;
                 },
+
                 // 取得線條本體選取
                 lineIntersectsRect(start, end, rect) {
                     // 矩形的四條邊
@@ -1545,44 +1770,45 @@
 
                 // 開始拖曳便利貼：如果該便利貼尚未選取，先清除其他選取；之後將所有已選取的便利貼作為拖曳群組
                 startDrag(node, event) {
-                    const vm = this;
-                    // 確保初始值不會變成NAN
-                    node.initialX = node.x || 0;
-                    node.initialY = node.y || 0;
-                    // 避免點擊輸入框或選單時觸發拖曳
+                    event.preventDefault();
+                    event.stopPropagation(); // 阻止事件冒泡，避免干擾
+                    clearTimeout(this.longPressTimer);
+
+                    this.lastPointerDown = {
+                        time: Date.now(),
+                        x: event.clientX,
+                        y: event.clientY,
+                        target: event.target
+                    };
+
                     const targetTag = event.target.tagName.toLowerCase();
                     if (["textarea", "select"].includes(targetTag)) {
                         return;
                     }
-                    // 更新選取狀態
+
+                    node.initialX = node.x || 0;
+                    node.initialY = node.y || 0;
+
                     if (!node.selected) {
                         this.nodes.forEach(n => n.selected = false);
                         node.selected = true;
                     }
-                    // 獲取當前平移和縮放值
-                    const tx = this.boardOffset.x; // 平移 x
-                    const ty = this.boardOffset.y; // 平移 y
-                    const s = this.scale;         // 縮放比例
-                    // 計算滑鼠在 SVG 座標系統中的位置
+
+                    const tx = this.boardOffset.x;
+                    const ty = this.boardOffset.y;
+                    const s = this.scale;
                     const svgX = (event.clientX - tx) / s;
                     const svgY = (event.clientY - ty) / s;
-                    // 記錄拖曳起點（SVG 座標）
-                    vm.dragStart = { x: svgX, y: svgY };
-                    // 記錄選取的節點
-                    vm.draggingNodes = this.nodes.filter(n => n.selected);
-                    // 記錄每個節點的初始位置
-                    vm.draggingNodes.forEach(n => {
+
+                    this.dragStart = { x: svgX, y: svgY };
+                    this.draggingNodes = this.nodes.filter(n => n.selected);
+                    this.draggingNodes.forEach(n => {
                         n.startX = n.x;
                         n.startY = n.y;
-                        n.userId = vm.userId;
-                        n.boardId = vm.boardId;
+                        n.userId = this.userId;
+                        n.boardId = this.boardId;
                     });
 
-                    // 重新記錄持有者
-
-                    // 綁定拖曳事件
-                    document.addEventListener("mousemove", this.onDrag);
-                    document.addEventListener("mouseup", this.stopDrag);
                 },
 
                 onDrag(event) {
@@ -1692,6 +1918,7 @@
 
                 // 臨時線條
                 startDragConnectionCircle(node, event) {
+                    event.stopPropagation(); // 阻止事件冒泡
                     this.tempConnection.active = true;
                     this.tempConnection.startNode = node;
 
@@ -1703,10 +1930,11 @@
                     this.tempConnection.startX = circleX;
                     this.tempConnection.startY = circleY;
 
-                    document.addEventListener('mousemove', this.dragConnectionCircle);
-                    document.addEventListener('mouseup', this.endDragConnectionCircle, { once: true });
+                    // document.addEventListener('mousemove', this.dragConnectionCircle);
+                    // document.addEventListener('mouseup', this.endDragConnectionCircle, { once: true });
                 },
 
+                // 貌似被取消了
                 dragConnectionCircle(event) {
                     if (!this.tempConnection.active) return;
 
@@ -1748,6 +1976,7 @@
                     this.tempConnection.path = `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`;
                 },
 
+                // 貌似被取消了
                 endDragConnectionCircle(event) {
                     if (!this.tempConnection.active) return;
 
@@ -2436,9 +2665,9 @@
                             this.renderChart(node);
                         }
                     } else {
-                        // if (event.shiftKey) {
-                        node.selected = !node.selected;
-                        // }
+                        if (this.isMobile) {
+                            node.selected = !node.selected;
+                        }
                     }
                 },
 
@@ -2662,13 +2891,12 @@
                     }
 
                     if (event.key === 'Enter') {
-                        console.log("關閉")
-
                         event.preventDefault();
                         const editingNode = this.nodes.find(n => n.editing);
                         if (editingNode) {
                             this.finishEdit(editingNode);
                         }
+
                     }
 
                     // Tab 按鍵：新增便利貼並連線
