@@ -1395,9 +1395,10 @@
                         const dx = Math.abs(event.clientX - this.lastPointerDown.x);
                         const dy = Math.abs(event.clientY - this.lastPointerDown.y);
                         const timeDiff = now - this.lastPointerDown.time;
+                        //可以進到這邊 但雙擊判定應該是有問題
 
                         if (dx < moveThreshold && dy < moveThreshold && timeDiff < clickThreshold) {
-                            alert("移動設備上模擬雙擊按鈕")
+                            alert("移動設備上模擬按鈕")
                             const simulatedEvent = { ...event, simulated: true };
                             if (event.target.id === 'mindmapSvg' ||
                                 (event.target.tagName === 'rect' && event.target.getAttribute('fill') === 'url(#grid)')) {
@@ -3220,6 +3221,7 @@
                                     "startY": 0,
                                     "userId": data.data[i].UserId,
                                     "boardId": data.data[i].BoardId,
+                                    "operation": data.data[i].Operation,  // 預設值
                                     "editing": false,
                                     "selected": false,
                                 })
