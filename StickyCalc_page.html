@@ -81,7 +81,7 @@
 
         /* 通用工具列樣式 */
         .toolbar {
-            position: absolute;
+            position: fixed;
             height: 40px;
             background-color: #f0f0f0;
             /* 淺灰色背景，可自行調整 */
@@ -176,7 +176,7 @@
 
         /* 工具列按鈕 */
         .toolbar-button {
-            width: 40px;
+            width: 70px;
             /* 固定寬度 */
             height: 30px;
             /* 固定高度 */
@@ -188,6 +188,8 @@
             /* 滑鼠指針 */
             margin: 5px 0;
             /* 上下間距 */
+            margin-inline: -10px;
+            /* 左右間距 */
             display: flex;
             /* Flexbox 置中內容 */
             align-items: center;
@@ -301,22 +303,22 @@
                     <svg-icon name="svg-deleteNode"></svg-icon>
                 </button>
                 <!-- general換色粉紅 -->
-                <button v-if="selectedNode" class="toolbar-button" style="margin: 0px;"
+                <button v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
                     @click="changeNodeColor('general', '#ffc0cb', '#FCAFAA')">
                     <svg-icon name="svg-nodeColorPink"></svg-icon>
                 </button>
                 <!-- general換色粉綠 -->
-                <button v-if="selectedNode" class="toolbar-button" style="margin: 0px;"
+                <button v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
                     @click="changeNodeColor('general', '#D3ED7F', '#C7DF7A')">
                     <svg-icon name="svg-nodeColorGreen"></svg-icon>
                 </button>
                 <!-- general換色粉藍 -->
-                <button v-if="selectedNode" class="toolbar-button" style="margin: 0px;"
+                <button v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
                     @click="changeNodeColor('general', '#CEEBFD', '#ADD8E6')">
                     <svg-icon name="svg-nodeColorBlue"></svg-icon>
                 </button>
                 <!-- general換色粉黃 -->
-                <button v-if="selectedNode" class="toolbar-button" style="margin: 0px;"
+                <button v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
                     @click="changeNodeColor('general', '#FFF8CA', '#FFF4B2')">
                     <svg-icon name="svg-nodeColorYellow"></svg-icon>
                 </button>
@@ -771,18 +773,17 @@
                         </svg>
 
                          <!-- svgIcon:更多 -->   
-                        <svg v-if="name === 'svg-more'"  xmlns="http://www.w3.org/2000/svg" width="26" height="5" viewBox="0 0 26 5"
-                                    fill="none">
-                                    <path fill-rule="evenodd" clip-rule="evenodd"
-                                        d="M0 2C0 0.895432 0.895386 0 2 0H4C5.10461 0 6 0.895432 6 2V3C6 4.10457 5.10461 5 4 5H2C0.895386 5 0 4.10457 0 3V2ZM10 2C10 0.895432 10.8954 0 12 0H14C15.1046 0 16 0.895432 16 2V3C16 4.10457 15.1046 5 14 5H12C10.8954 5 10 4.10457 10 3V2ZM22 0C20.8954 0 20 0.895432 20 2V3C20 4.10457 20.8954 5 22 5H24C25.1046 5 26 4.10457 26 3V2C26 0.895432 25.1046 0 24 0H22Z"
-                                        fill="#505050" />
-                                </svg>
+                        <svg v-if="name === 'svg-more'"  xmlns="http://www.w3.org/2000/svg" width="26" height="5" viewBox="0 0 26 5" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M0 2C0 0.895432 0.895386 0 2 0H4C5.10461 0 6 0.895432 6 2V3C6 4.10457 5.10461 5 4 5H2C0.895386 5 0 4.10457 0 3V2ZM10 2C10 0.895432 10.8954 0 12 0H14C15.1046 0 16 0.895432 16 2V3C16 4.10457 15.1046 5 14 5H12C10.8954 5 10 4.10457 10 3V2ZM22 0C20.8954 0 20 0.895432 20 2V3C20 4.10457 20.8954 5 22 5H24C25.1046 5 26 4.10457 26 3V2C26 0.895432 25.1046 0 24 0H22Z"
+                            fill="#505050" />
+                        </svg>
 
                          <!-- svgIcon:新增便利貼 -->    
-                        <svg v-if="name === 'svg-addNode'"  xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
-                        <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M4 0C1.79086 0 0 1.79086 0 4V24C0 26.2091 1.79086 28 4 28H26C28.2091 28 30 26.2091 30 24V4C30 1.79086 28.2091 0 26 0H4ZM2 4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4V24C28 25.1046 27.1046 26 26 26H4C2.89543 26 2 25.1046 2 24V4ZM5 5H25V3H5V5ZM14 17H8V15H14V9H16V15H22V17H16V23H14V17Z"
-                            fill="#505050" />
+                        <svg v-if="name === 'svg-addNode'" xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                d="M4 0C1.79086 0 0 1.79086 0 4V24C0 26.2091 1.79086 28 4 28H26C28.2091 28 30 26.2091 30 24V4C30 1.79086 28.2091 0 26 0H4ZM2 4C2 2.89543 2.89543 2 4 2H26C27.1046 2 28 2.89543 28 4V24C28 25.1046 27.1046 26 26 26H4C2.89543 26 2 25.1046 2 24V4ZM5 5H25V3H5V5ZM14 17H8V15H14V9H16V15H22V17H16V23H14V17Z"
+                                fill="#505050" />
                         </svg>
 
                         <!-- svgIcon:新增圖表便利貼 -->  
@@ -850,94 +851,94 @@
                             d="M4 2H26V0H4V2ZM28 4V24H30V4H28ZM26 26H4V28H26V26ZM2 24V4H0V24H2ZM4 26C2.89543 26 2 25.1046 2 24H0C0 26.2091 1.79086 28 4 28V26ZM28 24C28 25.1046 27.1046 26 26 26V28C28.2091 28 30 26.2091 30 24H28ZM26 2C27.1046 2 28 2.89543 28 4H30C30 1.79086 28.2091 0 26 0V2ZM4 0C1.79086 0 0 1.79086 0 4H2C2 2.89543 2.89543 2 4 2V0Z"
                             fill="#CFCFCF" />
                         <path d="M5 4H25" stroke="#CFCFCF" stroke-width="2" />
-                    </svg>
+                        </svg>
 
-                    <!-- svgIcon:線條換色:粉紅 -->
-                    <svg v-if="name === 'svg-lineColorPink'"  xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
-                        <path
-                            d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                            stroke="#FCAFAA" stroke-width="2" stroke-linecap="round" />
-                    </svg>
+                        <!-- svgIcon:線條換色:粉紅 -->
+                        <svg v-if="name === 'svg-lineColorPink'"  xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
+                            <path
+                                d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                stroke="#FCAFAA" stroke-width="2" stroke-linecap="round" />
+                        </svg>
 
-                    <!-- svgIcon:線條換色:粉綠 -->
-                    <svg v-if="name === 'svg-lineColorGreen'"  xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
-                        <path
-                            d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                            stroke="#C7DF7A" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                    
-                    <!-- svgIcon:線條換色:粉藍 -->
-                    <svg v-if="name === 'svg-lineColorBlue'"  xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
-                        <path
-                            d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                            stroke="#ADD8E6" stroke-width="2" stroke-linecap="round" />
-                    </svg>
+                        <!-- svgIcon:線條換色:粉綠 -->
+                        <svg v-if="name === 'svg-lineColorGreen'"  xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
+                            <path
+                                d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                stroke="#C7DF7A" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        
+                        <!-- svgIcon:線條換色:粉藍 -->
+                        <svg v-if="name === 'svg-lineColorBlue'"  xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
+                            <path
+                                d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                stroke="#ADD8E6" stroke-width="2" stroke-linecap="round" />
+                        </svg>
 
-                    <!-- svgIcon:線條換色:橘黃 -->
-                    <svg v-if="name === 'svg-lineColorYellow'"  xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
-                        <path
-                            d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
-                            stroke="#FFB53E" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-
-
-                        <!-- svgIcon:線條類型:實線 -->
-                    <svg v-if="name === 'svg-lineTypeEntity'"  xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
-                        <path
-                            d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
-                            stroke="#A7A7A7" stroke-width="2" />
-                        <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
-                        <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
-                    </svg>
+                        <!-- svgIcon:線條換色:橘黃 -->
+                        <svg v-if="name === 'svg-lineColorYellow'"  xmlns="http://www.w3.org/2000/svg" width="31" height="27" viewBox="0 0 31 27" fill="none">
+                            <path
+                                d="M1 1C8.49996 0.999996 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 23 25.5 30 25"
+                                stroke="#FFB53E" stroke-width="2" stroke-linecap="round" />
+                        </svg>
 
 
-                                        <!-- svgIcon:線條類型:中空線 -->
-                    <svg v-if="name === 'svg-lineTypeHollow'"  xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
-                        <path
-                            d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
-                            stroke="#A7A7A7" stroke-width="2" stroke-dasharray="6 2" />
-                        <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
-                        <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
-                    </svg>
+                            <!-- svgIcon:線條類型:實線 -->
+                        <svg v-if="name === 'svg-lineTypeEntity'"  xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
+                            <path
+                                d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                stroke="#A7A7A7" stroke-width="2" />
+                            <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                            <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                        </svg>
+
+
+                        <!-- svgIcon:線條類型:中空線 -->
+                        <svg v-if="name === 'svg-lineTypeHollow'"  xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
+                            <path
+                                d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                stroke="#A7A7A7" stroke-width="2" stroke-dasharray="6 2" />
+                            <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                            <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                        </svg>
 
 
 
-                      <!-- svgIcon:線條類型:虛線 -->
-                    <svg v-if="name === 'svg-lineTypeDottedLine'"  xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
-                        <path
-                            d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
-                            stroke="#A7A7A7" stroke-width="2" stroke-dasharray="2 2" />
-                        <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
-                        <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
-                    </svg>
+                        <!-- svgIcon:線條類型:虛線 -->
+                        <svg v-if="name === 'svg-lineTypeDottedLine'"  xmlns="http://www.w3.org/2000/svg" width="31" height="26" viewBox="0 0 31 26" fill="none">
+                            <path
+                                d="M7.50004 3.99999C15 3.99999 23.5 3.49999 23.5 8.99999C23.5 14.5 7.50004 11.5 7.5 17C7.49996 22.5 16.5 22.5 23.5 22"
+                                stroke="#A7A7A7" stroke-width="2" stroke-dasharray="2 2" />
+                            <circle cx="4" cy="4" r="3" stroke="#A7A7A7" stroke-width="2" />
+                            <circle cx="27" cy="22" r="3" stroke="#A7A7A7" stroke-width="2" />
+                        </svg>
 
 
-                    <!-- svgIcon:右鍵選單:粉紅 -->
-                                <svg v-if="name === 'svg-lfetMenuPink'"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" transform="scale(1)">
-                                    <circle cx="12" cy="12" r="11" fill="#FFE6EB" stroke="#CFCFCF" stroke-width="2" />
-                                </svg>
+                        <!-- svgIcon:右鍵選單:粉紅 -->
+                        <svg v-if="name === 'svg-lfetMenuPink'"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" transform="scale(1)">
+                            <circle cx="12" cy="12" r="11" fill="#FFE6EB" stroke="#CFCFCF" stroke-width="2" />
+                        </svg>
 
 
-                                <!-- svgIcon:右鍵選單:粉綠 -->
-                                <svg v-if="name === 'svg-lfetMenuGreen'"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" transform="scale(1)">
-                                    <circle cx="12" cy="12" r="11" fill="#F7FFDB" stroke="#CFCFCF" stroke-width="2" />
-                                </svg>
+                        <!-- svgIcon:右鍵選單:粉綠 -->
+                        <svg v-if="name === 'svg-lfetMenuGreen'"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" transform="scale(1)">
+                            <circle cx="12" cy="12" r="11" fill="#F7FFDB" stroke="#CFCFCF" stroke-width="2" />
+                        </svg>
 
 
-                                 <!-- svgIcon:右鍵選單:粉藍 -->
-                                <svg v-if="name === 'svg-lfetMenuBlue'"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" transform="scale(1)">
-                                    <circle cx="12" cy="12" r="11" fill="#CEEBFD" stroke="#CFCFCF" stroke-width="2" />
-                                </svg>
+                            <!-- svgIcon:右鍵選單:粉藍 -->
+                        <svg v-if="name === 'svg-lfetMenuBlue'"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" transform="scale(1)">
+                            <circle cx="12" cy="12" r="11" fill="#CEEBFD" stroke="#CFCFCF" stroke-width="2" />
+                        </svg>
 
 
-                                <!-- svgIcon:右鍵選單:粉黃 -->
-                                <svg v-if="name === 'svg-lfetMenuYellow'"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" transform="scale(1)">
-                                    <circle cx="12" cy="12" r="11" fill="#FFF8CA" stroke="#CFCFCF" stroke-width="2" />
-                                </svg>
+                        <!-- svgIcon:右鍵選單:粉黃 -->
+                        <svg v-if="name === 'svg-lfetMenuYellow'"  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" transform="scale(1)">
+                            <circle cx="12" cy="12" r="11" fill="#FFF8CA" stroke="#CFCFCF" stroke-width="2" />
+                        </svg>
 
 
 
@@ -1175,9 +1176,9 @@
                     if (this.selectedNode && this.selectedConn) {
                         return 462
                     } else if (this.selectedConn) {
-                        return 348
+                        return 368
                     } else if (this.selectedNode) {
-                        return 246
+                        return 256
                     } else if (this.selectedChert) {
                         return 122
                     } else {
@@ -1282,13 +1283,6 @@
                         this.rightPanMoved = false;
                     }
 
-                    this.lastPointerDown = {
-                        time: Date.now(),
-                        x: event.clientX,
-                        y: event.clientY,
-                        target: event.target
-                    };
-
                     // 記錄 pointerdown 事件
                     this.lastPointerDown = {
                         time: Date.now(),
@@ -1370,8 +1364,6 @@
                 // 拖曳中：若正進行群組移動，則更新所有拖曳便利貼的位置；否則更新框選矩形
                 dragMove(event) {
                     this.touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
-
-
 
                     // 處理臨時連線拖動
                     if (this.tempConnection.active) {
@@ -1462,10 +1454,9 @@
                 },
 
 
-                // 研究一下
+                // 結束托拽
                 endDrag(event) {
 
-                    event.preventDefault();
 
                     // 鼠標左鍵釋放後的結束處理(放到下面就會出問題)
                     this.resizingNode = null;
@@ -1481,8 +1472,10 @@
                     this.handleMouseUp(event);
 
 
+                    event.preventDefault();
+
                     // 避免重複執行：如果已經處理過此 pointerId，則跳過
-                    if (this.processedEvents?.has(event.pointerId)) {
+                    if (this.processedEvents?.has(event.pointerId) && this.isMobile) {
                         return;
                     }
                     if (!this.processedEvents) {
@@ -1770,8 +1763,10 @@
 
                 // 開始拖曳便利貼：如果該便利貼尚未選取，先清除其他選取；之後將所有已選取的便利貼作為拖曳群組
                 startDrag(node, event) {
-                    event.preventDefault();
-                    event.stopPropagation(); // 阻止事件冒泡，避免干擾
+                    // event.preventDefault(); //有使用的話則無法點擊到選取，不使用的話則會無法連線(移動端有沒有用都無所謂)
+                    if (this.isMobile) {
+                        event.stopPropagation(); // 阻止事件冒泡，避免干擾
+                    }
                     clearTimeout(this.longPressTimer);
 
                     this.lastPointerDown = {
