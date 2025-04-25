@@ -22,6 +22,7 @@
             position: relative;
         }
 
+
         .mind-map-container {
             width: 100vw;
             height: 100vh;
@@ -29,6 +30,15 @@
             overflow: hidden;
             position: relative;
             background: #f9f9f9;
+            user-select: none;
+        }
+
+        .mind-map-container-dark {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            background: #242424;
             user-select: none;
         }
 
@@ -74,10 +84,6 @@
             background: transparent;
         }
 
-        .mind-map-container {
-            position: relative;
-            /* 確保工具列相對於容器定位 */
-        }
 
         /* 通用工具列樣式 */
         .toolbar {
@@ -206,13 +212,71 @@
             background-color: #e0e0e0;
             /* 滑鼠懸停時變色 */
         }
+
+        /* 暗黑模式按鈕 */
+        :root {
+            --width-of-switch: 3.5em;
+            --height-of-switch: 2em;
+            --size-of-icon: 1.4em;
+            --slider-offset: 0.3em;
+        }
+
+        .switch input {
+            width: 0;
+            height: 0;
+            opacity: 0;
+        }
+
+        .switch {
+            display: block;
+            position: relative;
+            width: var(--width-of-switch);
+            height: var(--height-of-switch);
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f4f4f5;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+
+        .slider::before {
+            position: absolute;
+            content: "";
+            height: var(--size-of-icon);
+            width: var(--size-of-icon);
+            border-radius: 20px;
+            left: var(--slider-offset);
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(40deg, #ff0080, #ff8c00 70%);
+            transition: 0.4s;
+        }
+
+        input:checked+.slider {
+            background: #303136;
+        }
+
+        input:checked+.slider::before {
+            /* left: calc(100% - (var(--size-of-icon)+var(--slider-offset))); */
+            left: 50%;
+            background: #303136;
+            /* box-shadow: inset -3px -2px 5px 2px #8982f7; */
+            box-shadow: inset -3px -2px 5px 2px #8982f7, inset -10px -4px 0 0 #a3dafb;
+        }
     </style>
 </head>
 
 <body>
     <div id="app">
         <!-- 外層容器，點擊時隱藏右鍵選單 -->
-        <div class="mind-map-container" @click="hideContextMenu">
+        <div :class="['mind-map-container', { 'mind-map-container-dark': isDark }]" @click="hideContextMenu">
             <!-- 左上工具列 -->
             <div class="toolbar toolbar-left">
                 <div class="mt-2 d-flex">
@@ -269,8 +333,14 @@
                             <svg-icon name="svg-logo"></svg-icon>
                         </a>
                     </div>
-                    <div class="mx-3" data-title="下載" style="margin-top: -10px;">
+                    <!-- <div class="mx-3" data-title="下載" style="margin-top: -10px;">
                         <svg-icon name="svg-download"></svg-icon>
+                    </div> -->
+                    <div class="darkLightSwitch mt-1">
+                        <label class="switch">
+                            <input type="checkbox" v-model="isDark">
+                            <span class="slider"></span>
+                        </label>
                     </div>
                     <div class="mx-3 " data-title="更多">
                         <div class="dropdown">
@@ -364,7 +434,8 @@
                 <defs>
                     <!-- 格紋背景，每格 20x20 -->
                     <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                        <path d="M 20 0 L 0 0 L 0 20" fill="none" stroke="#ddd" stroke-width="0.5"></path>
+                        <path d="M 20 0 L 0 0 L 0 20" fill="none" :stroke="isDark?'#5a5a5a':'#ddd'" stroke-width="0.5">
+                        </path>
                     </pattern>
                 </defs>
                 <!-- 使用格紋背景覆蓋整個 SVG -->
@@ -1066,6 +1137,8 @@
                     processedEvents: new Set(), // 用於避免重複處理事件
                     lastDistance: null, // 記錄雙指間距離
                     isDragging: false,
+
+                    isDark: false, //黑暗模式
 
                 }
             },
