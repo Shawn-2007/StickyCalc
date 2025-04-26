@@ -15,7 +15,7 @@
         }
 
         .leftMenu {
-            width: 300px;
+            /* width: 300px; */
             /* 固定側欄寬度 */
             min-width: 250px;
             /* 最小寬度 (避免過窄) */
@@ -35,6 +35,15 @@
             /* 加入陰影，提升視覺層次 */
             z-index: -1000;
             /* 確保側欄在最上層 */
+        }
+
+        /* IPHONE直立式 orientation方向: portrait縱向*/
+        @media (max-width: 768px) and (orientation: portrait) {
+            .leftMenu {
+                width: 90px;
+                min-width: 90px;
+            }
+
         }
     </style>
 </head>
@@ -186,7 +195,6 @@
                             </div>
                         </div>
                         <!-- loginModal 登入 -->
-
                     </div>
                 </div>
             </nav>
@@ -194,7 +202,7 @@
 
         <div class="container-fluid ">
             <div class="row">
-                <div class="col-3">
+                <div class="col-sm-4 col-3">
                     <div class="leftMenu">
                         <div class="mt-4">
                             <a href="index.html" class="form-control">
@@ -224,23 +232,23 @@
                 </div>
 
                 <!-- ------------- 列表 ---------------- -->
-                <div class="col-9">
+                <div class="col-sm-8 col-9">
                     <!-- <h1>檔案列表</h1> -->
                     <div class="row mt-3 mb-3">
-                        <div class="col-1">
+                        <div class="col-sm-1">
 
                         </div>
-                        <div class="col-4 h4">
+                        <div class="col-sm-3 col-4 h4">
                             檔案名稱
                         </div>
-                        <div class="col-3 h4">
+                        <div class="col-sm-3 col-4 h4">
                             修改時間
                         </div>
-                        <div class="col-3 h4">
+                        <div class="col-sm-3 col-4 h4">
                             創建時間
                         </div>
 
-                        <div class="col-1">
+                        <div class="col-sm-1">
 
 
                         </div>
@@ -409,6 +417,7 @@
                         dataType: "json",
                         async: false,
                         success: function (data) {
+                            console.log(data.state);
                             location.href = "StickyCalc_board.html";
                         },
                         error: function () {
@@ -424,6 +433,7 @@
                         $("#username_text").text(data.data.Username);
 
                         vm.memberLevel01 = data.data.Level;
+                        console.log(data)
                         vm.chageLevel(vm.memberLevel01);
 
                         $("#login_btn").addClass("d-none");
@@ -440,6 +450,7 @@
                             async: false,
                             success: function (data) {
                                 vm.boardData = data.data;
+                                console.log(vm.boardData);
                                 // vm.showdata();
                             },
                             error: function () {
@@ -482,6 +493,7 @@
                 showdata(data) {
                     const vm = this
                     vm.boards = data;
+                    console.log("列表資訊" + data.data);
                     if (data.state) {
 
                         $("#mydata #inBoard_btn").click(function () {
@@ -511,6 +523,7 @@
                                     //{"id" : "26", "price" : "90", "remark" : "高品質鮮乳"}
                                     var JSONdata02 = {};
                                     JSONdata02["id"] = uid;
+                                    console.log(JSONdata02);
 
                                     $.ajax({
                                         type: "DELETE",
@@ -550,6 +563,7 @@
                                 var JSONdata01 = {};
                                 JSONdata01["id"] = uid;
                                 JSONdata01["email"] = $("#email").val();
+                                console.log(JSONdata01);
 
                                 $.ajax({
                                     type: "POST",
@@ -696,6 +710,7 @@
 
         function showdata_login(data) {
             // location.href = "SPA-index.html";
+            console.log(data);
             if (data.state) {
                 Swal.fire({
                     title: data.message,
@@ -736,6 +751,7 @@
                 var JSONdata = {};
                 // JSONdata['"userId"'] = data.data.Username;
                 JSONdata['"userId"'] = "testUserId0001";
+                console.log(JSONdata)
                 // 渲染帳號資料
                 $.ajax({
                     type: "GET",
@@ -755,6 +771,7 @@
 
 
         function showdata_delete(data) {
+            console.log(data);
 
             if (data.state) {
                 alert(data.message);//練習階段，一切皆用sweetalert
@@ -767,6 +784,7 @@
         }
 
         function showdata_update(data) {
+            // console.log(data);
             if (data.state) {
                 alert(data.message);//練習階段，一切皆用sweetalert
                 location.href = "StickyCalc_manage.html";

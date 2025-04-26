@@ -302,15 +302,15 @@
                     </div>
                     <!-- 存檔 -->
                     <div class="ms-1">
-                        <a href="#" @click="nodes_upload" class="nav-link">
-                            <svg-icon name="svg-upload"></svg-icon>
+                        <a href="#" @click="nodesUpload" class="nav-link">
+                            <svg-icon :name="isAutoUpload ? 'svg-upload-ok' : 'svg-upload'"></svg-icon>
                         </a>
                     </div>
                     <!-- 讀檔 -->
                     <div class="ms-2">
-                        <a href="#" @click="get_nodes" class="nav-link">
+                        <!-- <a href="#" @click="get_nodes" class="nav-link">
                             <svg-icon name="svg-loader"></svg-icon>
-                        </a>
+                        </a> -->
                     </div>
                     <!-- 上一步 -->
                     <div class="ms-auto me-2" @click="undo">
@@ -742,7 +742,7 @@
                             <!-- 線條顏色 橘黃 -->
                             <button v-if="selectedConn" type="button" class="btn btn-sm "
                                 @click="changeLineColor('#FFB53E')"
-                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
+                                style="height: 30px; width: 30px; margin-top: -50;display: inline-block;  ">
                                 <svg-icon name="svg-lineColorYellow"></svg-icon>
                             </button>
                         </div>
@@ -773,6 +773,13 @@
                                 <path fill-rule="evenodd" clip-rule="evenodd"
                                     d="M15.5762 8.00193C16.0275 5.18599 18.5438 2.98696 21.6283 2.98696C25.0434 2.98696 27.7534 5.67576 27.7534 8.92151C27.7534 10.142 27.3744 11.275 26.721 12.2198L25.1418 14.5031L27.9079 14.2665C28.0152 14.2573 28.1243 14.2526 28.2352 14.2526C30.2817 14.2526 31.8827 15.8606 31.8827 17.773C31.8827 19.6855 30.2817 21.2935 28.2352 21.2935V23.9088C31.6615 23.9088 34.4979 21.1936 34.4979 17.773C34.4979 14.9068 32.5063 12.5358 29.8448 11.8427C30.1835 10.9313 30.3686 9.94727 30.3686 8.92151C30.3686 4.16781 26.4233 0.371735 21.6283 0.371735C17.838 0.371735 14.5845 2.73906 13.3825 6.07945C13.1101 6.03021 12.8297 6.00453 12.5438 6.00453C10.7877 6.00453 9.2422 6.97276 8.46453 8.41874L8.4145 8.41858C4.0755 8.41858 0.5 11.8544 0.5 16.1637C0.5 20.473 4.0755 23.9088 8.4145 23.9088V21.2935C5.45544 21.2935 3.11523 18.965 3.11523 16.1637C3.11523 13.3623 5.45544 11.0338 8.4145 11.0338C8.6661 11.0338 8.91334 11.0507 9.15421 11.0832L10.3219 11.2408L10.5998 10.0957C10.8001 9.27046 11.5776 8.61976 12.5438 8.61976C12.9388 8.61976 13.3021 8.72851 13.6079 8.91364L15.2689 9.91911L15.5762 8.00193ZM17.989 10.3968L24.2063 19.627H20.0399V27.8316H15.9376V19.627H11.7718L17.989 10.3968Z"
                                     fill="#505050" />
+                            </svg>
+
+            <svg  v-if="name === 'svg-upload-ok'"  xmlns="http://www.w3.org/2000/svg" width="35" height="28" viewBox="0 0 35 28"
+                                transform="scale(0.8)" fill="none">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M15.5762 8.00193C16.0275 5.18599 18.5438 2.98696 21.6283 2.98696C25.0434 2.98696 27.7534 5.67576 27.7534 8.92151C27.7534 10.142 27.3744 11.275 26.721 12.2198L25.1418 14.5031L27.9079 14.2665C28.0152 14.2573 28.1243 14.2526 28.2352 14.2526C30.2817 14.2526 31.8827 15.8606 31.8827 17.773C31.8827 19.6855 30.2817 21.2935 28.2352 21.2935V23.9088C31.6615 23.9088 34.4979 21.1936 34.4979 17.773C34.4979 14.9068 32.5063 12.5358 29.8448 11.8427C30.1835 10.9313 30.3686 9.94727 30.3686 8.92151C30.3686 4.16781 26.4233 0.371735 21.6283 0.371735C17.838 0.371735 14.5845 2.73906 13.3825 6.07945C13.1101 6.03021 12.8297 6.00453 12.5438 6.00453C10.7877 6.00453 9.2422 6.97276 8.46453 8.41874L8.4145 8.41858C4.0755 8.41858 0.5 11.8544 0.5 16.1637C0.5 20.473 4.0755 23.9088 8.4145 23.9088V21.2935C5.45544 21.2935 3.11523 18.965 3.11523 16.1637C3.11523 13.3623 5.45544 11.0338 8.4145 11.0338C8.6661 11.0338 8.91334 11.0507 9.15421 11.0832L10.3219 11.2408L10.5998 10.0957C10.8001 9.27046 11.5776 8.61976 12.5438 8.61976C12.9388 8.61976 13.3021 8.72851 13.6079 8.91364L15.2689 9.91911L15.5762 8.00193ZM17.989 10.3968L24.2063 19.627H20.0399V27.8316H15.9376V19.627H11.7718L17.989 10.3968Z"
+                                    fill="#c0c0c0" />
                             </svg>
             <svg v-if="name === 'svg-loader'"  xmlns="http://www.w3.org/2000/svg" width="34" height="28" fill="none"
                     transform="scale(0.8)" viewBox="0 0 34 28">
@@ -1140,6 +1147,9 @@
 
                     isDark: false, //黑暗模式
 
+                    uploadTimer: null, // 用於上傳的存儲計時器
+                    isAutoUpload: false,
+
                 }
             },
             // 生命週期 : 起始
@@ -1188,11 +1198,26 @@
 
                 vm.checkuid();
 
+                // 添加 beforeunload 事件（桌面端可用）
+                window.addEventListener('beforeunload', this.handleBeforeUnload);
+
+                // 添加 pagehide 事件（移動端，尤其是 iOS）
+                window.addEventListener('pagehide', this.handlePageHide);
+
+                // 添加 visibilitychange 事件（檢測頁面隱藏）
+                document.addEventListener('visibilitychange', this.handleVisibilityChange);
+
                 window.addEventListener('keydown', this.handleKeyDown);
 
                 //儲存狀態
                 this.saveState()
 
+            },
+            beforeDestroy() {
+                // 移除事件監聽器
+                window.removeEventListener('beforeunload', this.handleBeforeUnload);
+                window.removeEventListener('pagehide', this.handlePageHide);
+                document.removeEventListener('visibilitychange', this.handleVisibilityChange);
             },
             beforeUnmount() {
                 window.removeEventListener('keydown', this.handleKeyDown);
@@ -1202,9 +1227,35 @@
                 nodes: {
                     // 深層監聽，保留方法handler與deep是搭配使用的
                     handler(newNodes) {
+                        // 存放到localStorage裡
                         if (this.startLocalStorage) {
                             localStorage.setItem('nodes', JSON.stringify(newNodes));
                         }
+
+                        // 清除現有的計時器
+                        if (this.uploadTimer) {
+                            clearTimeout(this.uploadTimer);
+                            console.log("清除現有的計時器")
+                            this.isAutoUpload = false;
+                        }
+
+                        if (!this.isMobile) {
+                            // 一有更動就設置新的2分鐘計時器
+                            this.uploadTimer = setTimeout(() => {
+                                this.nodesUpload();
+                                console.log("計時結束 上傳")
+                                this.isAutoUpload = true;
+                            }, 300000); // 2分鐘 = 120000毫秒
+
+                        } else {
+                            // 一有更動就設置新的2分鐘計時器
+                            this.uploadTimer = setTimeout(() => {
+                                this.nodesUpload();
+                                console.log("計時結束 上傳")
+                                this.isAutoUpload = true;
+                            }, 12000); // 2分鐘 = 120000毫秒
+                        }
+
                     },
                     deep: true,
                 },
@@ -1336,14 +1387,7 @@
                             this.isRightPanning = false;
                         };
                     }
-
                 },
-
-                /*
-                出現BUG 
-                1 電腦端 : 點擊便利貼後會選擇狀態會瞬間取消
-                2 電腦端 : event.preventDefault(); 加上這個後，點擊其他地方無法取消編輯模式
-                */
 
                 // 對應背景網格
                 /* ===== 左鍵平移：背景 Pointer ===== */
@@ -2512,6 +2556,7 @@
                     document.addEventListener('mouseup', this.stopResize);
                 },
 
+                // 調整便利貼大小
                 resizeChart(event) {
                     if (!this.resizingNode) return;
                     const dx = event.clientX - this.resizeStartX;
@@ -2548,14 +2593,7 @@
 
                 },
 
-                goIndex() {
-                    const vm = this;
-                    vm.nodes_upload();
-                    vm.connections_upload();
-                    vm.board_upload();
 
-                    location.href = "index.html";
-                },
 
                 /* ===== 狀態快照 系統，記錄每次操作的變更，然後可以回溯或前進。 ===== */
                 saveState() {
@@ -3221,10 +3259,60 @@
                 pageNodesUpload() {
                     const vm = this;
                     vm.nodes_upload();
-                    vm.connections_upload();
-                    vm.board_upload();
+                    // vm.connections_upload();
+                    // vm.board_upload();
 
                     location.href = "StickyCalc_board.html";
+                },
+
+                goIndex() {
+                    const vm = this;
+                    vm.nodes_upload();
+                    // vm.connections_upload();
+                    // vm.board_upload();
+
+                    location.href = "index.html";
+                },
+
+                //電腦端儲存邏輯
+                handleBeforeUnload(event) {
+                    // 調用儲存方法
+                    this.nodesUpload();
+
+                    // 可選：顯示確認提示（如果需要用戶確認）
+                    // event.preventDefault();
+                    // event.returnValue = '您有未儲存的變更，確定要離開嗎？';
+                },
+
+                handlePageHide(event) {
+                    // 移動端儲存邏輯
+                    this.nodesUpload();
+
+                    // 如果頁面進入 BFCache，設置 persisted 屬性
+                    if (event.persisted) {
+                        console.log('Page is being cached (BFCache)');
+                    }
+                },
+
+                handleVisibilityChange() {
+                    // 當頁面隱藏時儲存
+                    if (document.visibilityState === 'hidden') {
+                        this.nodesUpload();
+                    }
+                },
+
+
+
+                nodesUpload() {
+                    const vm = this;
+                    vm.nodes_upload();
+
+                    // 清除計時器
+                    if (this.uploadTimer) {
+                        clearTimeout(this.uploadTimer);
+                        this.uploadTimer = null;
+                        this.isAutoUpload = true;
+                    }
                 },
 
                 nodes_upload() {

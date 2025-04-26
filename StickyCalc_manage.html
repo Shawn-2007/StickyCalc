@@ -36,6 +36,15 @@
             z-index: -1000;
             /* 確保側欄在最上層 */
         }
+
+        /* IPHONE直立式 orientation方向: portrait縱向*/
+        @media (max-width: 768px) and (orientation: portrait) {
+            .leftMenu {
+                width: 90px;
+                min-width: 90px;
+            }
+
+        }
     </style>
 </head>
 
@@ -184,7 +193,6 @@
                         </div>
                     </div>
                     <!-- loginModal 登入 -->
-
                 </div>
             </div>
         </nav>
@@ -192,7 +200,7 @@
 
     <div class="container-fluid ">
         <div class="row">
-            <div class="col-3">
+            <div class="col-sm-4 col-3">
                 <div class="leftMenu">
                     <div class="mt-4">
                         <a href="index.html" class="form-control">
@@ -222,7 +230,7 @@
             </div>
 
             <!-- ------------- 會員列表 ---------------- -->
-            <div class="col-9 ">
+            <div class="col-sm-8 col-9">
                 <!-- <div class="">會員列表</div> -->
                 <div id="mydata" class=" ms-3 mt-3"></div>
             </div>
@@ -381,6 +389,7 @@
 
         function showdata_login(data) {
             // location.href = "SPA-index.html";
+            console.log(data);
             if (data.state) {
                 Swal.fire({
                     title: data.message,
@@ -410,6 +419,7 @@
         }
 
         function showdata_checkuid(data) {
+            console.log(data)
             if (data.state) {
                 $("#username_showtext").removeClass("d-none");
 
@@ -434,6 +444,7 @@
         }
 
         function showdata(data) {
+            console.log(data);
             if (data.state) {
                 // $("#mydata").empty();
                 data.data.forEach(function (item01) {
@@ -452,6 +463,8 @@
                 })
 
                 $("#mydata #updata_btn").click(function () {
+                    console.log($(this).data("username"));
+                    console.log($(this).data("email"));
 
                     $("#username").val($(this).data("username"));
                     $("#email").val($(this).data("email"));
@@ -478,6 +491,7 @@
                             //{"id" : "26", "price" : "90", "remark" : "高品質鮮乳"}
                             var JSONdata02 = {};
                             JSONdata02["id"] = uid;
+                            console.log(JSONdata02);
 
                             $.ajax({
                                 type: "DELETE",
@@ -517,6 +531,7 @@
                         var JSONdata01 = {};
                         JSONdata01["id"] = uid;
                         JSONdata01["email"] = $("#email").val();
+                        console.log(JSONdata01);
 
                         $.ajax({
                             type: "POST",
@@ -544,6 +559,7 @@
 
 
         function showdata_delete(data) {
+            console.log(data);
 
             if (data.state) {
                 alert(data.message);//練習階段，一切皆用sweetalert
@@ -556,6 +572,7 @@
         }
 
         function showdata_update(data) {
+            // console.log(data);
             if (data.state) {
                 alert(data.message);//練習階段，一切皆用sweetalert
                 location.href = "StickyCalc_manage.html";
