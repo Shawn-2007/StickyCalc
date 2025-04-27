@@ -643,17 +643,7 @@
                         </template>
                     </g>
 
-                    <!-- 畫板邊緣浮動箭頭（若有便條紙超出可見範圍則顯示） -->
-                    <g>
-                        <text v-if="showLeftArrow" class="floating-arrow" x="10" :y="height/2" fill="blue"
-                            @click="scrollTo('left')">&#9664;</text>
-                        <text v-if="showRightArrow" class="floating-arrow" :x="width - 20" :y="height/2" fill="blue"
-                            @click="scrollTo('right')">&#9654;</text>
-                        <text v-if="showTopArrow" class="floating-arrow" :x="width/2" y="20" fill="blue"
-                            @click="scrollTo('top')">&#9650;</text>
-                        <text v-if="showBottomArrow" class="floating-arrow" :x="width/2" :y="height - 10" fill="blue"
-                            @click="scrollTo('bottom')">&#9660;</text>
-                    </g>
+
                     <!-- 框選的選取框 -->
                     <rect v-if="selectionBox.active" :x="selectionBox.x" :y="selectionBox.y" :width="selectionBox.width"
                         :height="selectionBox.height" stroke="#4D74F4" stroke-dasharray="4,4" fill="none" />
@@ -1334,19 +1324,7 @@
                     const bottom = top + this.height / this.scale;
                     return { left, top, right, bottom };
                 },
-                /* 若有便條紙超出可見範圍則顯示浮動箭頭 */
-                showLeftArrow() {
-                    return this.nodes.some(n => n.x + this.noteWidth / 2 < this.visibleRect.left);
-                },
-                showRightArrow() {
-                    return this.nodes.some(n => n.x - this.noteWidth / 2 > this.visibleRect.right);
-                },
-                showTopArrow() {
-                    return this.nodes.some(n => n.y + this.noteHeight / 2 < this.visibleRect.top);
-                },
-                showBottomArrow() {
-                    return this.nodes.some(n => n.y - this.noteHeight / 2 > this.visibleRect.bottom);
-                }
+
             },
 
             // 方法函式
@@ -1497,41 +1475,9 @@
 
                     // 處理臨時連線拖動
                     if (this.tempConnection.active) {
-                        const svg = document.getElementById('mindmapSvg');
-                        const point = svg.createSVGPoint();
-                        point.x = event.clientX;
-                        point.y = event.clientY;
+                        //這是臨時的線條展示
+                        this.dragConnectionCircle(event);
 
-                        const ctm = svg.getScreenCTM();
-                        let svgX = (point.x - ctm.e) / ctm.a;
-                        let svgY = (point.y - ctm.f) / ctm.d;
-
-                        svgX = (svgX - this.boardOffset.x) / this.scale;
-                        svgY = (svgY - this.boardOffset.y) / this.scale;
-
-                        if (isNaN(svgX) || isNaN(svgY)) {
-                            console.warn('Invalid SVG coordinates:', svgX, svgY);
-                            return;
-                        }
-
-                        const startX = this.tempConnection.startX;
-                        const startY = this.tempConnection.startY;
-                        if (isNaN(startX) || isNaN(startY)) {
-                            console.warn('Invalid start coordinates:', startX, startY);
-                            return;
-                        }
-
-                        const endX = svgX;
-                        const endY = svgY;
-                        const mx = (startX + endX) / 2, my = (startY + endY) / 2;
-                        const dx = endX - startX, dy = endY - startY;
-                        const len = Math.sqrt(dx * dx + dy * dy);
-                        let offset = 30;
-                        if (len === 0) offset = 0;
-                        const px = -dy / (len || 1), py = dx / (len || 1);
-                        const cx = mx + px * offset, cy = my + py * offset;
-
-                        this.tempConnection.path = `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`;
                         return; // 優先處理臨時連線
                     }
 
@@ -1567,6 +1513,7 @@
                         const point = svg.createSVGPoint();
                         point.x = event.clientX;
                         point.y = event.clientY;
+
                         // 將視窗坐標轉換為 SVG 坐標
                         const ctm = svg.getScreenCTM();
                         let svgCurrentX = (point.x - ctm.e) / ctm.a;
@@ -1665,73 +1612,9 @@
 
                     // 處理臨時連線結束
                     if (this.tempConnection.active) {
-                        const svg = document.getElementById('mindmapSvg');
-                        const point = svg.createSVGPoint();
-                        point.x = event.clientX;
-                        point.y = event.clientY;
+                        // 處理臨時連線結束
+                        this.endDragConnectionCircle(event);
 
-                        const ctm = svg.getScreenCTM();
-                        let svgX = (point.x - ctm.e) / ctm.a;
-                        let svgY = (point.y - ctm.f) / ctm.d;
-
-                        svgX = (svgX - this.boardOffset.x) / this.scale;
-                        svgY = (svgY - this.boardOffset.y) / this.scale;
-
-                        const targetNode = this.nodes.find(node => {
-                            if (node === this.tempConnection.startNode) return false;
-                            const width = node.type === 'chart' ? node.chartWidth : this.noteWidth;
-                            const height = node.type === 'chart' ? node.chartHeight : this.noteHeight;
-                            const rect = {
-                                x: node.x - width / 2,
-                                y: node.y - height / 2,
-                                width: width,
-                                height: height,
-                            };
-                            const isInRect = svgX >= rect.x && svgX <= rect.x + rect.width &&
-                                svgY >= rect.y && svgY <= rect.y + rect.height;
-                            return isInRect;
-                        });
-
-                        if (targetNode) {
-                            if (this.willCauseLoop(this.tempConnection.startNode.id, targetNode.id)) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: '無法連線',
-                                    text: '此連線會導致循環，請檢查您的連線結構！',
-                                });
-                            } else if (this.tempConnection.startNode.connectionsOut.includes(targetNode.id)) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: '無法連線',
-                                    text: '重複連線了唷，請檢查您的連線結構！',
-                                });
-                            } else {
-                                // 托拽連線用
-                                this.pushConnections(this.tempConnection.startNode, targetNode);
-
-                                this.calculateTotal();
-
-                                if (targetNode.type === 'chart' && targetNode.connectionsIn.length >= 2) {
-                                    this.renderChart(targetNode);
-                                }
-                            }
-                        } else {
-
-                            const newNode = this.addNode(svgX, svgY);
-
-                            this.nodes.push(newNode);
-                            // 建立連線（從基準便利貼到新便利貼）
-                            this.pushConnections(this.tempConnection.startNode, newNode);
-
-                            this.focusNodeText(newNode);
-
-                            this.calculateTotal();
-                        }
-
-                        // 清理臨時連線
-                        this.tempConnection.active = false;
-                        this.tempConnection.startNode = null;
-                        this.tempConnection.path = '';
                     }
 
                     // ========================
@@ -1875,21 +1758,25 @@
                         node.selected = true;
                     }
 
+                    if (event.button === 0) {
+                        this.contextMenu.visible = false;
 
-                    const tx = this.boardOffset.x;
-                    const ty = this.boardOffset.y;
-                    const s = this.scale;
-                    const svgX = (event.clientX - tx) / s;
-                    const svgY = (event.clientY - ty) / s;
+                        const tx = this.boardOffset.x;
+                        const ty = this.boardOffset.y;
+                        const s = this.scale;
+                        const svgX = (event.clientX - tx) / s;
+                        const svgY = (event.clientY - ty) / s;
 
-                    this.dragStart = { x: svgX, y: svgY };
-                    this.draggingNodes = this.nodes.filter(n => n.selected);
-                    this.draggingNodes.forEach(n => {
-                        n.startX = n.x;
-                        n.startY = n.y;
-                        n.userId = this.userId;
-                        n.boardId = this.boardId;
-                    });
+                        this.dragStart = { x: svgX, y: svgY };
+                        this.draggingNodes = this.nodes.filter(n => n.selected);
+                        this.draggingNodes.forEach(n => {
+                            n.startX = n.x;
+                            n.startY = n.y;
+                            n.userId = this.userId;
+                            n.boardId = this.boardId;
+                        });
+                    }
+
 
                     // 綁定拖曳事件
                     document.addEventListener("mousemove", this.onDrag);
@@ -1998,7 +1885,7 @@
                     }
 
                     const result = { x: adjustedX, y: adjustedY };
-                    // console.log('Adjusted arrow position:', result, 'for connection:', conn.connectionsId);
+                    console.log('Adjusted arrow position:', result, 'for connection:', conn.connectionsId);
                     return result;
                 },
 
@@ -2020,7 +1907,7 @@
                     // document.addEventListener('mouseup', this.endDragConnectionCircle, { once: true });
                 },
 
-                // 貌似被取消了
+                // 這是臨時的線條展示
                 dragConnectionCircle(event) {
                     if (!this.tempConnection.active) return;
 
@@ -2062,7 +1949,7 @@
                     this.tempConnection.path = `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`;
                 },
 
-                // 貌似被取消了
+                // 處理臨時連線結束
                 endDragConnectionCircle(event) {
                     if (!this.tempConnection.active) return;
 
@@ -2173,11 +2060,11 @@
 
                     const yOffset = conn.yOffset || 0;
                     let y = endEdge.y + yOffset;
-                    y = Math.max(minY, Math.min(maxY, y));
+                    // 圓圈上下內縮的問題，把下面這個限制拔掉就好了
+                    // y = Math.max(minY, Math.min(maxY, y));
 
                     const result = { x: endEdge.x, y };
-                    // console.log('Arrow position for connection:', conn.connectionsId, result);
-
+                    console.log('Arrow position for connection:', conn.connectionsId, result);
                     if (isNaN(result.x) || isNaN(result.y)) {
                         console.warn('Invalid arrow position:', result, 'for connection:', conn);
                         return { x: toNode.x, y: toNode.y };
@@ -2864,6 +2751,8 @@
                         y: addY,
                         color: '#FFF8CA',
                         colorTop: '#FFF4B2',
+                        // color: '#FFF8CA5d',
+                        // colorTop: '#FFF4B25d',
                         editing: false,
                         selected: true,
                         operation: "sum",  // 預設值
@@ -2975,6 +2864,7 @@
                 },
 
                 deleteBtn() {
+                    this.deleteConnection()
                     // 記錄所有被選取的節點 ID
                     const deletedIds = this.nodes.filter(node => node.selected).map(node => node.id);
 
@@ -3168,6 +3058,7 @@
                     }
 
                     const result = { x: edgeX, y: edgeY };
+                    console.log('Edge point:', result, 'from:', fromNode.id, 'to:', toNode.id);
                     return result;
                 },
 
@@ -3643,6 +3534,7 @@
                     const cx = mx + px * offset, cy = my + py * offset;
 
                     const path = `M ${startEdge.x} ${startEdge.y} Q ${cx} ${cy} ${endEdge.x} ${endEdge.y}`;
+                    console.log('Connection path:', path, 'for connection:', conn.connectionsId);
                     return path;
                 },
 
