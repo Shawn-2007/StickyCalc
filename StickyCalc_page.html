@@ -241,7 +241,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: #f4f4f5;
+            background: #d1e2eb;
             transition: 0.4s;
             border-radius: 30px;
         }
@@ -269,6 +269,21 @@
             background: #303136;
             /* box-shadow: inset -3px -2px 5px 2px #8982f7; */
             box-shadow: inset -3px -2px 5px 2px #8982f7, inset -10px -4px 0 0 #a3dafb;
+        }
+
+        /* IPHONE直立式 orientation方向: portrait縱向*/
+        @media (max-width: 768px) and (orientation: portrait) {
+
+            /* 右上工具列 */
+            .toolbar-right {
+                width: 120px;
+            }
+
+            /* 左上工具列 */
+            .toolbar-left {
+                width: 230px;
+            }
+
         }
     </style>
 </head>
@@ -327,7 +342,7 @@
             <!-- 右上工具列 -->
             <div class="toolbar toolbar-right">
                 <div class="d-flex">
-                    <div class="ms-3" data-title="LOGO">
+                    <div v-if="!isMobile" class="ms-3" data-title="LOGO">
                         <a href="#" @click="goIndex">
                             <!-- LOGO -->
                             <svg-icon name="svg-logo"></svg-icon>
@@ -336,13 +351,13 @@
                     <!-- <div class="mx-3" data-title="下載" style="margin-top: -10px;">
                         <svg-icon name="svg-download"></svg-icon>
                     </div> -->
-                    <div class="darkLightSwitch mt-1">
+                    <div class="darkLightSwitch mt-1 ms-auto">
                         <label class="switch">
                             <input type="checkbox" v-model="isDark">
                             <span class="slider"></span>
                         </label>
                     </div>
-                    <div class="mx-3 " data-title="更多">
+                    <div class="mx-1 " data-title="更多">
                         <div class="dropdown">
                             <button class="btn btn-link" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <svg-icon name="svg-more"></svg-icon>
@@ -360,11 +375,11 @@
             <!-- 垂直工具列（新增） 全上462px 一般82px 貼246px 線348px -->
             <div class="toolbar toolbar-vertical" :style="{height: computedToolbarHeight + 'px' }">
                 <!-- 新增便利貼 -->
-                <button class="toolbar-button" @click="addNodeAtContext">
+                <button class="toolbar-button" @click="addNodeAtRight">
                     <svg-icon name="svg-addNode"></svg-icon>
                 </button>
                 <!-- 新增圖表便利貼 -->
-                <button class="toolbar-button" @click="addChartNode">
+                <button class="toolbar-button" @click="addChartNodeRight">
                     <svg-icon name="svg-addChartNode"></svg-icon>
                 </button>
                 <!-- 刪除便利貼 -->
@@ -654,7 +669,7 @@
                         style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                         <svg-icon name="svg-addNode"></svg-icon>
                     </button>
-                    <button type="button" class="btn btn-sm " @click="addChartNode"
+                    <button type="button" class="btn btn-sm " @click="addChartNodeAtContext"
                         style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                         <svg-icon name="svg-addChartNode"></svg-icon>
                     </button>
@@ -1198,11 +1213,11 @@
 
                 vm.checkuid();
 
+                // 添加 pagehide 事件（移動端，尤其是 iOS）目前看好像沒用，後續再決定去留
+                window.addEventListener('pagehide', this.handlePageHide);
+
                 // 添加 beforeunload 事件（桌面端可用）
                 window.addEventListener('beforeunload', this.handleBeforeUnload);
-
-                // 添加 pagehide 事件（移動端，尤其是 iOS）
-                window.addEventListener('pagehide', this.handlePageHide);
 
                 // 添加 visibilitychange 事件（檢測頁面隱藏）
                 document.addEventListener('visibilitychange', this.handleVisibilityChange);
@@ -1235,15 +1250,14 @@
                         // 清除現有的計時器
                         if (this.uploadTimer) {
                             clearTimeout(this.uploadTimer);
-                            console.log("清除現有的計時器")
                             this.isAutoUpload = false;
                         }
 
+                        // 自動存檔區分電腦端與移動端，移動端無法抓取到存檔，所以時間減短至修改後30秒未動就存檔
                         if (!this.isMobile) {
                             // 一有更動就設置新的2分鐘計時器
                             this.uploadTimer = setTimeout(() => {
                                 this.nodesUpload();
-                                console.log("計時結束 上傳")
                                 this.isAutoUpload = true;
                             }, 300000); // 2分鐘 = 120000毫秒
 
@@ -1251,9 +1265,8 @@
                             // 一有更動就設置新的2分鐘計時器
                             this.uploadTimer = setTimeout(() => {
                                 this.nodesUpload();
-                                console.log("計時結束 上傳")
                                 this.isAutoUpload = true;
-                            }, 12000); // 2分鐘 = 120000毫秒
+                            }, 30000); // 30秒 = 30000毫秒
                         }
 
                     },
@@ -1298,7 +1311,7 @@
                 },
                 computedToolbarHeight() {
                     if (this.selectedNode && this.selectedConn) {
-                        return 462
+                        return 496
                     } else if (this.selectedConn) {
                         return 368
                     } else if (this.selectedNode) {
@@ -1693,18 +1706,9 @@
                                     text: '重複連線了唷，請檢查您的連線結構！',
                                 });
                             } else {
-                                this.connections.push({
-                                    from: this.tempConnection.startNode.id,
-                                    to: targetNode.id,
-                                    selected: false,
-                                    userId: this.userId,
-                                    boardId: this.boardId,
-                                    color: '#FFB53E',
-                                    type: '12,6',
-                                    connectionsId: Math.random().toString(36).substring(2, 12),
-                                });
-                                this.tempConnection.startNode.connectionsOut.push(targetNode.id);
-                                targetNode.connectionsIn.push(this.tempConnection.startNode.id);
+                                // 托拽連線用
+                                this.pushConnections(this.tempConnection.startNode, targetNode);
+
                                 this.calculateTotal();
 
                                 if (targetNode.type === 'chart' && targetNode.connectionsIn.length >= 2) {
@@ -1712,51 +1716,14 @@
                                 }
                             }
                         } else {
-                            const newNode = {
-                                x: svgX,
-                                y: svgY,
-                                userId: this.userId,
-                                boardId: this.boardId,
-                                id: Math.random().toString(36).substring(2, 12),
-                                label: 'New Node',
-                                type: 'general',
-                                color: '#FFF8CA',
-                                colorTop: '#FFF4B2',
-                                editing: false,
-                                selected: false,
-                                operation: "sum",
-                                connectionsOut: [],
-                                connectionsIn: [],
-                                connections: [],
-                                total: 0,
-                                count: 0,
-                            };
+
+                            const newNode = this.addNode(svgX, svgY);
 
                             this.nodes.push(newNode);
+                            // 建立連線（從基準便利貼到新便利貼）
+                            this.pushConnections(this.tempConnection.startNode, newNode);
 
-                            this.connections.push({
-                                from: this.tempConnection.startNode.id,
-                                to: newNode.id,
-                                selected: false,
-                                userId: this.userId,
-                                boardId: this.boardId,
-                                color: '#FFB53E',
-                                type: '12,6',
-                                connectionsId: Math.random().toString(36).substring(2, 12),
-                            });
-
-                            this.tempConnection.startNode.connectionsOut.push(newNode.id);
-                            newNode.connectionsIn.push(this.tempConnection.startNode.id);
-
-                            const node = this.nodes.find(n => n.id === newNode.id);
-                            node.editing = true;
-                            this.$nextTick(() => {
-                                const textarea = document.querySelector(`#app textarea`);
-                                if (textarea) {
-                                    textarea.focus();
-                                    textarea.select();
-                                }
-                            });
+                            this.focusNodeText(newNode);
 
                             this.calculateTotal();
                         }
@@ -1898,13 +1865,16 @@
                         return;
                     }
 
+                    // 確保初始值不會變成NAN
                     node.initialX = node.x || 0;
                     node.initialY = node.y || 0;
 
+                    // 更新選取狀態
                     if (!node.selected) {
                         this.nodes.forEach(n => n.selected = false);
                         node.selected = true;
                     }
+
 
                     const tx = this.boardOffset.x;
                     const ty = this.boardOffset.y;
@@ -1920,6 +1890,10 @@
                         n.userId = this.userId;
                         n.boardId = this.boardId;
                     });
+
+                    // 綁定拖曳事件
+                    document.addEventListener("mousemove", this.onDrag);
+                    document.addEventListener("mouseup", this.stopDrag);
 
                 },
 
@@ -2135,18 +2109,9 @@
                                 text: '重複連線了唷，請檢查您的連線結構！',
                             });
                         } else {
-                            this.connections.push({
-                                from: this.tempConnection.startNode.id,
-                                to: targetNode.id,
-                                selected: false,
-                                userId: this.userId,
-                                boardId: this.boardId,
-                                color: '#FFB53E',
-                                type: '12,6',
-                                connectionsId: Math.random().toString(36).substring(2, 12),
-                            });
-                            this.tempConnection.startNode.connectionsOut.push(targetNode.id);
-                            targetNode.connectionsIn.push(this.tempConnection.startNode.id);
+                            // 建立連線（從基準便利貼到新便利貼）
+                            this.pushConnections(this.tempConnection.startNode, targetNode);
+
                             this.calculateTotal();
 
                             if (targetNode.type === 'chart' && targetNode.connectionsIn.length >= 2) {
@@ -2155,57 +2120,16 @@
                         }
                     } else {
                         // 新功能：拖曳到空白位置，新增便利貼
-                        const newNode = {
-                            x: svgX, // 新便利貼的 X 坐標
-                            y: svgY, // 新便利貼的 Y 坐標
-
-                            userId: this.userId,
-                            boardId: this.boardId,
-                            // 其他必要的節點屬性...
-                            id: Math.random().toString(36).substring(2, 12), //取隨機8字元
-                            label: 'New Node',
-                            type: 'general',
-                            color: '#FFF8CA',
-                            colorTop: '#FFF4B2',
-                            editing: false,
-                            selected: false,
-                            operation: "sum",  // 預設值
-                            connectionsOut: [],
-                            connectionsIn: [],
-                            connections: [],
-                            total: 0,
-                            count: 0,
-                        };
+                        const newNode = this.addNode(svgX, svgY)
 
                         // 將新便利貼添加到 nodes 數組
                         this.nodes.push(newNode);
 
                         // 建立與起始節點的連線
-                        this.connections.push({
-                            from: this.tempConnection.startNode.id,
-                            to: newNode.id,
-                            selected: false,
-                            userId: this.userId,
-                            boardId: this.boardId,
-                            color: '#FFB53E',
-                            type: '12,6',
-                            connectionsId: Math.random().toString(36).substring(2, 12),
-                        });
-
-                        // 更新起始節點和目標節點的連線關係
-                        this.tempConnection.startNode.connectionsOut.push(newNode.id);
-                        newNode.connectionsIn.push(this.tempConnection.startNode.id);
+                        this.pushConnections(this.tempConnection.startNode, newNode);
 
 
-                        const node = this.nodes.find(n => n.id === newNode.id);
-                        node.editing = true;
-                        this.$nextTick(() => {
-                            const textarea = document.querySelector(`#app textarea`);
-                            if (textarea) {
-                                textarea.focus();
-                                textarea.select();
-                            }
-                        });
+                        this.focusNodeText(newNode);
 
                         // 重新計算總計（如果需要）
                         this.calculateTotal();
@@ -2253,6 +2177,7 @@
 
                     const result = { x: endEdge.x, y };
                     // console.log('Arrow position for connection:', conn.connectionsId, result);
+
                     if (isNaN(result.x) || isNaN(result.y)) {
                         console.warn('Invalid arrow position:', result, 'for connection:', conn);
                         return { x: toNode.x, y: toNode.y };
@@ -2347,9 +2272,20 @@
                         confirmButtonText: '關閉',
                     });
                 },
+
                 /* ================ 圖表便利貼 ==================== */
+                //側欄新增圖表便利貼
+                addChartNodeRight(event) {
+                    this.addChartNode(190, 140, event);
+                },
+
+                //右鍵新增便利貼圖表
+                addChartNodeAtContext(event) {
+                    this.addChartNode(0, 0, event);
+                },
+
                 /* 圖表便利貼相關方法 */
-                addChartNode(event) {
+                addChartNode(addX, addY, event) {
                     const vm = this;
                     const svgElement = document.getElementById('mindmapSvg');
                     const rect = svgElement.getBoundingClientRect();
@@ -2358,8 +2294,8 @@
                     const newNode = {
                         id: `chart-${Date.now()}`,
                         type: 'chart',
-                        x: x,
-                        y: y,
+                        x: x + addX,
+                        y: y + addY,
                         chartWidth: 400,
                         chartHeight: 240,
                         chartType: 'bar', // 預設為柱狀圖
@@ -2580,18 +2516,7 @@
 
 
                 /* ================ 圖表便利貼 ==================== */
-                edittodo() {
-                    // this.cacheTitle = title;
-                    this.editName = !this.editName;
-                    this.$nextTick(() => {
-                        const textarea = document.querySelector(`#app input`);
-                        if (textarea) {
-                            textarea.focus();
-                            textarea.select();
-                        }
-                    });
 
-                },
 
 
 
@@ -2641,15 +2566,35 @@
                 editNode(node) {
 
                     if (node.type !== 'chart' && node.connectionsIn.length <= 1) {
-                        node.editing = true;
-                        this.$nextTick(() => {
-                            const textarea = document.querySelector(`#app textarea`);
-                            if (textarea) {
-                                textarea.focus();
-                                textarea.select();
-                            }
-                        });
+                        this.focusNodeText(node);
                     }
+                },
+
+                //關注便利貼(進入新便利貼的編輯模式)
+                focusNodeText(newNode) {
+                    const node = this.nodes.find(n => n.id === newNode.id);
+                    node.selected = true;
+                    node.editing = true;
+                    this.$nextTick(() => {
+                        const textarea = document.querySelector(`#app textarea`);
+                        if (textarea) {
+                            textarea.focus();
+                            textarea.select();
+                        }
+                    });
+                },
+
+                edittodo() {
+                    // this.cacheTitle = title;
+                    this.editName = !this.editName;
+                    this.$nextTick(() => {
+                        const textarea = document.querySelector(`#app input`);
+                        if (textarea) {
+                            textarea.focus();
+                            textarea.select();
+                        }
+                    });
+
                 },
 
                 // computeTotal: 提取所有數字（含負號）並加總後存入 node.total
@@ -2724,54 +2669,46 @@
                 // 點擊便利貼：若處於連線模式則建立連線；否則若按住 Shift 則切換選取狀態
                 nodeClick(node, event) {
                     const vm = this;
-                    if (this.connectionStartNode && this.connectionStartNode.id !== node.id) {
+                    if (vm.connectionStartNode && vm.connectionStartNode.id !== node.id) {
                         // 檢查是否會形成循環
-                        if (this.willCauseLoop(this.connectionStartNode.id, node.id)) {
+                        if (vm.willCauseLoop(vm.connectionStartNode.id, node.id)) {
                             Swal.fire({
                                 icon: 'warning',
                                 title: '無法連線',
                                 text: '此連線會導致循環，請檢查您的連線結構！',
                             });
-                            this.connectionStartNode = null;
+                            vm.connectionStartNode = null;
                             return;
                         }
                         // 檢查是否重複連線
-                        this.connectionStartNode.connectionsOut.forEach(conn => {
+                        vm.connectionStartNode.connectionsOut.forEach(conn => {
                             if (conn == node.id) {
                                 Swal.fire({
                                     icon: 'warning',
                                     title: '無法連線',
                                     text: '重複連線了唷，請檢查您的連線結構！',
                                 });
-                                this.connectionStartNode = null;
+                                vm.connectionStartNode = null;
                                 return;
                             }
-
                         })
 
                         // 新增連線
-                        this.connections.push({
-                            from: this.connectionStartNode.id,
-                            to: node.id,
-                            selected: false,
-                            userId: vm.userId,
-                            boardId: vm.boardId,
-                            color: '#FFB53E',
-                            type: '12,6',
-                            connectionsId: Math.random().toString(36).substring(2, 12),
-                        });
-                        this.connectionStartNode.connectionsOut.push(node.id);
-                        node.connectionsIn.push(this.connectionStartNode.id);
-                        this.connectionStartNode = null;
+                        vm.pushConnections(vm.connectionStartNode, node);
 
-                        this.calculateTotal();
+
+                        vm.connectionStartNode.connectionsOut.push(node.id);
+                        node.connectionsIn.push(vm.connectionStartNode.id);
+                        vm.connectionStartNode = null;
+
+                        vm.calculateTotal();
 
                         // 新增連線後檢查並刷新圖表
                         if (node.type === 'chart' && node.connectionsIn.length >= 2) {
-                            this.renderChart(node);
+                            vm.renderChart(node);
                         }
                     } else {
-                        if (this.isMobile) {
+                        if (vm.isMobile) {
                             node.selected = !node.selected;
                         }
                     }
@@ -2861,19 +2798,70 @@
                 hideContextMenu() {
                     this.contextMenu.visible = false;
                 },
+
                 // 在空白右鍵選單中點「新增節點」，根據滑鼠位置新增便利貼
                 addNodeAtContext() {
-                    const vm = this;
                     const svgElement = document.getElementById('mindmapSvg');
                     const rect = svgElement.getBoundingClientRect();
                     const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
                     const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
+
+                    const newNode = this.addNode(x, y)
+                    this.contextMenu.visible = false;
+                    //進入新便利貼的編輯模式
+                    this.focusNodeText(newNode);
+                },
+                //側欄新增便利貼
+                addNodeAtRight() {
+                    const svgElement = document.getElementById('mindmapSvg');
+                    const rect = svgElement.getBoundingClientRect();
+                    const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
+                    const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
+
+                    const newNode = this.addNode(x + 150, y + 0)
+                    this.contextMenu.visible = false;
+                    //進入新便利貼的編輯模式
+                    this.focusNodeText(newNode);
+                },
+                // 按下 Tab 鍵時，在選取的一般便利貼右邊新增一個便利貼並連線
+                addNodeOnTab() {
+                    const vm = this;
+                    // 獲取所有選取的便利貼
+                    const selectedNodes = this.nodes.filter(n => n.selected);
+                    // 如果沒有選取的便利貼，則不執行
+                    if (selectedNodes.length === 0) {
+                        return;
+                    }
+                    // 找到第一個一般便利貼（type: 'general'）
+                    const baseNode = selectedNodes.find(n => n.type === 'general');
+                    if (!baseNode) {
+                        return; // 如果選取的便利貼中沒有一般便利貼，則不執行
+                    }
+                    const newNode = this.addNode(baseNode.x + 200, baseNode.y + 0)
+                    // 將新便利貼添加到 nodes 數組
+                    this.nodes.push(newNode);
+
+                    // 建立連線（從基準便利貼到新便利貼）
+                    this.pushConnections(baseNode, newNode);
+
+                    baseNode.selected = false;
+
+                    // 重新計算總計（如果需要）
+                    this.calculateTotal();
+
+                    // 進入新便利貼的編輯模式
+                    this.focusNodeText(newNode);
+                },
+
+                // 新增便利貼
+                addNode(addX, addY) {
+                    const vm = this;
                     const newNode = {
                         id: Math.random().toString(36).substring(2, 12), //取隨機8字元
                         label: 'New Node',
                         type: 'general',
-                        x: x,
-                        y: y,
+                        x: addX,
+                        y: addY,
                         color: '#FFF8CA',
                         colorTop: '#FFF4B2',
                         editing: false,
@@ -2886,68 +2874,16 @@
                         count: 0,
                         userId: vm.userId,
                         boardId: vm.boardId,
-
                     };
                     this.nodes.push(newNode);
-                    this.contextMenu.visible = false;
-
-                    const node = this.nodes.find(n => n.id === newNode.id);
-                    node.editing = true;
-                    this.$nextTick(() => {
-                        const textarea = document.querySelector(`#app textarea`);
-                        if (textarea) {
-                            textarea.focus();
-                            textarea.select();
-                        }
-                    });
-
+                    return newNode;
                 },
-                // 按下 Tab 鍵時，在選取的一般便利貼右邊新增一個便利貼並連線
-                addNodeOnTab() {
-                    const vm = this;
 
-                    // 獲取所有選取的便利貼
-                    const selectedNodes = this.nodes.filter(n => n.selected);
-
-                    // 如果沒有選取的便利貼，則不執行
-                    if (selectedNodes.length === 0) {
-                        return;
-                    }
-
-                    // 找到第一個一般便利貼（type: 'general'）
-                    const baseNode = selectedNodes.find(n => n.type === 'general');
-                    if (!baseNode) {
-                        return; // 如果選取的便利貼中沒有一般便利貼，則不執行
-                    }
-
-                    // 新增便利貼，位置在基準便利貼右邊 200px
-                    const newNode = {
-                        id: Math.random().toString(36).substring(2, 12),
-                        label: 'New Node',
-                        type: 'general',
-                        x: baseNode.x + 200, // 右邊 200px
-                        y: baseNode.y, // 與基準便利貼的 y 坐標相同
-                        color: '#FFF8CA',
-                        colorTop: '#FFF4B2',
-                        editing: false,
-                        selected: false,
-                        operation: "sum",
-                        connectionsOut: [],
-                        connectionsIn: [],
-                        connections: [],
-                        total: 0,
-                        count: 0,
-                        userId: vm.userId,
-                        boardId: vm.boardId,
-                    };
-
-                    // 將新便利貼添加到 nodes 數組
-                    this.nodes.push(newNode);
-
-                    // 建立連線（從基準便利貼到新便利貼）
+                // 建立連線（從基準便利貼到新便利貼）
+                pushConnections(fromNode, toNode) {
                     this.connections.push({
-                        from: baseNode.id,
-                        to: newNode.id,
+                        from: fromNode.id,
+                        to: toNode.id,
                         selected: true,
                         userId: this.userId,
                         boardId: this.boardId,
@@ -2957,26 +2893,8 @@
                     });
 
                     // 更新連線關係
-                    baseNode.connectionsOut.push(newNode.id);
-                    newNode.connectionsIn.push(baseNode.id);
-                    baseNode.selected = false;
-
-                    // 重新計算總計（如果需要）
-                    this.calculateTotal();
-
-
-
-                    // 進入新便利貼的編輯模式
-                    const node = this.nodes.find(n => n.id === newNode.id);
-                    node.selected = true;
-                    node.editing = true;
-                    this.$nextTick(() => {
-                        const textarea = document.querySelector(`#app textarea`);
-                        if (textarea) {
-                            textarea.focus();
-                            textarea.select();
-                        }
-                    });
+                    fromNode.connectionsOut.push(toNode.id);
+                    toNode.connectionsIn.push(fromNode.id);
                 },
 
                 // ============== 連線相關 ===============
