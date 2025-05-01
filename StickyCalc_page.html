@@ -2009,9 +2009,6 @@
                         // 新功能：拖曳到空白位置，新增便利貼
                         const newNode = this.addNode(svgX, svgY)
 
-                        // 將新便利貼添加到 nodes 數組
-                        this.nodes.push(newNode);
-
                         // 建立與起始節點的連線
                         this.pushConnections(this.tempConnection.startNode, newNode);
 
@@ -2725,8 +2722,7 @@
                         return; // 如果選取的便利貼中沒有一般便利貼，則不執行
                     }
                     const newNode = this.addNode(baseNode.x + 200, baseNode.y + 0)
-                    // 將新便利貼添加到 nodes 數組
-                    this.nodes.push(newNode);
+
 
                     // 建立連線（從基準便利貼到新便利貼）
                     this.pushConnections(baseNode, newNode);
