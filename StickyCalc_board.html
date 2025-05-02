@@ -189,7 +189,8 @@
 
                                         <button type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">取消</button>
-                                        <button type="button" id="ok_btn_login" class="btn btn-primary">登入</button>
+                                        <button type="button" id="ok_btn_login" @click="ok_btn_login()"
+                                            class="btn btn-primary">登入</button>
                                     </div>
                                 </div>
                             </div>
@@ -362,40 +363,27 @@
                     boardData: [],
                     memberLevel01: 0,
                     userLevel: '',
+
+                    isMobile: false, // 是否為移動設備
                 }
             },
+            // 生命週期:起始
             created() {
                 const vm = this;
-                //確認UID是否存在
-                if (vm.getCookie("Uid01")) {
-                    // 將Uid01傳遞至後端API執行驗證
-                    // input {"uid01" : "owne132fd2"}
-                    var JSONdata = {};
-                    JSONdata["uid01"] = vm.getCookie("Uid01");
-                    $.ajax({
-                        type: "POST",
-                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuid",
-                        data: JSON.stringify(JSONdata),
-                        dataType: "json",
-                        success: vm.showdata_checkuid,
-                        error: function () {
-                            Swal.fire({
-                                title: "API串接錯誤",
-                                text: "member_register_api_v1.php",
-                                icon: "error"
-                            });
-                        }
-                    })
+                // 設備檢測邏輯
+                const userAgent = navigator.userAgent.toLowerCase();
+                const isTouchDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+                const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+                this.isMobile = isTouchDevice || isCoarsePointer || ('ontouchstart' in window);
+                // 設備檢測邏輯
 
+                if (this.isMobile) {
+                    this.checkmid();
                 } else {
-                    Swal.fire({
-                        title: "請先登入會員",
-                        icon: "info",
-                        allowOutsideClick: false,
-                    }).then((result) => {
-                        location.href = "index.html";
-                    });
+
+                    this.checkuid();
                 }
+
 
                 localStorage.setItem('boardId', "")
                 localStorage.setItem('boardName', "")
@@ -403,6 +391,71 @@
             watch: {
             },
             methods: {
+                checkuid() {
+                    const vm = this;
+                    //確認UID是否存在
+                    if (vm.getCookie("Uid01")) {
+                        // 將Uid01傳遞至後端API執行驗證
+                        // input {"uid01" : "owne132fd2"}
+                        var JSONdata = {};
+                        JSONdata["uid01"] = vm.getCookie("Uid01");
+                        $.ajax({
+                            type: "POST",
+                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuid",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: vm.showdata_checkuid,
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_register_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        })
+                    } else {
+                        Swal.fire({
+                            title: "請先登入會員",
+                            icon: "info",
+                            allowOutsideClick: false,
+                        }).then((result) => {
+                            location.href = "index.html";
+                        });
+                    }
+                },
+                checkmid() {
+                    const vm = this;
+                    //確認UID是否存在
+                    if (vm.getCookie("Mid")) {
+                        // 將Uid01傳遞至後端API執行驗證
+                        // input {"uid01" : "owne132fd2"}
+                        var JSONdata = {};
+                        JSONdata["mid"] = vm.getCookie("Mid");
+                        $.ajax({
+                            type: "POST",
+                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkmid",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: vm.showdata_checkuid,
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_register_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        })
+                    } else {
+                        Swal.fire({
+                            title: "請先登入會員",
+                            icon: "info",
+                            allowOutsideClick: false,
+                        }).then((result) => {
+                            location.href = "index.html";
+                        });
+                    }
+                },
+
                 deleteBoard(boardId, userId) {
                     var JSONdata = {};
 
@@ -601,6 +654,88 @@
 
                     location.href = "StickyCalc_page.html";
                 },
+                ok_btn_login() {
+                    if (flag_username_login && flag_password_login) {
+                        //傳遞後端API 執行登入行為
+                        // {"username" : "owner01", "password" : "123456"}
+                        var JSONdata01 = {};
+                        JSONdata01["username"] = $("#username_login").val();
+                        JSONdata01["password"] = $("#password_login").val();
+
+                        if (this.isMobile) {
+                            $.ajax({
+                                type: "POST",
+                                url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login_mobile",
+                                data: JSON.stringify(JSONdata01),
+                                dataType: "json",
+                                success: this.showdata_login,
+                                error: function () {
+                                    Swal.fire({
+                                        title: "API串接錯誤",
+                                        text: "member_login_api_v1.php",
+                                        icon: "error"
+                                    });
+                                }
+                            });
+                        } else {
+                            $.ajax({
+                                type: "POST",
+                                url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login",
+                                data: JSON.stringify(JSONdata01),
+                                dataType: "json",
+                                success: this.showdata_login,
+                                error: function () {
+                                    Swal.fire({
+                                        title: "API串接錯誤",
+                                        text: "member_login_api_v1.php",
+                                        icon: "error"
+                                    });
+                                }
+                            });
+                        }
+                    } else {
+                        Swal.fire({
+                            title: "輸入錯誤",
+                            text: "請輸入帳號和密碼",
+                            icon: "error"
+                        });
+                    }
+                },
+
+
+                showdata_login(data) {
+                    // location.href = "SPA-index.html";
+                    console.log(data);
+                    if (data.state) {
+                        Swal.fire({
+                            title: data.message,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // 讓loginModal 消失
+                                $("#loginModal").modal("hide");
+                                $("#username_showtext").removeClass("d-none");
+                                $("#backstage").removeClass("d-none");
+
+                                $("#username_text").text(data.data.Username);
+
+                                $("#login_btn").addClass("d-none");
+                                $("#logout_btn").removeClass("d-none");
+
+                                if (this.isMobile) {
+                                    setCookie("Mid", data.data.Mid, 7);
+                                } else {
+                                    setCookie("Uid01", data.data.Uid01, 7);
+                                }
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: data.message,
+                            icon: "error"
+                        });
+                    }
+                },
 
                 // 預留:分享功能
                 sendBoard(boardId, userId) {
@@ -644,38 +779,38 @@
         $(function () {
 
 
-            // 登入按鈕
-            $("#ok_btn_login").click(function () {
-                if (flag_username_login && flag_password_login) {
-                    //傳遞後端API 執行登入行為
-                    // {"username" : "owner01", "password" : "123456"}
-                    var JSONdata01 = {};
-                    JSONdata01["username"] = $("#username_login").val();
-                    JSONdata01["password"] = $("#password_login").val();
+            // // 登入按鈕
+            // $("#ok_btn_login").click(function () {
+            //     if (flag_username_login && flag_password_login) {
+            //         //傳遞後端API 執行登入行為
+            //         // {"username" : "owner01", "password" : "123456"}
+            //         var JSONdata01 = {};
+            //         JSONdata01["username"] = $("#username_login").val();
+            //         JSONdata01["password"] = $("#password_login").val();
 
-                    $.ajax({
-                        type: "POST",
-                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login",
-                        data: JSON.stringify(JSONdata01),
-                        dataType: "json",
-                        success: showdata_login,
-                        error: function () {
-                            Swal.fire({
-                                title: "API串接錯誤",
-                                text: "member_login_api_v1.php",
-                                icon: "error"
-                            });
-                        }
-                    });
+            //         $.ajax({
+            //             type: "POST",
+            //             url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login",
+            //             data: JSON.stringify(JSONdata01),
+            //             dataType: "json",
+            //             success: showdata_login,
+            //             error: function () {
+            //                 Swal.fire({
+            //                     title: "API串接錯誤",
+            //                     text: "member_login_api_v1.php",
+            //                     icon: "error"
+            //                 });
+            //             }
+            //         });
 
-                } else {
-                    Swal.fire({
-                        title: "輸入錯誤",
-                        text: "請輸入帳號和密碼",
-                        icon: "error"
-                    });
-                }
-            });
+            //     } else {
+            //         Swal.fire({
+            //             title: "輸入錯誤",
+            //             text: "請輸入帳號和密碼",
+            //             icon: "error"
+            //         });
+            //     }
+            // });
 
             //及時監聽username_login 登入布林
             $("#username_login").bind("input propertychange", function () {
@@ -708,36 +843,36 @@
         })
 
 
-        function showdata_login(data) {
-            // location.href = "SPA-index.html";
-            console.log(data);
-            if (data.state) {
-                Swal.fire({
-                    title: data.message,
-                    icon: "success"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // 讓loginModal 消失
-                        $("#loginModal").modal("hide");
-                        $("#username_showtext").removeClass("d-none");
-                        $("#backstage").removeClass("d-none");
+        // function showdata_login(data) {
+        //     // location.href = "SPA-index.html";
+        //     console.log(data);
+        //     if (data.state) {
+        //         Swal.fire({
+        //             title: data.message,
+        //             icon: "success"
+        //         }).then((result) => {
+        //             if (result.isConfirmed) {
+        //                 // 讓loginModal 消失
+        //                 $("#loginModal").modal("hide");
+        //                 $("#username_showtext").removeClass("d-none");
+        //                 $("#backstage").removeClass("d-none");
 
-                        $("#username_text").text(data.data.Username);
+        //                 $("#username_text").text(data.data.Username);
 
-                        $("#login_btn").addClass("d-none");
-                        $("#logout_btn").removeClass("d-none");
+        //                 $("#login_btn").addClass("d-none");
+        //                 $("#logout_btn").removeClass("d-none");
 
 
-                        setCookie("Uid01", data.data.Uid01, 7);
-                    }
-                });
-            } else {
-                Swal.fire({
-                    title: data.message,
-                    icon: "error"
-                });
-            }
-        }
+        //                 setCookie("Uid01", data.data.Uid01, 7);
+        //             }
+        //         });
+        //     } else {
+        //         Swal.fire({
+        //             title: data.message,
+        //             icon: "error"
+        //         });
+        //     }
+        // }
 
         function showdata_checkuid(data) {
             if (data.state) {

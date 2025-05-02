@@ -517,7 +517,6 @@
                         </template>
                         <!-- 頂欄 -->
 
-
                         <!-- 編輯模式 -->
                         <template v-if="node.editing && node.type !== 'chart'">
                             <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
@@ -563,9 +562,16 @@
                                 style="cursor: pointer;" @pointerdown.stop="startDragConnectionCircle(node, $event)">
                             </circle>
                         </template>
+                    </g>
+
+
+                    <!-- 測試:圖表便利貼 -->
+                    <g v-for="(node, index) in nodes" :key="node.id" :data-id="node.id"
+                        @pointerdown.stop="startDrag(node, $event)" @click.stop="nodeClick(node, $event)"
+                        @mouseenter="hoveredNode = node" @mouseleave="hoveredNode = null" style="cursor: move;">
 
                         <!-- 圖表便利貼 -->
-                        <template v-else-if="node.type === 'chart'">
+                        <template v-if="node.type === 'chart'">
                             <g>
                                 <!-- 底層矩形（淺色） -->
                                 <rect :x="node.x - node.chartWidth/2" :y="node.y - node.chartHeight/2"
@@ -633,6 +639,7 @@
                                 :width="node.chartWidth - 20" :height="node.chartHeight - 40">
                                 <div :id="node.id" class="chart-container" :style="foreignObjectTransformStyle"></div>
                             </foreignObject>
+                            <!-- 右下角拖移方塊 -->
                             <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
                                 height="15" fill="grey" stroke="black" stroke-width="1" style="cursor: se-resize;"
                                 @pointerdown.stop="startResize(node, $event)" />
@@ -642,7 +649,6 @@
                                 stroke-width="2" rx="5" ry="5" />
                         </template>
                     </g>
-
 
                     <!-- 框選的選取框 -->
                     <rect v-if="selectionBox.active" :x="selectionBox.x" :y="selectionBox.y" :width="selectionBox.width"
@@ -1201,7 +1207,11 @@
             mounted() {
                 const vm = this;
 
-                vm.checkuid();
+                if (this.isMobile) {
+                    vm.checkmid();
+                } else {
+                    vm.checkuid();
+                }
 
                 // 添加 pagehide 事件（移動端，尤其是 iOS）目前看好像沒用，後續再決定去留
                 window.addEventListener('pagehide', this.handlePageHide);
@@ -2008,6 +2018,9 @@
                     } else {
                         // 新功能：拖曳到空白位置，新增便利貼
                         const newNode = this.addNode(svgX, svgY)
+
+                        // 將新便利貼添加到 nodes 數組
+                        // this.nodes.push(newNode);
 
                         // 建立與起始節點的連線
                         this.pushConnections(this.tempConnection.startNode, newNode);
@@ -3276,6 +3289,33 @@
                         $.ajax({
                             type: "POST",
                             url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuid",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: vm.showdata_checkuid,
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "member_register_api_v1.php",
+                                    icon: "error"
+                                });
+                            }
+                        })
+                    } else {
+
+                    }
+                },
+
+                checkmid() {
+                    //確認UID是否存在
+                    const vm = this;
+                    if (vm.getCookie("Mid")) {
+                        // 將Uid01傳遞至後端API執行驗證
+                        // input {"uid01" : "owne132fd2"}
+                        var JSONdata = {};
+                        JSONdata["mid"] = vm.getCookie("Mid");
+                        $.ajax({
+                            type: "POST",
+                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkmid",
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: vm.showdata_checkuid,
