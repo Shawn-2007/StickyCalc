@@ -271,6 +271,10 @@
             box-shadow: inset -3px -2px 5px 2px #8982f7, inset -10px -4px 0 0 #a3dafb;
         }
 
+        .todoCheckder {
+            text-decoration: line-through;
+        }
+
         /* IPHONE直立式 orientation方向: portrait縱向*/
         @media (max-width: 768px) and (orientation: portrait) {
 
@@ -464,8 +468,12 @@
 
                     <!-- 連線 -->
                     <g v-for="(conn, index) in connections" :key="'conn-' + index">
+
                         <path :d="getConnectionPath(conn)" :stroke="conn.selected ? 'blue' : conn.color" fill="none"
-                            :stroke-dasharray="conn.type" stroke-width="3" pointer-events="visibleStroke"
+                            :stroke-dasharray="conn.type" stroke-width="2" pointer-events="visibleStroke"></path>
+
+                        <path :d="getConnectionPath(conn)" stroke="none" fill="none" stroke-dasharray="solid"
+                            stroke-width="20" pointer-events="visibleStroke"
                             @click.stop="toggleConnectionSelection(conn, $event)"></path>
                         <!-- 終端圓圈 -->
                         <g v-if="getAdjustedArrowPosition(conn).x !== 0 && getAdjustedArrowPosition(conn).y !== 0">
@@ -510,6 +518,13 @@
                         </template>
 
                         <template v-else>
+                            <!-- 選取框checkbox -->
+                            <foreignObject v-if="node.connectionsIn.length < 2" :x="node.x - 60"
+                                :y="node.y - noteHeight / 2 -1" width="100" height="32">
+                                <input type="checkbox" name="" id="" class="form-check-input" v-model="node.isComplete"
+                                    style="background-color: #f9f9f900;border-color: #7c7c7c27;width: 20px; height: 20px;">
+                            </foreignObject>
+
                             <text :x="node.x + noteWidth / 2 - 5" :y="node.y - noteHeight / 2 + 20" text-anchor="end"
                                 font-size="18" fill="grey" font-weight="bold">
                                 {{ node.total }}
@@ -534,8 +549,12 @@
                                 <div class="note-text-container" :style="foreignObjectTransformStyle"
                                     @dblclick="draggingNodes.length ? null : editNode(node)">
                                     <!-- 一連以下顯示此段，label無內容顯示雙擊編輯 -->
-                                    <span v-if="node.connectionsIn.length < 2" class="note-text">{{ node.label || "雙擊編輯"
+                                    <span v-if="node.connectionsIn.length < 2" class="note-text"
+                                        :style="{ 'text-decoration': node.isComplete ? 'line-through' : 'none' }">{{
+                                        node.label ||
+                                        "雙擊編輯"
                                         }}</span>
+
                                     <!-- 二連以上顯示此段，顯示總值或0 -->
                                     <span v-else class="note-text">{{ node.label }}</span>
                                 </div>
@@ -1182,10 +1201,10 @@
                     localStorage.setItem('boardId', vm.boardId)
 
                     vm.nodes = [
-                        { boardId: vm.boardId, type: 'general', id: 1, count: 1, label: '便條紙 1', angle: 0, color: '#FFF8CA', colorTop: '#FFF4B2', selected: false, total: 1, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, type: 'general', id: 2, count: 2, label: '便條紙 2', angle: 90, color: '#D3ED7F', colorTop: '#C7DF7A', selected: false, total: 2, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, type: 'general', id: 3, count: 3, label: '便條紙 3', angle: 180, color: '#ffc0cb', colorTop: '#FCAFAA', selected: false, total: 3, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
-                        { boardId: vm.boardId, type: 'general', id: 4, count: 4, label: '便條紙 4', angle: 270, color: '#CEEBFD', colorTop: '#ADD8E6', selected: false, total: 4, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, type: 'general', isComplete: false, id: 1, count: 1, label: '便條紙 1', angle: 0, color: '#FFF8CA', colorTop: '#FFF4B2', selected: false, total: 1, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, type: 'general', isComplete: false, id: 2, count: 2, label: '便條紙 2', angle: 90, color: '#D3ED7F', colorTop: '#C7DF7A', selected: false, total: 2, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, type: 'general', isComplete: false, id: 3, count: 3, label: '便條紙 3', angle: 180, color: '#ffc0cb', colorTop: '#FCAFAA', selected: false, total: 3, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
+                        { boardId: vm.boardId, type: 'general', isComplete: false, id: 4, count: 4, label: '便條紙 4', angle: 270, color: '#CEEBFD', colorTop: '#ADD8E6', selected: false, total: 4, connectionsOut: [], connectionsIn: [], operation: "sum", connections: [] },
                     ];
 
                     // 根據角度初始化便利貼的位置
@@ -1340,7 +1359,6 @@
             // 方法函式
             methods: {
                 /* ================ 移動相關 ==================== */
-
 
 
                 // 滾輪縮放
@@ -2805,6 +2823,7 @@
                         colorTop: '#FFF4B2',
                         // color: '#FFF8CA5d',
                         // colorTop: '#FFF4B25d',
+                        isComplete: false,
                         editing: false,
                         selected: true,
                         operation: "sum",  // 預設值
@@ -3485,6 +3504,8 @@
                                     "color": data.data[i].Color,
                                     "colorTop": data.data[i].ColorTop,
                                     "type": data.data[i].Type,
+                                    // "isComplete": false,
+                                    "isComplete": data.data[i].IsComplete == 'false' ? false : true,
                                     "connectionsOut": data.data[i].ConnectionsOut,
                                     "connectionsIn": data.data[i].ConnectionsIn,
                                     "connections": data.data[i].Connections,
