@@ -1647,21 +1647,6 @@
 
                 },
 
-                // 結束拖曳或框選，若處於框選狀態則根據選取框更新各便利貼選取狀態
-                // endDrag(event) {  // 注意：這裡需要加上 event 參數
-                //     this.resizingNode = null; //圖表便利貼
-                //     if (event.button === 0) {
-                //         if (this.draggingNodes.length > 0) {
-                //             this.draggingNodes = [];
-                //         }
-                //         if (this.selectionBox.active) {
-                //             this.finishSelection();
-                //         }
-                //     }
-                //     this.handleMouseUp(event);
-                // },
-
-
                 // 框選結束：檢查哪些便利貼的中心落在選取框內，並標記為 selected
                 finishSelection() {
                     const vm = this;
@@ -2495,18 +2480,70 @@
                 },
 
                 // computeTotal: 提取所有數字（含負號）並加總後存入 node.total
+                // computeTotal(node) {
+                //     //     // 確保 node.label 是字符串，若不是則設置為空字符串
+                //     const label = typeof node.label === 'string' ? node.label : '';
+                //     // 移除被 ## 包覆的內容
+                //     const cleanedLabel = label.replace(/#[^#]*#/g, '');
+                //     // 直觀版
+                //     // const cleanedLabel = label.replace(/#[^#]*#/g, '').replace(/![^!]*!/g, '');
+                //     // 簡潔的移除被 ##,!! 包覆的內容
+                //     // const cleanedLabel = label.replace(/(#[^#]*#|![^!]*!)/g, '');
+
+                //     // 匹配數字（包括負數和小數）
+                //     const matches = cleanedLabel.match(/-?\d*\.?\d+/g);
+
+                //     let total = 0;
+                //     if (matches) {
+                //         matches.forEach(numStr => {
+                //             total += parseFloat(numStr);
+                //         });
+                //     }
+                //     node.total = total;
+                //     node.count = total;
+                //     return total;
+                // },
+
                 computeTotal(node) {
-                    const matches = node.label.match(/-?\d*\.?\d+/g);
+                    // 確保 node.label 是字符串，若不是則設置為空字符串
+                    const label = typeof node.label === 'string' ? node.label : '';
+                    // 移除被 ## 包覆的內容
+                    const cleanedLabel = label.replace(/#[^#]*#/g, '');
+                    // 檢查是否為數學運算式（只包含數字、運算符和可選空格）
+                    const isMathExpression = /^[\d\s+\-*/.()]+$/.test(cleanedLabel);
                     let total = 0;
-                    if (matches) {
-                        matches.forEach(numStr => {
-                            total += parseFloat(numStr);
-                        });
+                    if (isMathExpression) {
+                        try {
+                            // 使用 Function 構造函數安全評估數學運算式
+                            total = new Function(`return ${cleanedLabel}`)();
+                            // 確保結果是數字
+                            if (typeof total !== 'number' || isNaN(total)) {
+                                total = 0;
+                            }
+                        } catch (e) {
+                            // 如果運算式無效，回退到數字加總
+                            const matches = cleanedLabel.match(/-?\d*\.?\d+/g);
+                            if (matches) {
+                                matches.forEach(numStr => {
+                                    total += parseFloat(numStr);
+                                });
+                            }
+                        }
+                    } else {
+                        // 非數學運算式，提取並加總所有數字
+                        const matches = cleanedLabel.match(/-?\d*\.?\d+/g);
+                        if (matches) {
+                            matches.forEach(numStr => {
+                                total += parseFloat(numStr);
+                            });
+                        }
                     }
                     node.total = total;
-                    node.count = total;
+                    node.count = total; // 如果 count 應為數字個數，可改為 matches ? matches.length : 0
                     return total;
                 },
+
+
 
                 // 結束編輯
                 finishEdit(node) {
@@ -2550,16 +2587,22 @@
                         node.total = values;
                     } else if (node.connectionsIn.length >= 3) {
                         values = 0;
+                        // 收集所有連入便利貼的 label
+                        const labels = [];
                         for (let i = 0; i < node.connectionsIn.length; i++) {
-                            const a = this.getNodeById(node.connectionsIn[i]).total || 0;
-                            values += a;
+                            const connectedNode = this.getNodeById(node.connectionsIn[i]);
+                            const label = typeof connectedNode.label == 'string' ? connectedNode.label : '';
+                            labels.push(label);
+                            values += connectedNode.total || 0;
                         }
+                        // 拼接 label，用空格分隔
+                        node.label = labels.join(' ');
                         values = Math.round(values * 100) / 100;
-                        node.label = values;
                         node.total = values;
+
                     }
 
-                    return Math.round(values * 100) / 100;;
+                    return Math.round(values * 100) / 100;
                 },
 
 
@@ -2804,6 +2847,7 @@
                 },
 
 
+                // 鍵盤事件區塊
                 handleKeyDown(event) {
                     // Enter 按鍵：關閉編輯模式 加SHIFT則換行
                     if (event.key === 'Enter' && event.shiftKey) {
