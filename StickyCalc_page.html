@@ -386,6 +386,27 @@
                 <button class="toolbar-button" @click="addChartNodeRight">
                     <svg-icon name="svg-addChartNode"></svg-icon>
                 </button>
+                <!-- 新增建立群組 -->
+                <button class="toolbar-button" @click="createGroup">
+                    <svg-icon name="svg-addGroup"></svg-icon>
+                </button>
+                <!-- <div class="toolbar-button">
+                    <select v-model="selectedGroupId" @change="addToGroup"
+                        :disabled="!hasSelectedNodes || groups.length === 0">
+                        <option value="" disabled>選擇群組</option>
+                        <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
+                    </select>
+                </div> -->
+                <!-- 移除 -->
+                <button v-if="selectedNode" class="toolbar-button" @click="removeFromGroup"
+                    :disabled="!hasSelectedNodesInGroup">
+                    <svg-icon name="svg-removeFromGroup"></svg-icon>
+                </button>
+                <!-- 移除群組 -->
+                <button v-if="selectedGroupId != ''" class="toolbar-button" @click="deleteGroup"
+                    :disabled="!selectedGroupId">
+                    <svg-icon name="svg-deleteGroup"></svg-icon>
+                </button>
                 <!-- 刪除便利貼 -->
                 <button v-if="selectedNode || selectedConn || selectedChert" class="toolbar-button"
                     @click="deleteBtn()">
@@ -462,6 +483,31 @@
                     @pointerdown="handleBackgroundPointerDown"></rect>
                 <!-- 將畫板內容包在 <g> 中，可統一進行平移與縮放 -->
                 <g :transform="boardTransform">
+
+                    <!-- 群組 -->
+                    <g v-for="group in groups" :key="group.id">
+                        <!-- 群組範圍矩形 -->
+                        <rect :x="getGroupBounds(group).x" :y="getGroupBounds(group).y"
+                            :width="getGroupBounds(group).width" :height="getGroupBounds(group).height" fill="grey"
+                            fill-opacity="0.3" stroke="grey" stroke-width="1" rx="5" ry="5" style="cursor: pointer;"
+                            @click.stop="selectGroup(group)" @pointerdown.stop="startDragGroup(group, $event)"></rect>
+                        <!-- 選中邊框 -->
+                        <rect v-if="group.selected" :x="getGroupBounds(group).x" :y="getGroupBounds(group).y"
+                            :width="getGroupBounds(group).width" :height="getGroupBounds(group).height" fill="none"
+                            stroke="blue" stroke-width="2" rx="5" ry="5"></rect>
+                        <!-- 群組名稱 -->
+                        <foreignObject :x="getGroupBounds(group).x" :y="getGroupBounds(group).y - 30"
+                            :width="getGroupBounds(group).width" height="30">
+                            <div v-if="editingGroup !== group.id" class="group-name" @dblclick="editGroupName(group)"
+                                style="text-align: center; font-weight: 900; font-size: 20px; color: rgb(150, 150, 150); line-height: 30px;">
+                                {{ group.name }}
+                            </div>
+                            <input v-else v-model="group.name" @blur="finishGroupEdit(group)"
+                                @keyup.enter="finishGroupEdit(group)"
+                                style="width: 100%; height: 100%; text-align: center; font-weight: 900; font-size: 20px; border: none; outline: none;">
+                        </foreignObject>
+                    </g>
+
                     <!-- 臨時連線 -->
                     <path v-if="tempConnection.active" :d="tempConnection.path" stroke="grey" fill="none"
                         stroke-width="3" stroke-dasharray="5,5"></path>
@@ -894,8 +940,14 @@
                                 fill="#505050" />
                         </svg>
 
-                        <!-- svgIcon:新增圖表便利貼 -->  
-                        <svg v-if="name === 'svg-addChartNode'"  xmlns="http://www.w3.org/2000/svg" width="31" height="28" viewBox="0 0 31 28" fill="none">
+                         <svg v-if="name === 'svg-addChartNode'"  xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
+                        <path
+                            d="M26 0C28.2091 1.28853e-07 30 1.79086 30 4V24C30 26.2091 28.2091 28 26 28H4C1.79086 28 8.0532e-09 26.2091 0 24V4C3.22133e-07 1.79086 1.79086 1.61064e-08 4 0H26ZM4 2C2.89543 2 2 2.89543 2 4V24C2 25.1046 2.89543 26 4 26H26C27.1046 26 28 25.1046 28 24V4C28 2.89543 27.1046 2 26 2H4ZM7 23H8.5V15H11.5V23H13.5V13H16.5V23H18.5V19.5H21.5V23H23.5V11H26.5V23H27V25H3V23H4V9.5H7V23ZM25 5H5V3H25V5Z"
+                            fill="#505050" />
+                    </svg>
+
+                        <!-- svgIcon:創建群組 -->  
+                        <svg v-if="name === 'svg-addGroup'"  xmlns="http://www.w3.org/2000/svg" width="31" height="28" viewBox="0 0 31 28" fill="none">
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M6 3C4.34315 3 3 4.34315 3 6V15C3 16.3062 3.83481 17.4175 5 17.8293V15V7V6C5 5.44772 5.44772 5 6 5H7H18H20.8293C20.4175 3.83481 19.3062 3 18 3H6Z"
                             fill="#505050" />
@@ -909,6 +961,29 @@
                             d="M10 0H2C0.895447 0 0 0.895432 0 2V10H2V2H10V0ZM29 10V2H21V0H29C30.1046 0 31 0.89543 31 2V10H29ZM21 26H29V18H31V26C31 27.1046 30.1046 28 29 28H21V26ZM2 18V26H10V28H2C0.895447 28 0 27.1046 0 26V18H2Z"
                             fill="#505050" />
                         </svg>
+
+
+                            <svg v-if="name === 'svg-removeFromGroup'"  xmlns="http://www.w3.org/2000/svg" width="31" height="28" viewBox="0 0 31 28" fill="none">
+                        <path
+                            d="M18 3C19.3059 3 20.4141 3.83532 20.8262 5H6C5.44772 5 5 5.44772 5 6V17.8252C3.83548 17.413 3 16.3057 3 15V6C3 4.34315 4.34315 3 6 3H18Z"
+                            fill="#505050" />
+                        <path
+                            d="M22 6C23.3059 6 24.4141 6.83532 24.8262 8H9C8.44772 8 8 8.44772 8 9V21.8252C6.83548 21.413 6 20.3057 6 19V9C6 7.34315 7.34315 6 9 6H22Z"
+                            fill="#505050" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M9 12C9 10.3431 10.3431 9 12 9H25C26.6569 9 28 10.3431 28 12V22C28 23.6569 26.6569 25 25 25H12C10.3431 25 9 23.6569 9 22V12ZM12 11C11.4477 11 11 11.4477 11 12V22C11 22.5523 11.4477 23 12 23H25C25.5523 23 26 22.5523 26 22V12C26 11.4477 25.5523 11 25 11H12Z"
+                            fill="#505050" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M10 0H2C0.895447 0 0 0.895432 0 2V10H2V2H10V0ZM29 10V2H21V0H29C30.1046 0 31 0.89543 31 2V10H29ZM21 26H29V18H31V26C31 27.1046 30.1046 28 29 28H21V26ZM2 18V26H10V28H2C0.895447 28 0 27.1046 0 26V18H2Z"
+                            fill="#505050" />
+                        <path d="M14 17H24" stroke="#505050" stroke-width="2" />
+                    </svg>
+
+                       <svg v-if="name === 'svg-deleteGroup'"  xmlns="http://www.w3.org/2000/svg" width="31" height="25" viewBox="0 0 31 25" fill="none">
+                        <path
+                            d="M25 9C26.6569 9 28 10.3431 28 12V22C28 23.6569 26.6569 25 25 25H12C10.3431 25 9 23.6569 9 22V12C9 10.3431 10.3431 9 12 9H25ZM2 24H0V22H2V24ZM12 11C11.4477 11 11 11.4477 11 12V22C11 22.5523 11.4477 23 12 23H25C25.5523 23 26 22.5523 26 22V12C26 11.4477 25.5523 11 25 11H12ZM22 6C23.3059 6 24.4141 6.83532 24.8262 8H9C8.44772 8 8 8.44772 8 9V21.8252C6.83548 21.413 6 20.3057 6 19V9C6 7.34315 7.34315 6 9 6H22ZM2 20H0V18H2V20ZM18 3C19.3059 3 20.4141 3.83532 20.8262 5H6C5.44772 5 5 5.44772 5 6V17.8252C3.83548 17.413 3 16.3057 3 15V6C3 4.34315 4.34315 3 6 3H18ZM10 2H2V10H0V2C5.15414e-07 0.895432 0.895447 0 2 0H10V2ZM31 10H29V8H31V10ZM31 6H29V4H31V6ZM29 0C30.1046 0 31 0.89543 31 2H21V0H29Z"
+                            fill="#505050" />
+                    </svg>
 
                         <!-- svgIcon:刪除便利貼 -->  
                         <svg  v-if="name === 'svg-deleteNode'" xmlns="http://www.w3.org/2000/svg" width="30" height="28" viewBox="0 0 30 28" fill="none">
@@ -1180,6 +1255,12 @@
                     uploadTimer: null, // 用於上傳的存儲計時器
                     isAutoUpload: false,
 
+                    // 群組
+                    groups: [], // 新增群組陣列
+                    editingGroup: null, // 當前編輯的群組 ID（用於名稱輸入）
+                    selectedGroupId: '', // 當前選擇的群組 ID
+                    draggingGroup: null, // 當前拖動的群組
+
                 }
             },
             // 生命週期 : 起始
@@ -1231,6 +1312,8 @@
                 } else {
                     vm.checkuid();
                 }
+                // 初始化鍵盤事件
+                this.initKeyboardEvents();
 
                 // 添加 pagehide 事件（移動端，尤其是 iOS）目前看好像沒用，後續再決定去留
                 window.addEventListener('pagehide', this.handlePageHide);
@@ -1329,16 +1412,24 @@
                     return this.connections.some(c => c.selected)
                 },
                 computedToolbarHeight() {
-                    if (this.selectedNode && this.selectedConn) {
-                        return 496
+                    if (this.selectedNode && this.selectedConn && this.selectedGroupId) {
+                        return 616
+                    } else if (this.selectedNode && this.selectedConn) {
+                        return 576
+                    } else if (this.selectedNode && this.selectedGroupId) {
+                        return 376
+                    } else if (this.selectedGroupId && this.selectedConn) {
+                        return 450
                     } else if (this.selectedConn) {
-                        return 368
+                        return 410
                     } else if (this.selectedNode) {
-                        return 256
+                        return 334
                     } else if (this.selectedChert) {
                         return 122
+                    } else if (this.selectedGroupId) {
+                        return 164
                     } else {
-                        return 82
+                        return 124
                     }
                 },
                 /* 畫板 transform */
@@ -1359,7 +1450,159 @@
             // 方法函式
             methods: {
                 /* ================ 移動相關 ==================== */
+                // 選取群組
+                selectGroup(group) {
+                    // 清除其他群組的選中狀態
+                    this.groups.forEach(g => {
+                        g.selected = g.id === group.id;
+                    });
+                    this.selectedGroupId = group.id;
+                    // 清除便利貼選中狀態（避免混淆）
+                    this.nodes.forEach(node => {
+                        node.selected = false;
+                    });
+                },
 
+                // 開始拖動群組
+                startDragGroup(group, event) {
+                    this.draggingGroup = group;
+                    const tx = this.boardOffset.x;
+                    const ty = this.boardOffset.y;
+                    const s = this.scale;
+                    // 計算鼠標在 SVG 坐標系中的位置
+                    this.dragStart = {
+                        x: (event.clientX - tx) / s,
+                        y: (event.clientY - ty) / s,
+                    };
+                    event.preventDefault();
+                },
+
+                // 創建群組
+                createGroup() {
+                    // 獲取選中的便利貼
+                    const selectedNodes = this.nodes.filter(node => node.selected);
+                    if (selectedNodes.length === 0) return; // 無選中便利貼，退出
+
+                    // 生成唯一群組 ID
+                    const groupId = `group-${this.groups.length + 1}`;
+                    // 創建群組
+                    const group = {
+                        id: groupId,
+                        name: `群組 ${this.groups.length + 1}`,
+                        nodeIds: selectedNodes.map(node => node.id),
+                    };
+                    this.groups.push(group);
+
+                    // 進入群組名稱編輯模式
+                    this.editingGroup = groupId;
+
+                    // 取消便利貼選中狀態
+                    selectedNodes.forEach(node => {
+                        node.selected = false;
+                    });
+                },
+
+                // 完成群組名稱編輯
+                finishGroupEdit(group) {
+                    this.editingGroup = null;
+                },
+
+                // 計算群組範圍
+                getGroupBounds(group) {
+                    const nodeIds = group.nodeIds;
+                    if (nodeIds.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+
+                    const nodes = nodeIds
+                        .map(id => this.nodes.find(node => node.id === id))
+                        .filter(node => node); // 過濾無效 node
+
+                    if (nodes.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+
+                    const padding = 20; // 外擴 20px
+                    const noteWidth = this.noteWidth;
+                    const noteHeight = this.noteHeight;
+
+                    // 計算包含所有便利貼的邊界
+                    const minX = Math.min(...nodes.map(node => node.x - noteWidth / 2));
+                    const maxX = Math.max(...nodes.map(node => node.x + noteWidth / 2));
+                    const minY = Math.min(...nodes.map(node => node.y - noteHeight / 2));
+                    const maxY = Math.max(...nodes.map(node => node.y + noteHeight / 2));
+                    return {
+                        x: minX - padding,
+                        y: minY - padding,
+                        width: maxX - minX + 2 * padding,
+                        height: maxY - minY + 2 * padding,
+                    };
+                },
+
+                editGroupName(group) {
+                    this.editingGroup = group.id;
+                },
+
+                // 計算是否有選中便利貼
+                hasSelectedNodes() {
+                    return this.nodes.some(node => node.selected);
+                },
+
+
+                // 計算是否有選中便利貼在群組中
+                hasSelectedNodesInGroup() {
+                    const selectedNodeIds = this.nodes
+                        .filter(node => node.selected)
+                        .map(node => node.id);
+                    return this.groups.some(group =>
+                        group.nodeIds.some(id => selectedNodeIds.includes(id))
+                    );
+                },
+
+                // 加入群組(暫無用處)
+                addToGroup() {
+                    if (!this.selectedGroupId) return;
+                    const group = this.groups.find(g => g.id === this.selectedGroupId);
+                    if (!group) return;
+
+                    const selectedNodeIds = this.nodes
+                        .filter(node => node.selected)
+                        .map(node => node.id);
+
+                    // 添加選中便利貼到群組（避免重複）
+                    group.nodeIds = [...new Set([...group.nodeIds, ...selectedNodeIds])];
+
+                    // 取消便利貼選中狀態
+                    this.nodes.forEach(node => {
+                        if (node.selected) node.selected = false;
+                    });
+
+                    // 重置選擇的群組
+                    this.selectedGroupId = '';
+                },
+                // 從群組移除
+                removeFromGroup() {
+                    const selectedNodeIds = this.nodes
+                        .filter(node => node.selected)
+                        .map(node => node.id);
+
+                    // 從所有群組中移除選中便利貼
+                    this.groups.forEach(group => {
+                        group.nodeIds = group.nodeIds.filter(id => !selectedNodeIds.includes(id));
+                    });
+
+                    // 移除空群組（可選）
+                    this.groups = this.groups.filter(group => group.nodeIds.length > 0);
+
+                    // 取消便利貼選中狀態
+                    this.nodes.forEach(node => {
+                        if (node.selected) node.selected = false;
+                    });
+                },
+                // 刪除群組
+                deleteGroup() {
+                    if (!this.selectedGroupId) return;
+                    this.groups = this.groups.filter(group => group.id !== this.selectedGroupId);
+                    this.selectedGroupId = '';
+                },
+
+                // 以上皆為群組功能
 
                 // 滾輪縮放
                 handleWheel(event) {
@@ -1417,6 +1660,17 @@
                         this.isRightPanning = true;
                         this.rightPanStart = { x: event.clientX, y: event.clientY };
                         this.rightPanMoved = false;
+                    }
+
+                    // 背景點擊清除選取
+                    if (!event.ctrlKey) {
+                        this.nodes.forEach(node => {
+                            node.selected = false;
+                        });
+                        this.groups.forEach(group => {
+                            group.selected = false;
+                        });
+                        this.selectedGroupId = '';
                     }
 
                     // 記錄 pointerdown 事件
@@ -1509,6 +1763,32 @@
                         return; // 優先處理臨時連線
                     }
 
+                    // 群組拖動
+                    if (this.draggingGroup) {
+                        const tx = this.boardOffset.x;
+                        const ty = this.boardOffset.y;
+                        const s = this.scale;
+                        // 計算當前鼠標在 SVG 坐標系中的位置
+                        const currentX = (event.clientX - tx) / s;
+                        const currentY = (event.clientY - ty) / s;
+                        const dx = currentX - this.dragStart.x;
+                        const dy = currentY - this.dragStart.y;
+
+                        // 移動群組內的所有便利貼
+                        const nodes = this.nodes.filter(node =>
+                            node && this.draggingGroup.nodeIds.includes(node.id) && typeof node.x === 'number' && typeof node.y === 'number'
+                        );
+                        nodes.forEach(node => {
+                            node.x += dx;
+                            node.y += dy;
+                        });
+
+                        // 更新拖動起點
+                        this.dragStart.x = currentX;
+                        this.dragStart.y = currentY;
+                        return; // 避免其他拖動邏輯
+                    }
+
                     if (this.isMobile && event.pointerType === 'touch') {
                         const dx = Math.abs(event.clientX - this.lastPointerDown.x);
                         const dy = Math.abs(event.clientY - this.lastPointerDown.y);
@@ -1562,6 +1842,8 @@
                 // 結束托拽
                 endDrag(event) {
 
+                    // 群組清除拖動
+                    this.draggingGroup = null;
 
                     // 鼠標左鍵釋放後的結束處理(放到下面就會出問題)
                     this.resizingNode = null;
@@ -1898,7 +2180,7 @@
                     }
 
                     const result = { x: adjustedX, y: adjustedY };
-                    console.log('Adjusted arrow position:', result, 'for connection:', conn.connectionsId);
+                    // console.log('Adjusted arrow position:', result, 'for connection:', conn.connectionsId);
                     return result;
                 },
 
@@ -1979,6 +2261,7 @@
                     svgX = (svgX - this.boardOffset.x) / this.scale;
                     svgY = (svgY - this.boardOffset.y) / this.scale;
 
+                    // 檢查是否拖動到另一個便利貼
                     const targetNode = this.nodes.find(node => {
                         if (node === this.tempConnection.startNode) return false;
                         const width = node.type === 'chart' ? node.chartWidth : this.noteWidth;
@@ -1995,7 +2278,7 @@
                     });
 
                     if (targetNode) {
-                        // 現有邏輯：拖曳到另一個節點，建立連線
+                        // 現有邏輯：拖曳到另一個便利貼，建立連線
                         if (this.willCauseLoop(this.tempConnection.startNode.id, targetNode.id)) {
                             Swal.fire({
                                 icon: 'warning',
@@ -2009,30 +2292,48 @@
                                 text: '重複連線了唷，請檢查您的連線結構！',
                             });
                         } else {
-                            // 建立連線（從基準便利貼到新便利貼）
                             this.pushConnections(this.tempConnection.startNode, targetNode);
-
                             this.calculateTotal();
-
                             if (targetNode.type === 'chart' && targetNode.connectionsIn.length >= 2) {
                                 this.renderChart(targetNode);
                             }
                         }
                     } else {
-                        // 新功能：拖曳到空白位置，新增便利貼
-                        const newNode = this.addNode(svgX, svgY)
+                        // 新功能：檢查是否拖動到群組
+                        const targetGroup = this.groups.find(group => {
+                            const bounds = this.getGroupBounds(group);
+                            return svgX >= bounds.x && svgX <= bounds.x + bounds.width &&
+                                svgY >= bounds.y && svgY <= bounds.y + bounds.height;
+                        });
 
-                        // 將新便利貼添加到 nodes 數組
-                        // this.nodes.push(newNode);
-
-                        // 建立與起始節點的連線
-                        this.pushConnections(this.tempConnection.startNode, newNode);
-
-
-                        this.focusNodeText(newNode);
-
-                        // 重新計算總計（如果需要）
-                        this.calculateTotal();
+                        if (targetGroup) {
+                            // 將起始便利貼加入群組
+                            const startNodeId = this.tempConnection.startNode.id;
+                            if (!targetGroup.nodeIds.includes(startNodeId)) {
+                                targetGroup.nodeIds.push(startNodeId);
+                                // Swal.fire({
+                                //     icon: 'success',
+                                //     title: '已加入群組',
+                                //     text: `便利貼已加入 ${targetGroup.name}`,
+                                //     timer: 1500,
+                                //     showConfirmButton: false,
+                                // });
+                            } else {
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: '已在群組中',
+                                    text: `便利貼已在 ${targetGroup.name} 中`,
+                                    timer: 1500,
+                                    showConfirmButton: false,
+                                });
+                            }
+                        } else {
+                            // 現有邏輯：拖曳到空白位置，新增便利貼
+                            const newNode = this.addNode(svgX, svgY);
+                            this.pushConnections(this.tempConnection.startNode, newNode);
+                            this.focusNodeText(newNode);
+                            this.calculateTotal();
+                        }
                     }
 
                     // 清理臨時連線
@@ -2077,7 +2378,7 @@
                     // y = Math.max(minY, Math.min(maxY, y));
 
                     const result = { x: endEdge.x, y };
-                    console.log('Arrow position for connection:', conn.connectionsId, result);
+                    // console.log('Arrow position for connection:', conn.connectionsId, result);
                     if (isNaN(result.x) || isNaN(result.y)) {
                         console.warn('Invalid arrow position:', result, 'for connection:', conn);
                         return { x: toNode.x, y: toNode.y };
@@ -2865,9 +3166,18 @@
                     // alert('請點擊另一個便利貼以建立連線');
                 },
 
+                // 初始化鍵盤事件
+                initKeyboardEvents() {
+                    window.addEventListener('keydown', this.handleKeydown);
+                },
 
                 // 鍵盤事件區塊
                 handleKeyDown(event) {
+
+                    if (event.ctrlKey && event.key === 'g') {
+                        this.createGroup();
+                    }
+
                     // Enter 按鍵：關閉編輯模式 加SHIFT則換行
                     if (event.key === 'Enter' && event.shiftKey) {
                         console.log("換行")
@@ -2936,27 +3246,22 @@
                 },
 
                 deleteBtn() {
-                    this.deleteConnection()
-                    // 記錄所有被選取的節點 ID
-                    const deletedIds = this.nodes.filter(node => node.selected).map(node => node.id);
+                    const selectedNodeIds = this.nodes.filter(node => node.selected).map(node => node.id);
 
-                    // 刪除所有選取的節點
-                    this.nodes = this.nodes.filter(node => !node.selected);
-
-                    // 刪除相關連線
-                    this.connections = this.connections.filter(conn => {
-                        // 若連線兩端皆存在且未被選取則保留
-                        const fromExists = this.nodes.some(n => n.id === conn.from);
-                        const toExists = this.nodes.some(n => n.id === conn.to);
-                        return fromExists && toExists && !conn.selected;
+                    // 從群組中移除被刪除的便利貼 ID
+                    this.groups.forEach(group => {
+                        group.nodeIds = group.nodeIds.filter(id => !selectedNodeIds.includes(id));
                     });
 
-                    // 更新剩餘節點的 connectionsIn
-                    this.deleteForEachNodes(deletedIds);
-                    // 重新計算
-                    this.calculateTotal()
-                    //儲存狀態
-                    this.saveState()
+                    // 刪除選中的便利貼
+                    this.nodes = this.nodes.filter(node => !node.selected);
+
+                    // 移除空群組（可選）
+                    this.groups = this.groups.filter(group => group.nodeIds.length > 0);
+
+                    // 清理其他狀態（例如選中的連線或圖表）
+                    this.connections = this.connections.filter(conn => !conn.selected);
+                    this.calculateTotal();
                 },
 
                 deleteNode(node) {
@@ -3130,7 +3435,7 @@
                     }
 
                     const result = { x: edgeX, y: edgeY };
-                    console.log('Edge point:', result, 'from:', fromNode.id, 'to:', toNode.id);
+                    // console.log('Edge point:', result, 'from:', fromNode.id, 'to:', toNode.id);
                     return result;
                 },
 
@@ -3171,7 +3476,7 @@
 
                     // 如果頁面進入 BFCache，設置 persisted 屬性
                     if (event.persisted) {
-                        console.log('Page is being cached (BFCache)');
+                        // console.log('Page is being cached (BFCache)');
                     }
                 },
 
@@ -3224,6 +3529,7 @@
                         });
                         vm.connections_upload();
                         vm.board_upload();
+                        vm.groups_upload();
                     }
                 },
 
@@ -3269,6 +3575,35 @@
                         }
                     })
 
+                },
+
+                groups_upload() {
+                    const vm = this;
+                    if (vm.userId != "") {
+                        // 構建傳遞的資料物件
+                        var JSONdata = {
+                            groups: vm.groups,       // 便利貼陣列
+                            userId: vm.userId,     // 用戶 ID
+                            boardId: vm.boardId    // 白板 ID
+                        };
+
+                        $.ajax({
+                            type: "POST",
+                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=group_upload",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: function (data) {
+                                console.log("群組" + data.state + data.message);
+                            },
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "保存群組失敗 請聯繫作者",
+                                    icon: "error"
+                                });
+                            }
+                        });
+                    }
                 },
 
                 board_upload() {
@@ -3328,7 +3663,7 @@
                                 dataType: "json",
                                 async: false,
                                 success: function (data) {
-                                    console.log(data.state);
+                                    // console.log(data.state);
                                     location.href = "StickyCalc_board.html";
                                 },
                                 error: function () {
@@ -3397,7 +3732,7 @@
 
                 showdata_checkuid(data) {
                     const vm = this;
-                    console.log(data)
+                    // console.log(data)
                     if (data.state) {
                         vm.userId = data.data.Username;
 
@@ -3444,7 +3779,7 @@
                 get_nodes() {
                     const vm = this;
                     var JSONdata = {};
-                    console.log("name: " + vm.userId + "board: " + vm.boardId)
+                    // console.log("name: " + vm.userId + "board: " + vm.boardId)
                     if (vm.userId && vm.boardId) {
                         JSONdata["userId"] = vm.userId;
                         JSONdata["boardId"] = vm.boardId;
@@ -3464,6 +3799,7 @@
                         })
                     }
                     vm.getConnections();
+
                 },
 
                 showNodes(data) {
@@ -3523,7 +3859,7 @@
                             }
                             vm.nodes.push(newData[0]);
                             // this.computeTotal(vm.nodes[i])
-
+                            vm.get_group();
                         }
                     }
                     // 延遲渲染以確保 DOM 準備好
@@ -3585,6 +3921,49 @@
                     }
                 },
 
+                get_group() {
+                    const vm = this;
+                    var JSONdata = {};
+                    // console.log("name: " + vm.userId + "board: " + vm.boardId)
+                    if (vm.userId && vm.boardId) {
+                        JSONdata["userId"] = vm.userId;
+                        JSONdata["boardId"] = vm.boardId;
+                        $.ajax({
+                            type: "POST",
+                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=get_groups",
+                            data: JSON.stringify(JSONdata),
+                            dataType: "json",
+                            success: vm.showGroup,
+                            error: function () {
+                                Swal.fire({
+                                    title: "API串接錯誤",
+                                    text: "取得群組資料失敗 請聯繫作者",
+                                    icon: "error"
+                                });
+                            }
+                        })
+                    }
+                },
+
+                showGroup(data) {
+                    const vm = this;
+                    if (data.data) {
+                        vm.groups = [];
+                        for (let i = 0; i < data.data.length; i++) {
+                            console.log(data.data[i].NodeIds);
+                            vm.groups.push({
+                                id: data.data[i].Id,
+                                name: data.data[i].Name,
+                                nodeIds: typeof data.data[i].NodeIds === 'string'
+                                    ? JSON.parse(data.data[i].NodeIds)
+                                    : data.data[i].NodeIds,
+                                userId: data.data[i].UserId,
+                                boardId: data.data[i].BoardId,
+                            });
+                        }
+                    }
+                },
+
                 /* ================ 其他 ==================== */
 
                 // 根據 id 取得便利貼資料（用於繪製連線）
@@ -3635,7 +4014,7 @@
                     const cx = mx + px * offset, cy = my + py * offset;
 
                     const path = `M ${startEdge.x} ${startEdge.y} Q ${cx} ${cy} ${endEdge.x} ${endEdge.y}`;
-                    console.log('Connection path:', path, 'for connection:', conn.connectionsId);
+                    // console.log('Connection path:', path, 'for connection:', conn.connectionsId);
                     return path;
                 },
 
