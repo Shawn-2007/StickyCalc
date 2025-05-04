@@ -299,14 +299,15 @@
             <!-- 左上工具列 -->
             <div class="toolbar toolbar-left">
                 <div class="mt-2 d-flex">
-                    <div class="ms-2 me-2">
+                    <div title="前往上一頁" class="ms-2 me-2">
                         <a href="#" @click="pageNodesUpload" class="nav-link">
                             <!-- 前往上一頁 -->
                             <svg-icon name="svg-previousPage"></svg-icon>
                         </a>
                     </div>
                     <!-- 雙擊執行 -->
-                    <label v-if="!editName" for="" class="form-check-label" @dblclick="edittodo()">{{boardName}}</label>
+                    <label title="雙擊編輯貼版名稱" v-if="!editName" for="" class="form-check-label"
+                        @dblclick="edittodo()">{{boardName}}</label>
                     <div v-if="editName" class="">
                         <input type="text" class="form-control" v-model="boardName" name="" id=""
                             @keyup.enter="edittodo()" @keyup.esc="edittodo()" placeholder="編輯檔名">
@@ -320,11 +321,12 @@
                         </svg>
                     </div>
                     <!-- 存檔 -->
-                    <div class="ms-1">
+                    <div title="自動存檔，如ICON為深色，則可自行點擊存檔" class="ms-1">
                         <a href="#" @click="nodesUpload" class="nav-link">
                             <svg-icon :name="isAutoUpload ? 'svg-upload-ok' : 'svg-upload'"></svg-icon>
                         </a>
                     </div>
+                    <span v-if="isAutoUpload" style="font-size: 14px; color: #808080;" class="mt-auto">已上傳</span>
                     <!-- 讀檔 -->
                     <div class="ms-2">
                         <!-- <a href="#" @click="get_nodes" class="nav-link">
@@ -332,21 +334,23 @@
                         </a> -->
                     </div>
                     <!-- 上一步 -->
-                    <div class="ms-auto me-2" @click="undo">
-                        <svg-icon name="svg-toReturn"></svg-icon>
-                    </div>
-                    <!-- 下一步 -->
-                    <div class="me-2">
-                        <svg-icon name="svg-unReturn"></svg-icon>
 
-                    </div>
+                    <button title="上一步" class="ms-auto btn btn-sm" @click="undo" :disabled="currentIndex <= 0"
+                        style="margin-top: -3px; border: none;">
+                        <svg-icon name="svg-toReturn"></svg-icon>
+                    </button>
+                    <!-- 下一步 -->
+                    <button title="撤回上一步" class=" btn btn-sm" @click="redo"
+                        :disabled="currentIndex >= history.length - 1" style="margin-top: -3px; border: none;">
+                        <svg-icon name="svg-unReturn"></svg-icon>
+                    </button>
                 </div>
             </div>
 
             <!-- 右上工具列 -->
             <div class="toolbar toolbar-right">
                 <div class="d-flex">
-                    <div v-if="!isMobile" class="ms-3" data-title="LOGO">
+                    <div title="返回首頁" v-if="!isMobile" class="ms-3" data-title="LOGO">
                         <a href="#" @click="goIndex">
                             <!-- LOGO -->
                             <svg-icon name="svg-logo"></svg-icon>
@@ -356,14 +360,15 @@
                         <svg-icon name="svg-download"></svg-icon>
                     </div> -->
                     <div class="darkLightSwitch mt-1 ms-auto">
-                        <label class="switch">
+                        <label title="黑暗模式" class="switch">
                             <input type="checkbox" v-model="isDark">
                             <span class="slider"></span>
                         </label>
                     </div>
                     <div class="mx-1 " data-title="更多">
                         <div class="dropdown">
-                            <button class="btn btn-link" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button title="更多功能" class="btn btn-link" type="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
                                 <svg-icon name="svg-more"></svg-icon>
                             </button>
                             <ul class="dropdown-menu">
@@ -378,16 +383,14 @@
 
             <!-- 垂直工具列（新增） 全上462px 一般82px 貼246px 線348px -->
             <div class="toolbar toolbar-vertical" :style="{height: computedToolbarHeight + 'px' }">
-                <!-- 新增便利貼 -->
-                <button class="toolbar-button" @click="addNodeAtRight">
+
+                <button title="新增便利貼" class="toolbar-button" @click="addNodeAtRight">
                     <svg-icon name="svg-addNode"></svg-icon>
                 </button>
-                <!-- 新增圖表便利貼 -->
-                <button class="toolbar-button" @click="addChartNodeRight">
+                <button title="新增圖表便利貼" class="toolbar-button" @click="addChartNodeRight">
                     <svg-icon name="svg-addChartNode"></svg-icon>
                 </button>
-                <!-- 新增建立群組 -->
-                <button class="toolbar-button" @click="createGroup">
+                <button title="建立群組" class="toolbar-button" @click="createGroup">
                     <svg-icon name="svg-addGroup"></svg-icon>
                 </button>
                 <!-- <div class="toolbar-button">
@@ -397,70 +400,56 @@
                         <option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option>
                     </select>
                 </div> -->
-                <!-- 移除 -->
-                <button v-if="selectedNode" class="toolbar-button" @click="removeFromGroup"
+                <button title="從群組中移除此便利貼" v-if="selectedNode" class="toolbar-button" @click="removeFromGroup"
                     :disabled="!hasSelectedNodesInGroup">
                     <svg-icon name="svg-removeFromGroup"></svg-icon>
                 </button>
-                <!-- 移除群組 -->
-                <button v-if="selectedGroupId != ''" class="toolbar-button" @click="deleteGroup"
+                <button title="解散群組" v-if="selectedGroupId != ''" class="toolbar-button" @click="deleteGroup"
                     :disabled="!selectedGroupId">
                     <svg-icon name="svg-deleteGroup"></svg-icon>
                 </button>
-                <!-- 刪除便利貼 -->
-                <button v-if="selectedNode || selectedConn || selectedChert" class="toolbar-button"
+                <button title="刪除便利貼" v-if="selectedNode || selectedConn || selectedChert" class="toolbar-button"
                     @click="deleteBtn()">
                     <svg-icon name="svg-deleteNode"></svg-icon>
                 </button>
-                <!-- general換色粉紅 -->
-                <button v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
+                <button title="便利貼換色:粉紅色" v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
                     @click="changeNodeColor('general', '#ffc0cb', '#FCAFAA')">
                     <svg-icon name="svg-nodeColorPink"></svg-icon>
                 </button>
-                <!-- general換色粉綠 -->
-                <button v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
+                <button title="便利貼換色:粉綠色" v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
                     @click="changeNodeColor('general', '#D3ED7F', '#C7DF7A')">
                     <svg-icon name="svg-nodeColorGreen"></svg-icon>
                 </button>
-                <!-- general換色粉藍 -->
-                <button v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
+                <button title="便利貼換色:粉藍色" v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
                     @click="changeNodeColor('general', '#CEEBFD', '#ADD8E6')">
                     <svg-icon name="svg-nodeColorBlue"></svg-icon>
                 </button>
-                <!-- general換色粉黃 -->
-                <button v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
+                <button title="便利貼換色:粉黃色" v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
                     @click="changeNodeColor('general', '#FFF8CA', '#FFF4B2')">
                     <svg-icon name="svg-nodeColorYellow"></svg-icon>
                 </button>
-                <!-- svgIcon:線條類型:實線 -->
-                <button v-if="selectedConn" class="toolbar-button" @click="changeLineType('solid')">
+                <button title="線條類型:實線" v-if="selectedConn" class="toolbar-button" @click="changeLineType('solid')">
                     <svg-icon name="svg-lineTypeEntity"></svg-icon>
                 </button>
-                <!-- svgIcon:線條類型:中空線 -->
-                <button v-if="selectedConn" class="toolbar-button" @click="changeLineType('dashed')">
+                <button title="線條類型:中段線" v-if="selectedConn" class="toolbar-button" @click="changeLineType('dashed')">
                     <svg-icon name="svg-lineTypeHollow"></svg-icon>
                 </button>
-                <!-- svgIcon:線條類型:虛線 -->
-                <button v-if="selectedConn" class="toolbar-button" @click="changeLineType('dotted')">
+                <button title="線條類型:虛線" v-if="selectedConn" class="toolbar-button" @click="changeLineType('dotted')">
                     <svg-icon name="svg-lineTypeDottedLine"></svg-icon>
                 </button>
-                <!-- 線條顏色 粉紅 -->
-                <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
+                <button title="線條顏色:粉紅色" v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
                     @click="changeLineColor('#FCAFAA')">
                     <svg-icon name="svg-lineColorPink"></svg-icon>
                 </button>
-                <!-- 線條顏色 粉綠 -->
-                <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
+                <button title="線條顏色:粉綠色" v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
                     @click="changeLineColor('#C7DF7A')">
                     <svg-icon name="svg-lineColorGreen"></svg-icon>
                 </button>
-                <!-- 線條顏色 粉藍 -->
-                <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
+                <button title="線條顏色:粉藍色" v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
                     @click="changeLineColor('#ADD8E6')">
                     <svg-icon name="svg-lineColorBlue"></svg-icon>
                 </button>
-                <!-- 線條顏色 橘黃 -->
-                <button v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
+                <button title="線條顏色:橘黃色" v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
                     @click="changeLineColor('#FFB53E')">
                     <svg-icon name="svg-lineColorYellow"></svg-icon>
                 </button>
@@ -749,7 +738,7 @@
                             </button>
                             <!-- 按鈕 粉綠 -->
                             <button type="button" class="btn btn-sm "
-                                @click="changeNodeColor('general', '#F7FFDB', '#C7DF7A')"
+                                @click="changeNodeColor('general', '#D3ED7F', '#C7DF7A')"
                                 style="height: 30px; width: 30px; margin-top: -50;display: inline-block; ">
                                 <svg-icon name="svg-lfetMenuGreen"></svg-icon>
                             </button>
@@ -1379,6 +1368,15 @@
                     handler(newConnections) {
                         if (this.startLocalStorage) {
                             localStorage.setItem('connections', JSON.stringify(newConnections));
+                        }
+                    },
+                    deep: true,
+                },
+                groups: {
+                    // 深層監聽，保留方法handler與deep是搭配使用的
+                    handler(newGroups) {
+                        if (this.startLocalStorage) {
+                            localStorage.setItem('groups', JSON.stringify(newGroups));
                         }
                     },
                     deep: true,
@@ -2726,7 +2724,8 @@
                     // 深拷貝 nodes 和 connections
                     const state = {
                         nodes: JSON.parse(JSON.stringify(this.nodes)),
-                        connections: JSON.parse(JSON.stringify(this.connections))
+                        connections: JSON.parse(JSON.stringify(this.connections)),
+                        groups: JSON.parse(JSON.stringify(this.groups))
                     };
                     // 移除指針之後的歷史（若有），並加入新狀態
                     this.history = this.history.slice(0, this.currentIndex + 1);
