@@ -401,7 +401,7 @@
                     </select>
                 </div> -->
                 <button title="從群組中移除此便利貼" v-if="selectedNode" class="toolbar-button" @click="removeFromGroup"
-                    :disabled="!hasSelectedNodesInGroup">
+                    :disabled="!hasSelectedNodesInGroup()">
                     <svg-icon name="svg-removeFromGroup"></svg-icon>
                 </button>
                 <button title="解散群組" v-if="selectedGroupId != ''" class="toolbar-button" @click="deleteGroup"
@@ -1462,13 +1462,18 @@
                     const selectedNodes = this.nodes.filter(node => node.selected);
                     if (selectedNodes.length === 0) return; // 無選中便利貼，退出
 
-                    // 生成唯一群組 ID
-                    const groupId = `group-${this.groups.length + 1}`;
-                    // 創建群組
+                    // 一張便利貼只屬於一個群組：先從原本的群組移出
+                    const selectedIds = selectedNodes.map(node => node.id);
+                    this.removeNodesFromGroups(selectedIds);
+
+                    // 群組 ID 用亂數（以前用「數量+1」，刪掉一個再新增就會重複）
+                    const groupId = 'group-' + Math.random().toString(36).substring(2, 10);
+                    // 名稱用下一個沒用過的編號
+                    const usedNumbers = this.groups.map(g => parseInt((g.name || '').replace('群組 ', ''), 10) || 0);
                     const group = {
                         id: groupId,
-                        name: `群組 ${this.groups.length + 1}`,
-                        nodeIds: selectedNodes.map(node => node.id),
+                        name: `群組 ${Math.max(0, ...usedNumbers) + 1}`,
+                        nodeIds: selectedIds,
                     };
                     this.groups.push(group);
 
@@ -1500,14 +1505,15 @@
                     if (nodes.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
 
                     const padding = 20; // 外擴 20px
-                    const noteWidth = this.noteWidth;
-                    const noteHeight = this.noteHeight;
+                    // 圖表便利貼比一般便利貼大，要用各自的尺寸
+                    const widthOf = node => node.type === 'chart' ? node.chartWidth : this.noteWidth;
+                    const heightOf = node => node.type === 'chart' ? node.chartHeight : this.noteHeight;
 
                     // 計算包含所有便利貼的邊界
-                    const minX = Math.min(...nodes.map(node => node.x - noteWidth / 2));
-                    const maxX = Math.max(...nodes.map(node => node.x + noteWidth / 2));
-                    const minY = Math.min(...nodes.map(node => node.y - noteHeight / 2));
-                    const maxY = Math.max(...nodes.map(node => node.y + noteHeight / 2));
+                    const minX = Math.min(...nodes.map(node => node.x - widthOf(node) / 2));
+                    const maxX = Math.max(...nodes.map(node => node.x + widthOf(node) / 2));
+                    const minY = Math.min(...nodes.map(node => node.y - heightOf(node) / 2));
+                    const maxY = Math.max(...nodes.map(node => node.y + heightOf(node) / 2));
                     return {
                         x: minX - padding,
                         y: minY - padding,
@@ -1527,6 +1533,17 @@
 
 
                 // 計算是否有選中便利貼在群組中
+                // 把指定便利貼從所有群組移出，變成空的群組一併刪除
+                removeNodesFromGroups(nodeIds) {
+                    this.groups.forEach(group => {
+                        group.nodeIds = group.nodeIds.filter(id => !nodeIds.includes(id));
+                    });
+                    this.groups = this.groups.filter(group => group.nodeIds.length > 0);
+                    if (this.selectedGroupId && !this.groups.some(group => group.id === this.selectedGroupId)) {
+                        this.selectedGroupId = '';
+                    }
+                },
+
                 hasSelectedNodesInGroup() {
                     const selectedNodeIds = this.nodes
                         .filter(node => node.selected)
@@ -1565,12 +1582,7 @@
                         .map(node => node.id);
 
                     // 從所有群組中移除選中便利貼
-                    this.groups.forEach(group => {
-                        group.nodeIds = group.nodeIds.filter(id => !selectedNodeIds.includes(id));
-                    });
-
-                    // 移除空群組（可選）
-                    this.groups = this.groups.filter(group => group.nodeIds.length > 0);
+                    this.removeNodesFromGroups(selectedNodeIds);
 
                     // 取消便利貼選中狀態
                     this.nodes.forEach(node => {
@@ -1850,9 +1862,10 @@
 
                         const dx = svgX - this.dragStart.x;
                         const dy = svgY - this.dragStart.y;
+                        // 用 startX/startY（startDrag 時每個被拖曳的便利貼都有設定），多選拖曳才不會變成 NaN
                         this.draggingNodes.forEach(n => {
-                            n.x = n.initialX + dx;
-                            n.y = n.initialY + dy;
+                            n.x = n.startX + dx;
+                            n.y = n.startY + dy;
                         });
                     } else if (this.selectionBox.active) {
                         // 獲取 SVG 元素
@@ -1938,19 +1951,19 @@
                                     console.log("畫布單擊");
                                 }
                             } else {
-                                const nodeGroup = event.target.closest('g');
+                                // 外層帶 data-id 的 g 才是便利貼；id 可能是數字，用字串比對
+                                const nodeGroup = event.target.closest('g[data-id]');
                                 if (nodeGroup) {
                                     const nodeId = nodeGroup.getAttribute('data-id');
-                                    const node = this.nodes.find(n => n.id === nodeId);
+                                    const node = this.nodes.find(n => String(n.id) === nodeId);
                                     if (node) {
                                         if (timeSinceLastClick < doubleClickThreshold && this.lastClick.node === node) {
-                                            console.log("便利貼雙擊");
+                                            // 雙擊進入編輯（iOS 不一定會觸發原生 dblclick）
                                             this.editNode(node);
                                             this.lastClick.time = 0; // 重置時間
                                         } else {
-                                            this.nodeClick(node);
-                                            this.lastClick = { time: now, node: node }; // 更新上一次點擊資訊
-                                            console.log("便利貼單擊");
+                                            // 單擊交給便利貼本身的 @click 處理，這裡只記錄，避免選取被切換兩次
+                                            this.lastClick = { time: now, node: node };
                                         }
                                     }
                                 }
@@ -2349,28 +2362,19 @@
                                 svgY >= bounds.y && svgY <= bounds.y + bounds.height;
                         });
 
-                        if (targetGroup) {
-                            // 將起始便利貼加入群組
-                            const startNodeId = this.tempConnection.startNode.id;
-                            if (!targetGroup.nodeIds.includes(startNodeId)) {
-                                targetGroup.nodeIds.push(startNodeId);
-                                this.saveState();
-                                // Swal.fire({
-                                //     icon: 'success',
-                                //     title: '已加入群組',
-                                //     text: `便利貼已加入 ${targetGroup.name}`,
-                                //     timer: 1500,
-                                //     showConfirmButton: false,
-                                // });
-                            } else {
-                                Swal.fire({
-                                    icon: 'info',
-                                    title: '已在群組中',
-                                    text: `便利貼已在 ${targetGroup.name} 中`,
-                                    timer: 1500,
-                                    showConfirmButton: false,
-                                });
-                            }
+                        const startNodeId = this.tempConnection.startNode.id;
+                        if (targetGroup && !targetGroup.nodeIds.includes(startNodeId)) {
+                            // 從群組外拖進群組：把起始便利貼移進這個群組（一張便利貼只屬於一個群組）
+                            this.removeNodesFromGroups([startNodeId]);
+                            targetGroup.nodeIds.push(startNodeId);
+                            this.saveState();
+                        } else if (targetGroup) {
+                            // 在自己的群組裡拖到空白處：照常新增連線的便利貼，並放進同一個群組
+                            const newNode = this.addNode(svgX, svgY);
+                            this.pushConnections(this.tempConnection.startNode, newNode);
+                            targetGroup.nodeIds.push(newNode.id);
+                            this.focusNodeText(newNode);
+                            this.calculateTotal();
                         } else {
                             // 現有邏輯：拖曳到空白位置，新增便利貼
                             const newNode = this.addNode(svgX, svgY);
@@ -2527,7 +2531,7 @@
                 /* ================ 圖表便利貼 ==================== */
                 //側欄新增圖表便利貼
                 addChartNodeRight(event) {
-                    this.addChartNode(190, 140, event);
+                    this.addChartNode(190, 140, event, true);
                 },
 
                 //右鍵新增便利貼圖表
@@ -2536,17 +2540,18 @@
                 },
 
                 /* 圖表便利貼相關方法 */
-                addChartNode(addX, addY, event) {
+                addChartNode(addX, addY, event, avoidOverlap = false) {
                     const vm = this;
                     const svgElement = document.getElementById('mindmapSvg');
                     const rect = svgElement.getBoundingClientRect();
                     const x = event ? (event.clientX - rect.left - this.boardOffset.x) / this.scale : this.center.x;
                     const y = event ? (event.clientY - rect.top - this.boardOffset.y) / this.scale : this.center.y;
+                    const spot = avoidOverlap ? this.findFreeSpot(x + addX, y + addY, 400, 240) : { x: x + addX, y: y + addY };
                     const newNode = {
                         id: `chart-${Date.now()}`,
                         type: 'chart',
-                        x: x + addX,
-                        y: y + addY,
+                        x: spot.x,
+                        y: spot.y,
                         chartWidth: 400,
                         chartHeight: 240,
                         chartType: 'bar', // 預設為柱狀圖
@@ -2897,70 +2902,98 @@
 
                 },
 
-                // computeTotal: 提取所有數字（含負號）並加總後存入 node.total
-                // computeTotal(node) {
-                //     //     // 確保 node.label 是字符串，若不是則設置為空字符串
-                //     const label = typeof node.label === 'string' ? node.label : '';
-                //     // 移除被 ## 包覆的內容
-                //     const cleanedLabel = label.replace(/#[^#]*#/g, '');
-                //     // 直觀版
-                //     // const cleanedLabel = label.replace(/#[^#]*#/g, '').replace(/![^!]*!/g, '');
-                //     // 簡潔的移除被 ##,!! 包覆的內容
-                //     // const cleanedLabel = label.replace(/(#[^#]*#|![^!]*!)/g, '');
-
-                //     // 匹配數字（包括負數和小數）
-                //     const matches = cleanedLabel.match(/-?\d*\.?\d+/g);
-
-                //     let total = 0;
-                //     if (matches) {
-                //         matches.forEach(numStr => {
-                //             total += parseFloat(numStr);
-                //         });
-                //     }
-                //     node.total = total;
-                //     node.count = total;
-                //     return total;
-                // },
-
+                // 便利貼文字 → 數字（存到 node.total / node.count）
+                // 1. 被 # 包住的內容不計算，例如「#備註 99# 50」→ 50
+                // 2. 整段都是算式就照算式計算，例如「100*2+50」→ 250
+                // 3. 否則把文字裡的金額加總，例如「午餐 120 晚餐 80」→ 200
                 computeTotal(node) {
-                    // 確保 node.label 是字符串，若不是則設置為空字符串
                     const label = typeof node.label === 'string' ? node.label : '';
-                    // 移除被 ## 包覆的內容
-                    const cleanedLabel = label.replace(/#[^#]*#/g, '');
-                    // 檢查是否為數學運算式（只包含數字、運算符和可選空格）
-                    const isMathExpression = /^[\d\s+\-*/.()]+$/.test(cleanedLabel);
-                    let total = 0;
-                    if (isMathExpression) {
-                        try {
-                            // 使用 Function 構造函數安全評估數學運算式
-                            total = new Function(`return ${cleanedLabel}`)();
-                            // 確保結果是數字
-                            if (typeof total !== 'number' || isNaN(total)) {
-                                total = 0;
-                            }
-                        } catch (e) {
-                            // 如果運算式無效，回退到數字加總
-                            const matches = cleanedLabel.match(/-?\d*\.?\d+/g);
-                            if (matches) {
-                                matches.forEach(numStr => {
-                                    total += parseFloat(numStr);
-                                });
-                            }
-                        }
-                    } else {
-                        // 非數學運算式，提取並加總所有數字
-                        const matches = cleanedLabel.match(/-?\d*\.?\d+/g);
-                        if (matches) {
-                            matches.forEach(numStr => {
-                                total += parseFloat(numStr);
-                            });
-                        }
+                    const text = this.normalizeNumberText(label.replace(/#[^#]*#/g, ''));
+
+                    let total = this.evaluateExpression(text);
+                    if (total === null) {
+                        total = this.sumNumbersInText(text);
                     }
+                    // 去掉 0.1+0.2=0.30000000000000004 這類浮點誤差
+                    total = Math.round(total * 1e10) / 1e10;
+
                     node.total = total;
-                    node.count = total; // 如果 count 應為數字個數，可改為 matches ? matches.length : 0
+                    node.count = total;
                     return total;
                 },
 
+                // 統一數字寫法：全形轉半形、千分位、×÷；日期與時間不是金額，先拿掉
+                normalizeNumberText(text) {
+                    return text
+                        .replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+                        .replace(/　/g, ' ')
+                        .replace(/×/g, '*')
+                        .replace(/÷/g, '/')
+                        .replace(/−/g, '-')
+                        .replace(/(\d),(?=\d{3}(?!\d))/g, '$1') // 1,200 → 1200
+                        .replace(/\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}/g, ' ') // 2025-10-07、2025/10/07
+                        .replace(/\d{1,2}:\d{2}(:\d{2})?/g, ' '); // 12:30
+                },
+
+                // 只含數字、+ - * /、括號的算式才計算，否則回傳 null
+                // 自己解析而不用 eval：010 不會被當八進位，也不會執行任何程式碼
+                evaluateExpression(text) {
+                    if (!/^[\d\s+\-*/.()]+$/.test(text) || !/\d/.test(text)) return null;
+
+                    const tokens = text.match(/\d*\.?\d+|[+\-*/()]/g) || [];
+                    if (tokens.join('') !== text.replace(/\s+/g, '')) return null;
+                    let pos = 0;
+
+                    // 運算式 = 項 (+|- 項)*；項 = 因子 (*|/ 因子)*；因子 = -因子 | 數字 | (運算式)
+                    const factor = () => {
+                        const token = tokens[pos++];
+                        if (token === '-') return -factor();
+                        if (token === '+') return factor();
+                        if (token === '(') {
+                            const value = expression();
+                            if (tokens[pos++] !== ')') throw new Error('括號不成對');
+                            return value;
+                        }
+                        if (token !== undefined && /\d/.test(token)) return parseFloat(token);
+                        throw new Error('算式不完整');
+                    };
+                    const term = () => {
+                        let value = factor();
+                        while (tokens[pos] === '*' || tokens[pos] === '/') {
+                            const op = tokens[pos++];
+                            const right = factor();
+                            value = op === '*' ? value * right : value / right;
+                        }
+                        return value;
+                    };
+                    const expression = () => {
+                        let value = term();
+                        while (tokens[pos] === '+' || tokens[pos] === '-') {
+                            const op = tokens[pos++];
+                            const right = term();
+                            value = op === '+' ? value + right : value - right;
+                        }
+                        return value;
+                    };
+
+                    try {
+                        const value = expression();
+                        if (pos !== tokens.length) return null; // 例如「5 5」不是算式，改用加總
+                        return Number.isFinite(value) ? value : 0; // 除以 0 視為 0
+                    } catch (e) {
+                        return null;
+                    }
+                },
+
+                // 加總文字裡的數字（負號只認數字前面沒有接數字的，例如「支出 -50」）
+                sumNumbersInText(text) {
+                    const cleaned = text
+                        .replace(/\d+(?:-\d+){2,}/g, ' ') // 電話、編號：0912-345-678
+                        .replace(/\b\d{1,2}\/\d{1,2}\b/g, ' ') // 月/日：10/7
+                        .replace(/(\d)-(?=\d)/g, '$1 '); // 數字中間的 - 是分隔符號，不是負號
+                    const matches = cleaned.match(/-?\d*\.?\d+/g) || [];
+                    return matches.reduce((sum, numStr) => sum + parseFloat(numStr), 0);
+                },
 
 
                 // 結束編輯
@@ -3039,24 +3072,18 @@
                             return;
                         }
                         // 檢查是否重複連線
-                        vm.connectionStartNode.connectionsOut.forEach(conn => {
-                            if (conn == node.id) {
-                                Swal.fire({
-                                    icon: 'warning',
-                                    title: '無法連線',
-                                    text: '重複連線了唷，請檢查您的連線結構！',
-                                });
-                                vm.connectionStartNode = null;
-                                return;
-                            }
-                        })
+                        if (vm.connectionStartNode.connectionsOut.some(id => id == node.id)) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: '無法連線',
+                                text: '重複連線了唷，請檢查您的連線結構！',
+                            });
+                            vm.connectionStartNode = null;
+                            return;
+                        }
 
-                        // 新增連線
+                        // 新增連線（pushConnections 會同時更新兩端的 connectionsIn / connectionsOut）
                         vm.pushConnections(vm.connectionStartNode, node);
-
-
-                        vm.connectionStartNode.connectionsOut.push(node.id);
-                        node.connectionsIn.push(vm.connectionStartNode.id);
                         vm.connectionStartNode = null;
 
                         vm.calculateTotal();
@@ -3176,10 +3203,27 @@
                     const x = (event.clientX - rect.left - this.boardOffset.x) / this.scale;
                     const y = (event.clientY - rect.top - this.boardOffset.y) / this.scale;
 
-                    const newNode = this.addNode(x + 150, y + 0)
+                    const spot = this.findFreeSpot(x + 150, y);
+                    const newNode = this.addNode(spot.x, spot.y);
                     this.contextMenu.visible = false;
                     //進入新便利貼的編輯模式
                     this.focusNodeText(newNode);
+                },
+                // 自動放置的便利貼（工具列按鈕、Tab）：預定位置跟其他便利貼重疊時，往下一格一格找空位
+                // 使用者自己指定位置的（雙擊空白處、拖線到空白處）不經過這裡
+                findFreeSpot(x, y, width = this.noteWidth, height = this.noteHeight) {
+                    const gap = 20;
+                    const overlaps = (cx, cy) => this.nodes.some(n => {
+                        const w = n.type === 'chart' ? n.chartWidth : this.noteWidth;
+                        const h = n.type === 'chart' ? n.chartHeight : this.noteHeight;
+                        return Math.abs(n.x - cx) < (w + width) / 2 + gap / 2 &&
+                            Math.abs(n.y - cy) < (h + height) / 2 + gap / 2;
+                    });
+                    for (let i = 0; i < 20; i++) {
+                        const cy = y + i * (height + gap);
+                        if (!overlaps(x, cy)) return { x, y: cy };
+                    }
+                    return { x, y };
                 },
                 // 按下 Tab 鍵時，在選取的一般便利貼右邊新增一個便利貼並連線
                 addNodeOnTab() {
@@ -3195,7 +3239,8 @@
                     if (!baseNode) {
                         return; // 如果選取的便利貼中沒有一般便利貼，則不執行
                     }
-                    const newNode = this.addNode(baseNode.x + 200, baseNode.y + 0)
+                    const spot = this.findFreeSpot(baseNode.x + 200, baseNode.y);
+                    const newNode = this.addNode(spot.x, spot.y);
 
 
                     // 建立連線（從基準便利貼到新便利貼）
@@ -3296,11 +3341,13 @@
                     // Tab 按鍵：新增便利貼並連線
                     else if (event.key === 'Tab') {
                         event.preventDefault(); // 防止 Tab 鍵切換焦點
-                        if (this.nodes.some(n => n.editing)) {
-                            this.nodes.find(n => n.editing).editing = false
-                        } else {
-                            this.addNodeOnTab();
+                        // 編輯中按 Tab：完成編輯（重新計算）後直接接著新增下一張，可以連續輸入
+                        const editingNode = this.nodes.find(n => n.editing);
+                        if (editingNode) {
+                            this.finishEdit(editingNode);
+                            this.nodes.forEach(n => n.selected = n === editingNode);
                         }
+                        this.addNodeOnTab();
                     }
 
                     // DELETE 按鍵：刪除所有已選取的便利貼與連線
@@ -3371,13 +3418,7 @@
                     this.deleteForEachNodes(deletedIds);
 
                     // 從群組中移除被刪除的便利貼 ID，並移除空群組
-                    this.groups.forEach(group => {
-                        group.nodeIds = group.nodeIds.filter(id => !deletedIds.includes(id));
-                    });
-                    this.groups = this.groups.filter(group => group.nodeIds.length > 0);
-                    if (!this.groups.some(group => group.id === this.selectedGroupId)) {
-                        this.selectedGroupId = '';
-                    }
+                    this.removeNodesFromGroups(deletedIds);
 
                     this.contextMenu.visible = false;
                     // 重新計算（calculateTotal 內會 saveState，不必再存一次）
