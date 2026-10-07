@@ -527,7 +527,7 @@
                     if (vm.flag_username_reg && vm.flag_password_reg && vm.flag_email_reg && vm.flag_re_password_reg) {
                         var JSONdata = {};
                         //傳遞至後端API執行註冊行為
-                        // {"username" : "owner01", "password" : "123456", "email" : "owner01@test.com"}
+                        // {"username" : "owner01", "password" : "******", "email" : "owner01@test.com"}
                         JSONdata["username"] = vm.username_vue;
                         JSONdata["password"] = vm.password_vue;
                         JSONdata["email"] = vm.email_vue;
@@ -557,7 +557,7 @@
                 ok_btn_login() {
                     if (flag_username_login && flag_password_login) {
                         //傳遞後端API 執行登入行為
-                        // {"username" : "owner01", "password" : "123456"}
+                        // {"username" : "owner01", "password" : "******"}
                         var JSONdata01 = {};
                         JSONdata01["username"] = $("#username_login").val();
                         JSONdata01["password"] = $("#password_login").val();

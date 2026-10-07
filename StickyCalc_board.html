@@ -466,7 +466,7 @@
                         type: "POST",
                         url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=deleteBoard",
                         // url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=advanceDeleteBoard",
-                        data: JSON.stringify(JSONdata),
+                        data: JSON.stringify(this.withAuth(JSONdata)),
                         dataType: "json",
                         async: false,
                         success: function (data) {
@@ -498,7 +498,7 @@
                         $.ajax({
                             type: "POST",
                             url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=getAllUserBoard",
-                            data: JSON.stringify(JSONdata),
+                            data: JSON.stringify(vm.withAuth(JSONdata)),
                             dataType: "json",
                             async: false,
                             success: function (data) {
@@ -657,7 +657,7 @@
                 ok_btn_login() {
                     if (flag_username_login && flag_password_login) {
                         //傳遞後端API 執行登入行為
-                        // {"username" : "owner01", "password" : "123456"}
+                        // {"username" : "owner01", "password" : "******"}
                         var JSONdata01 = {};
                         JSONdata01["username"] = $("#username_login").val();
                         JSONdata01["password"] = $("#password_login").val();
@@ -753,6 +753,13 @@
                     let expires = "expires=" + d.toUTCString();
                     document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
                 },
+                // 附上登入 token，後端用它確認身分（不再相信 userId）
+                withAuth(payload) {
+                    return Object.assign({}, payload, {
+                        uid01: this.getCookie("Uid01"),
+                        mid: this.getCookie("Mid"),
+                    });
+                },
                 getCookie(cname) {
                     let name = cname + "=";
                     let decodedCookie = decodeURIComponent(document.cookie);
@@ -783,7 +790,7 @@
             // $("#ok_btn_login").click(function () {
             //     if (flag_username_login && flag_password_login) {
             //         //傳遞後端API 執行登入行為
-            //         // {"username" : "owner01", "password" : "123456"}
+            //         // {"username" : "owner01", "password" : "******"}
             //         var JSONdata01 = {};
             //         JSONdata01["username"] = $("#username_login").val();
             //         JSONdata01["password"] = $("#password_login").val();

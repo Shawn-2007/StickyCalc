@@ -327,7 +327,7 @@
             $("#ok_btn_login").click(function () {
                 if (flag_username_login && flag_password_login) {
                     //傳遞後端API 執行登入行為
-                    // {"username" : "owner01", "password" : "123456"}
+                    // {"username" : "owner01", "password" : "******"}
                     var JSONdata01 = {};
                     JSONdata01["username"] = $("#username_login").val();
                     JSONdata01["password"] = $("#password_login").val();
@@ -429,10 +429,11 @@
                 $("#login_btn").addClass("d-none");
                 $("#logout_btn").removeClass("d-none");
                 $("#backstage").removeClass("d-none");
-                // 渲染帳號資料
+                // 渲染帳號資料（後端會用 token 驗證管理者身分）
                 $.ajax({
-                    type: "GET",
+                    type: "POST",
                     url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=getalldata",
+                    data: JSON.stringify({ uid01: getCookie("Uid01") }),
                     dataType: "json",
                     async: false,
                     success: showdata,
@@ -443,11 +444,26 @@
             }
         }
 
+        // 會員填的資料可能含有 HTML，插入頁面前先跳脫，避免 XSS
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
         function showdata(data) {
-            console.log(data);
             if (data.state) {
                 // $("#mydata").empty();
-                data.data.forEach(function (item01) {
+                data.data.forEach(function (item) {
+                    var item01 = {
+                        ID: escapeHtml(item.ID),
+                        Username: escapeHtml(item.Username),
+                        Email: escapeHtml(item.Email),
+                        Created_at: escapeHtml(item.Created_at),
+                    };
                     var strHTML = `<tr>
                             <td data-th="編號">${item01.ID}</td>
                             <td data-th="帳號">${item01.Username}</td>
@@ -491,10 +507,10 @@
                             //{"id" : "26", "price" : "90", "remark" : "高品質鮮乳"}
                             var JSONdata02 = {};
                             JSONdata02["id"] = uid;
-                            console.log(JSONdata02);
+                            JSONdata02["uid01"] = getCookie("Uid01");
 
                             $.ajax({
-                                type: "DELETE",
+                                type: "POST",
                                 url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=delete",
                                 data: JSON.stringify(JSONdata02),
                                 dataType: "json",
@@ -531,7 +547,7 @@
                         var JSONdata01 = {};
                         JSONdata01["id"] = uid;
                         JSONdata01["email"] = $("#email").val();
-                        console.log(JSONdata01);
+                        JSONdata01["uid01"] = getCookie("Uid01");
 
                         $.ajax({
                             type: "POST",
