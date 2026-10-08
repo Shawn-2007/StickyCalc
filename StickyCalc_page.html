@@ -31,6 +31,8 @@
             position: relative;
             background: #f9f9f9;
             user-select: none;
+            -webkit-user-select: none; /* iOS Safari */
+            -webkit-touch-callout: none; /* 長按不要跳出系統選單 */
         }
 
         .mind-map-container-dark {
@@ -40,9 +42,24 @@
             position: relative;
             background: #242424;
             user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* 輸入框要能選取文字（上面關掉選取後，iOS 的輸入框會無法輸入） */
+        .mind-map-container textarea,
+        .mind-map-container input,
+        .mind-map-container-dark textarea,
+        .mind-map-container-dark input {
+            user-select: text;
+            -webkit-user-select: text;
+            -webkit-touch-callout: default;
         }
 
         svg {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
             width: 100%;
             height: 100%;
             /* cursor 預設 auto，可由各狀態動態變更 */
@@ -570,7 +587,7 @@
                             <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 30">
                                 <div class="note-text-container" :class="{ 'has-footer': node.connectionsIn.length === 1 }"
-                                    :style="foreignObjectTransformStyle"
+                                    :style="foreignObjectTransformStyle(node.x - noteWidth/2 + 5, node.y - noteHeight/2 + 30)"
                                     @dblclick="draggingNodes.length ? null : editNode(node)">
                                     <!-- 一連以下顯示此段，label無內容顯示雙擊編輯 -->
                                     <span v-if="node.connectionsIn.length < 2" class="note-text"
@@ -633,7 +650,7 @@
                             <!-- 圖表類型選擇（置於深色區） -->
                             <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 2"
                                 :width="node.chartWidth - 20" height="22">
-                                <div class="row" :style="foreignObjectTransformStyle">
+                                <div class="row" :style="foreignObjectTransformStyle(node.x - node.chartWidth/2 + 10, node.y - node.chartHeight/2 + 2)">
                                     <div class="col-6">
                                         <div class="">
                                             <!-- 按鈕 粉紅 -->
@@ -685,7 +702,8 @@
                             <!-- 圖表容器 -->
                             <foreignObject :x="node.x - node.chartWidth/2 + 10" :y="node.y - node.chartHeight/2 + 30"
                                 :width="node.chartWidth - 20" :height="node.chartHeight - 40">
-                                <div :id="node.id" class="chart-container" :style="foreignObjectTransformStyle"></div>
+                                <div :id="node.id" class="chart-container"
+                                    :style="foreignObjectTransformStyle(node.x - node.chartWidth/2 + 10, node.y - node.chartHeight/2 + 30)"></div>
                             </foreignObject>
                             <!-- 右下角拖移方塊 -->
                             <rect :x="node.x + node.chartWidth/2 - 15" :y="node.y + node.chartHeight/2 - 15" width="15"
@@ -1331,6 +1349,7 @@
                 document.addEventListener('visibilitychange', this.handleVisibilityChange);
 
                 window.addEventListener('keydown', this.handleKeyDown);
+                document.addEventListener('selectstart', this.preventSelectOutsideInputs);
 
                 //儲存狀態
                 this.saveState()
@@ -1344,6 +1363,7 @@
             },
             beforeUnmount() {
                 window.removeEventListener('keydown', this.handleKeyDown);
+                document.removeEventListener('selectstart', this.preventSelectOutsideInputs);
             },
             // 監視
             watch: {
@@ -1396,15 +1416,6 @@
                 svgStyle() {
                     return this.isMobile ? { touchAction: 'none' } : {};
                     // 是否為移動端
-                },
-
-                foreignObjectTransformStyle() {
-                    // 僅在移動端應用 transform，避免桌面端受到影響
-                    if (!this.isMobile) return {};
-                    return {
-                        transform: `translate(${this.boardOffset.x}px, ${this.boardOffset.y}px) scale(${this.scale})`,
-                        transformOrigin: '0 0', // 確保縮放從左上角開始
-                    };
                 },
 
                 selectedNode() {
@@ -2924,6 +2935,18 @@
 
                 },
 
+                // 手機（Safari）的 foreignObject 內容不會跟著外層 <g> 的平移／縮放，要自己套用
+                // (fx, fy) 是這個 foreignObject 在畫板上的位置。縮放的基準點必須是畫板原點（也就是 (-fx, -fy)），
+                // 不是元素自己的左上角，否則縮放不是 1 倍時內容會偏離便利貼（原本只有平移，沒縮放所以沒發現）
+                foreignObjectTransformStyle(fx, fy) {
+                    // 僅在移動端應用 transform，避免桌面端受到影響
+                    if (!this.isMobile) return {};
+                    return {
+                        transform: `translate(${this.boardOffset.x}px, ${this.boardOffset.y}px) scale(${this.scale})`,
+                        transformOrigin: `${-fx}px ${-fy}px`,
+                    };
+                },
+
                 // 數字顯示：千分位、最多兩位小數（js/stickycalc/format.js）
                 formatNumber,
 
@@ -3260,6 +3283,13 @@
                 // 初始化鍵盤事件
                 initKeyboardEvents() {
                     window.addEventListener('keydown', this.handleKeydown);
+                },
+
+                // 貼板上不需要選取文字（輸入框除外）：擋掉長按空白處時 iOS 的「全選」藍框
+                preventSelectOutsideInputs(event) {
+                    const el = event.target instanceof Element ? event.target : event.target?.parentElement;
+                    if (el && el.closest('textarea, input')) return;
+                    event.preventDefault();
                 },
 
                 // 鍵盤事件區塊
