@@ -147,6 +147,22 @@
             overflow: hidden;
         }
 
+        /* 存檔狀態文字 */
+        .save-status {
+            font-size: 14px;
+            color: #808080;
+            white-space: nowrap;
+        }
+
+        .save-status-error {
+            color: #d9534f;
+        }
+
+        /* 底部要顯示「本張」數值時，文字區縮短 */
+        .note-text-container.has-footer {
+            height: 72%;
+        }
+
 
         /* 垂直工具列 */
         .toolbar-vertical {
@@ -158,6 +174,8 @@
             /* 垂直置中 */
             transform: translateY(-50%);
             /* 偏移自身高度的一半以精準置中 */
+            height: auto;
+            /* 高度依按鈕數量自動決定（.toolbar 預設的 40px 是給上方工具列用的） */
             /* background-color: #070606; */
             background-color: #f0f0f0;
             /* 背景色，與你的設計一致 */
@@ -296,6 +314,8 @@
     <div id="app">
         <!-- 外層容器，點擊時隱藏右鍵選單 -->
         <div :class="['mind-map-container', { 'mind-map-container-dark': isDark }]" @click="hideContextMenu">
+            <!-- 新手提示（js/stickycalc/components/OnboardingHint.js） -->
+            <onboarding-hint v-if="isLoaded" :is-mobile="isMobile" :is-dark="isDark"></onboarding-hint>
             <!-- 左上工具列 -->
             <div class="toolbar toolbar-left">
                 <div class="mt-2 d-flex">
@@ -321,12 +341,13 @@
                         </svg>
                     </div>
                     <!-- 存檔 -->
-                    <div title="自動存檔，如ICON為深色，則可自行點擊存檔" class="ms-1">
-                        <a href="#" @click="nodesUpload" class="nav-link">
-                            <svg-icon :name="isAutoUpload ? 'svg-upload-ok' : 'svg-upload'"></svg-icon>
+                    <div :title="saveStatusHint" class="ms-1">
+                        <a href="#" @click.prevent="nodesUpload" class="nav-link">
+                            <svg-icon :name="saveStatus === 'saved' ? 'svg-upload-ok' : 'svg-upload'"></svg-icon>
                         </a>
                     </div>
-                    <span v-if="isAutoUpload" style="font-size: 14px; color: #808080;" class="mt-auto">已上傳</span>
+                    <span v-if="saveStatus" class="mt-auto save-status" :class="'save-status-' + saveStatus"
+                        :title="saveStatusHint">{{ saveStatusText }}</span>
                     <!-- 讀檔 -->
                     <div class="ms-2">
                         <!-- <a href="#" @click="get_nodes" class="nav-link">
@@ -382,7 +403,7 @@
             </div>
 
             <!-- 垂直工具列（新增） 全上462px 一般82px 貼246px 線348px -->
-            <div class="toolbar toolbar-vertical" :style="{height: computedToolbarHeight + 'px' }">
+            <div class="toolbar toolbar-vertical">
 
                 <button title="新增便利貼" class="toolbar-button" @click="addNodeAtRight">
                     <svg-icon name="svg-addNode"></svg-icon>
@@ -412,47 +433,13 @@
                     @click="deleteBtn()">
                     <svg-icon name="svg-deleteNode"></svg-icon>
                 </button>
-                <button title="便利貼換色:粉紅色" v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
-                    @click="changeNodeColor('general', '#ffc0cb', '#FCAFAA')">
-                    <svg-icon name="svg-nodeColorPink"></svg-icon>
-                </button>
-                <button title="便利貼換色:粉綠色" v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
-                    @click="changeNodeColor('general', '#D3ED7F', '#C7DF7A')">
-                    <svg-icon name="svg-nodeColorGreen"></svg-icon>
-                </button>
-                <button title="便利貼換色:粉藍色" v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
-                    @click="changeNodeColor('general', '#CEEBFD', '#ADD8E6')">
-                    <svg-icon name="svg-nodeColorBlue"></svg-icon>
-                </button>
-                <button title="便利貼換色:粉黃色" v-if="selectedNode" class="toolbar-button" style="margin: 1px;"
-                    @click="changeNodeColor('general', '#FFF8CA', '#FFF4B2')">
-                    <svg-icon name="svg-nodeColorYellow"></svg-icon>
-                </button>
-                <button title="線條類型:實線" v-if="selectedConn" class="toolbar-button" @click="changeLineType('solid')">
-                    <svg-icon name="svg-lineTypeEntity"></svg-icon>
-                </button>
-                <button title="線條類型:中段線" v-if="selectedConn" class="toolbar-button" @click="changeLineType('dashed')">
-                    <svg-icon name="svg-lineTypeHollow"></svg-icon>
-                </button>
-                <button title="線條類型:虛線" v-if="selectedConn" class="toolbar-button" @click="changeLineType('dotted')">
-                    <svg-icon name="svg-lineTypeDottedLine"></svg-icon>
-                </button>
-                <button title="線條顏色:粉紅色" v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
-                    @click="changeLineColor('#FCAFAA')">
-                    <svg-icon name="svg-lineColorPink"></svg-icon>
-                </button>
-                <button title="線條顏色:粉綠色" v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
-                    @click="changeLineColor('#C7DF7A')">
-                    <svg-icon name="svg-lineColorGreen"></svg-icon>
-                </button>
-                <button title="線條顏色:粉藍色" v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
-                    @click="changeLineColor('#ADD8E6')">
-                    <svg-icon name="svg-lineColorBlue"></svg-icon>
-                </button>
-                <button title="線條顏色:橘黃色" v-if="selectedConn" class="toolbar-button" style="margin: 0px;"
-                    @click="changeLineColor('#FFB53E')">
-                    <svg-icon name="svg-lineColorYellow"></svg-icon>
-                </button>
+                <!-- 顏色與線條樣式：點開才列出選項（選項在 js/stickycalc/palettes.js） -->
+                <toolbar-palette v-if="selectedNode" title="便利貼顏色" icon="svg-nodeColorYellow" :options="nodeColors"
+                    @select="option => changeNodeColor('general', option.color, option.colorTop)"></toolbar-palette>
+                <toolbar-palette v-if="selectedConn" title="線條樣式" icon="svg-lineTypeHollow" :options="lineTypes"
+                    @select="option => changeLineType(option.key)"></toolbar-palette>
+                <toolbar-palette v-if="selectedConn" title="線條顏色" icon="svg-lineColorYellow" :options="lineColors"
+                    @select="option => changeLineColor(option.color)"></toolbar-palette>
             </div>
 
             <!-- 主要畫板SVG -->
@@ -562,7 +549,8 @@
 
                             <text :x="node.x + noteWidth / 2 - 5" :y="node.y - noteHeight / 2 + 20" text-anchor="end"
                                 font-size="18" fill="grey" font-weight="bold">
-                                {{ node.total }}
+                                <title>{{ node.connectionsIn.length === 1 ? '累計：這張加上連入的便利貼' : '這張的數值' }}</title>
+                                {{ formatNumber(node.total) }}
                             </text>
                         </template>
                         <!-- 頂欄 -->
@@ -581,7 +569,8 @@
                         <template v-else-if="node.type !== 'chart'">
                             <foreignObject :x="node.x - noteWidth/2 + 5" :y="node.y - noteHeight/2 + 30"
                                 :width="noteWidth - 10" :height="noteHeight - 30">
-                                <div class="note-text-container" :style="foreignObjectTransformStyle"
+                                <div class="note-text-container" :class="{ 'has-footer': node.connectionsIn.length === 1 }"
+                                    :style="foreignObjectTransformStyle"
                                     @dblclick="draggingNodes.length ? null : editNode(node)">
                                     <!-- 一連以下顯示此段，label無內容顯示雙擊編輯 -->
                                     <span v-if="node.connectionsIn.length < 2" class="note-text"
@@ -591,9 +580,14 @@
                                         }}</span>
 
                                     <!-- 二連以上顯示此段，顯示總值或0 -->
-                                    <span v-else class="note-text">{{ node.label }}</span>
+                                    <span v-else class="note-text">{{ typeof node.label === 'number' ? formatNumber(node.label) : node.label }}</span>
                                 </div>
                             </foreignObject>
+                            <!-- 一條連入時：左下角顯示這張自己的數值（右上角是累計） -->
+                            <text v-if="node.connectionsIn.length === 1" :x="node.x - noteWidth/2 + 8"
+                                :y="node.y + noteHeight/2 - 8" font-size="11" fill="grey">
+                                本張 {{ formatNumber(node.count) }}
+                            </text>
                             <!-- 右下角「...」按鈕 -->
                             <svg v-if="node.connectionsIn.length < 2 && !node.editing" @click.stop="showFullText(node)"
                                 :x="node.x + noteWidth/2 - 34" :y="node.y + noteHeight/2 - 20"
@@ -828,7 +822,15 @@
     <script src="https://unpkg.com/apexcharts@latest/dist/apexcharts.min.js"></script>
 
     <script src="js/vue.global.js"></script>
-    <script>
+    <script type="module">
+        import { parseNoteValue } from './js/stickycalc/calc.js';
+        import { formatNumber } from './js/stickycalc/format.js';
+        import { apiUrl, withAuth, buildBoardUploads, postAll } from './js/stickycalc/api.js';
+        import { loadBoardCache, saveBoardCache, removeLegacyCache } from './js/stickycalc/boardCache.js';
+        import { OnboardingHint } from './js/stickycalc/components/OnboardingHint.js';
+        import { ToolbarPalette } from './js/stickycalc/components/ToolbarPalette.js';
+        import { NODE_COLORS, LINE_TYPES, LINE_COLORS } from './js/stickycalc/palettes.js';
+
         // UI SVG
         const SvgIcon = {
             props: ['name'], // 動態傳入 SVG 名稱
@@ -1247,7 +1249,12 @@
                     isDark: false, //黑暗模式
 
                     uploadTimer: null, // 用於上傳的存儲計時器
-                    isAutoUpload: false, // 目前內容已全部上傳成功
+                    saveStatus: '', // 存檔狀態：local（僅本機）／unsaved／saving／saved／error
+
+                    // 工具列的顏色與線條樣式選項（js/stickycalc/palettes.js）
+                    nodeColors: NODE_COLORS,
+                    lineTypes: LINE_TYPES,
+                    lineColors: LINE_COLORS,
                     lastUploadedKey: '', // 最後一次上傳成功的內容，沒變就不重複上傳
                     uploadingKey: '', // 上傳中的內容
                     uploadingKeepalive: false, // 上傳中的請求是否為關閉頁面用的 keepalive
@@ -1366,6 +1373,26 @@
             // 計算、運算
             computed: {
 
+                saveStatusText() {
+                    return {
+                        local: '僅存本機',
+                        unsaved: '未儲存',
+                        saving: '儲存中…',
+                        saved: '已儲存',
+                        error: '儲存失敗',
+                    }[this.saveStatus] || '';
+                },
+
+                saveStatusHint() {
+                    if (this.saveStatus === 'local') {
+                        return '未登入：內容只存在這個瀏覽器，登入後才會同步到雲端';
+                    }
+                    if (this.saveStatus === 'error') {
+                        return '儲存失敗，30 秒後會自動再試，也可以點這裡立即重試';
+                    }
+                    return '自動存檔：停止編輯 30 秒後儲存，也可以點這裡立即儲存';
+                },
+
                 svgStyle() {
                     return this.isMobile ? { touchAction: 'none' } : {};
                     // 是否為移動端
@@ -1389,27 +1416,6 @@
                 selectedConn() {
                     // some() 有任一個 node.selected 為 true 就設為 true，否則 false
                     return this.connections.some(c => c.selected)
-                },
-                computedToolbarHeight() {
-                    if (this.selectedNode && this.selectedConn && this.selectedGroupId) {
-                        return 616
-                    } else if (this.selectedNode && this.selectedConn) {
-                        return 576
-                    } else if (this.selectedNode && this.selectedGroupId) {
-                        return 376
-                    } else if (this.selectedGroupId && this.selectedConn) {
-                        return 450
-                    } else if (this.selectedConn) {
-                        return 410
-                    } else if (this.selectedNode) {
-                        return 334
-                    } else if (this.selectedChert) {
-                        return 122
-                    } else if (this.selectedGroupId) {
-                        return 124
-                    } else {
-                        return 84
-                    }
                 },
                 /* 畫板 transform */
                 boardTransform() {
@@ -2902,99 +2908,16 @@
 
                 },
 
-                // 便利貼文字 → 數字（存到 node.total / node.count）
-                // 1. 被 # 包住的內容不計算，例如「#備註 99# 50」→ 50
-                // 2. 整段都是算式就照算式計算，例如「100*2+50」→ 250
-                // 3. 否則把文字裡的金額加總，例如「午餐 120 晚餐 80」→ 200
+                // 數字顯示：千分位、最多兩位小數（js/stickycalc/format.js）
+                formatNumber,
+
+                // 便利貼文字 → 數字（規則見 js/stickycalc/calc.js）
                 computeTotal(node) {
-                    const label = typeof node.label === 'string' ? node.label : '';
-                    const text = this.normalizeNumberText(label.replace(/#[^#]*#/g, ''));
-
-                    let total = this.evaluateExpression(text);
-                    if (total === null) {
-                        total = this.sumNumbersInText(text);
-                    }
-                    // 去掉 0.1+0.2=0.30000000000000004 這類浮點誤差
-                    total = Math.round(total * 1e10) / 1e10;
-
+                    const total = parseNoteValue(node.label);
                     node.total = total;
                     node.count = total;
                     return total;
                 },
-
-                // 統一數字寫法：全形轉半形、千分位、×÷；日期與時間不是金額，先拿掉
-                normalizeNumberText(text) {
-                    return text
-                        .replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
-                        .replace(/　/g, ' ')
-                        .replace(/×/g, '*')
-                        .replace(/÷/g, '/')
-                        .replace(/−/g, '-')
-                        .replace(/(\d),(?=\d{3}(?!\d))/g, '$1') // 1,200 → 1200
-                        .replace(/\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}/g, ' ') // 2025-10-07、2025/10/07
-                        .replace(/\d{1,2}:\d{2}(:\d{2})?/g, ' '); // 12:30
-                },
-
-                // 只含數字、+ - * /、括號的算式才計算，否則回傳 null
-                // 自己解析而不用 eval：010 不會被當八進位，也不會執行任何程式碼
-                evaluateExpression(text) {
-                    if (!/^[\d\s+\-*/.()]+$/.test(text) || !/\d/.test(text)) return null;
-
-                    const tokens = text.match(/\d*\.?\d+|[+\-*/()]/g) || [];
-                    if (tokens.join('') !== text.replace(/\s+/g, '')) return null;
-                    let pos = 0;
-
-                    // 運算式 = 項 (+|- 項)*；項 = 因子 (*|/ 因子)*；因子 = -因子 | 數字 | (運算式)
-                    const factor = () => {
-                        const token = tokens[pos++];
-                        if (token === '-') return -factor();
-                        if (token === '+') return factor();
-                        if (token === '(') {
-                            const value = expression();
-                            if (tokens[pos++] !== ')') throw new Error('括號不成對');
-                            return value;
-                        }
-                        if (token !== undefined && /\d/.test(token)) return parseFloat(token);
-                        throw new Error('算式不完整');
-                    };
-                    const term = () => {
-                        let value = factor();
-                        while (tokens[pos] === '*' || tokens[pos] === '/') {
-                            const op = tokens[pos++];
-                            const right = factor();
-                            value = op === '*' ? value * right : value / right;
-                        }
-                        return value;
-                    };
-                    const expression = () => {
-                        let value = term();
-                        while (tokens[pos] === '+' || tokens[pos] === '-') {
-                            const op = tokens[pos++];
-                            const right = term();
-                            value = op === '+' ? value + right : value - right;
-                        }
-                        return value;
-                    };
-
-                    try {
-                        const value = expression();
-                        if (pos !== tokens.length) return null; // 例如「5 5」不是算式，改用加總
-                        return Number.isFinite(value) ? value : 0; // 除以 0 視為 0
-                    } catch (e) {
-                        return null;
-                    }
-                },
-
-                // 加總文字裡的數字（負號只認數字前面沒有接數字的，例如「支出 -50」）
-                sumNumbersInText(text) {
-                    const cleaned = text
-                        .replace(/\d+(?:-\d+){2,}/g, ' ') // 電話、編號：0912-345-678
-                        .replace(/\b\d{1,2}\/\d{1,2}\b/g, ' ') // 月/日：10/7
-                        .replace(/(\d)-(?=\d)/g, '$1 '); // 數字中間的 - 是分隔符號，不是負號
-                    const matches = cleaned.match(/-?\d*\.?\d+/g) || [];
-                    return matches.reduce((sum, numStr) => sum + parseFloat(numStr), 0);
-                },
-
 
                 // 結束編輯
                 finishEdit(node) {
@@ -3604,12 +3527,7 @@
 
                 /* ================ 後端 ==================== */
 
-                /* ================ 本機暫存 ==================== */
-
-                // 每個貼板各自一份本機暫存（以前所有貼板共用同一組 key，會互相覆蓋）
-                localCacheKey() {
-                    return 'stickycalc:board:' + (this.boardId || 'guest');
-                },
+                /* ================ 本機暫存（js/stickycalc/boardCache.js） ==================== */
 
                 // 貼板內容有變動：寫入本機暫存，並排程自動上傳
                 onBoardChanged() {
@@ -3621,76 +3539,36 @@
 
                     // 停止編輯 30 秒後自動上傳（每次變動都重新計時）
                     if (this.userId) {
-                        this.isAutoUpload = false;
+                        if (this.saveStatus !== 'saving') this.saveStatus = 'unsaved';
                         clearTimeout(this.uploadTimer);
                         this.uploadTimer = setTimeout(() => this.uploadBoard(), 30000);
                     }
                 },
 
+                // 寫入成功回傳 true
                 saveLocalBoard() {
                     clearTimeout(this.cacheTimer);
-                    if (!this.isLoaded) return;
-                    try {
-                        localStorage.setItem(this.localCacheKey(), JSON.stringify({
-                            nodes: this.nodes,
-                            connections: this.connections,
-                            groups: this.groups,
-                            savedAt: Date.now(),
-                        }));
-                    } catch (e) {
-                        // 容量已滿或瀏覽器禁止存取時略過，不影響雲端存檔
-                    }
+                    if (!this.isLoaded) return false;
+                    return saveBoardCache(this.boardId, {
+                        nodes: this.nodes,
+                        connections: this.connections,
+                        groups: this.groups,
+                    });
                 },
 
                 // 從本機暫存載入目前貼板（非雲端會員、訪客、或無法驗證登入時使用）
                 loadLocalBoard() {
-                    let saved = null;
-                    try {
-                        saved = JSON.parse(localStorage.getItem(this.localCacheKey()) || 'null');
-                    } catch (e) {
-                        saved = null;
-                    }
-                    let migrated = false;
-                    if (!saved) {
-                        saved = this.migrateOldLocalBoard();
-                        migrated = !!saved;
-                    }
-
-                    if (saved && Array.isArray(saved.nodes)) {
-                        this.nodes = saved.nodes;
-                        this.connections = Array.isArray(saved.connections) ? saved.connections : [];
-                        this.groups = Array.isArray(saved.groups) ? saved.groups : [];
+                    const { data, migrated } = loadBoardCache(this.boardId);
+                    if (data) {
+                        this.nodes = data.nodes;
+                        this.connections = data.connections;
+                        this.groups = data.groups;
                         this.renderAllCharts();
                     }
                     this.finishLoading();
-                    if (migrated) {
-                        // 舊資料搬過來後立刻寫進新的 key，確定寫入成功才刪掉舊 key
-                        this.saveLocalBoard();
-                        try {
-                            if (localStorage.getItem(this.localCacheKey())) {
-                                localStorage.removeItem('nodes');
-                                localStorage.removeItem('connections');
-                                localStorage.removeItem('groups');
-                            }
-                        } catch (e) { }
-                    }
-                },
-
-                // 舊版把所有貼板存在共用的 nodes / connections / groups 三個 key
-                // 只有便利貼的 boardId 全部是目前貼板時才搬到新的 key，避免拿到別的貼板的資料
-                migrateOldLocalBoard() {
-                    try {
-                        const nodes = JSON.parse(localStorage.getItem('nodes') || 'null');
-                        if (!this.boardId || !Array.isArray(nodes) || nodes.length === 0) return null;
-                        if (!nodes.every(node => node.boardId === this.boardId)) return null;
-
-                        return {
-                            nodes: nodes,
-                            connections: JSON.parse(localStorage.getItem('connections') || '[]'),
-                            groups: JSON.parse(localStorage.getItem('groups') || '[]'),
-                        };
-                    } catch (e) {
-                        return null;
+                    // 舊版共用 key 的資料搬過來後立刻寫進新的 key，確定寫入成功才刪掉舊 key
+                    if (migrated && this.saveLocalBoard()) {
+                        removeLegacyCache();
                     }
                 },
 
@@ -3707,8 +3585,13 @@
                     this.isLoaded = true;
                     // 新貼板視為尚未存檔，離開或 30 秒後就會上傳
                     this.lastUploadedKey = this.isNewBoard ? '' : this.getUploadKey();
-                    if (this.isNewBoard && this.userId) {
+                    if (!this.userId) {
+                        this.saveStatus = 'local';
+                    } else if (this.isNewBoard) {
+                        this.saveStatus = 'unsaved';
                         this.uploadTimer = setTimeout(() => this.uploadBoard(), 30000);
+                    } else {
+                        this.saveStatus = 'saved';
                     }
                     this.resetHistory();
                 },
@@ -3723,7 +3606,7 @@
                     });
                 },
 
-                /* ================ 雲端存檔 ==================== */
+                /* ================ 雲端存檔（js/stickycalc/api.js） ==================== */
 
                 // 用來判斷內容有沒有變（忽略選取、編輯等暫存狀態）
                 getUploadKey() {
@@ -3747,7 +3630,7 @@
                     const key = vm.getUploadKey();
                     if (!force) {
                         if (key === vm.lastUploadedKey) {
-                            vm.isAutoUpload = true;
+                            vm.saveStatus = 'saved';
                             return Promise.resolve(true);
                         }
                         // 同樣內容已在上傳中就不重送（除非上傳中的是一般請求、這次要 keepalive）
@@ -3760,49 +3643,40 @@
                     vm.uploadTimer = null;
                     vm.uploadingKey = key;
                     vm.uploadingKeepalive = keepalive;
+                    vm.saveStatus = 'saving';
 
-                    const userId = vm.userId;
-                    const boardId = vm.boardId;
-                    const requests = [
-                        ['nodes_upload', { nodes: vm.nodes, userId, boardId }],
-                        ['connections_upload', {
-                            connections: vm.connections.map(conn => ({
-                                boardId,
-                                userId,
-                                from: conn.from,
-                                to: conn.to,
-                                color: conn.color,
-                                type: conn.type,
-                                connectionsId: conn.connectionsId,
-                            })),
-                            userId,
-                            boardId,
-                        }],
-                        ['group_upload', { groups: vm.groups, userId, boardId }],
-                        ['board_upload', { userId, boardId, alterTime: vm.getCurrentTime(), boardName: vm.boardName }],
-                    ].map(([action, payload]) => [action, JSON.stringify(vm.withAuth(payload))]);
+                    const requests = buildBoardUploads({
+                        nodes: vm.nodes,
+                        connections: vm.connections,
+                        groups: vm.groups,
+                        userId: vm.userId,
+                        boardId: vm.boardId,
+                        boardName: vm.boardName,
+                        alterTime: vm.getCurrentTime(),
+                    });
 
-                    // keepalive 的請求合計上限約 64KB，太大就改用一般請求（盡力而為）
-                    const totalSize = requests.reduce((sum, [, body]) => sum + body.length, 0);
-                    const useKeepalive = keepalive && totalSize < 60000;
-
-                    return Promise.all(requests.map(([action, body]) => vm.postApi(action, body, useKeepalive)))
+                    return postAll(requests, { keepalive })
                         .then(() => {
                             vm.lastUploadedKey = key;
                             // 上傳期間又有修改，就還不算全部上傳完成
-                            vm.isAutoUpload = vm.getUploadKey() === key;
+                            vm.saveStatus = vm.getUploadKey() === key ? 'saved' : 'unsaved';
                             vm.saveErrorShown = false;
                             return true;
                         })
                         .catch(error => {
-                            vm.isAutoUpload = false;
-                            if (!keepalive && !vm.saveErrorShown) {
-                                vm.saveErrorShown = true;
-                                Swal.fire({
-                                    title: "存檔失敗",
-                                    text: (error && error.message) || "請檢查網路連線，稍後會再自動嘗試",
-                                    icon: "error"
-                                });
+                            vm.saveStatus = 'error';
+                            if (!keepalive) {
+                                // 30 秒後自動再試一次
+                                clearTimeout(vm.uploadTimer);
+                                vm.uploadTimer = setTimeout(() => vm.uploadBoard(), 30000);
+                                if (!vm.saveErrorShown) {
+                                    vm.saveErrorShown = true;
+                                    Swal.fire({
+                                        title: "存檔失敗",
+                                        text: ((error && error.message) || "請檢查網路連線") + "，稍後會自動再試",
+                                        icon: "error"
+                                    });
+                                }
                             }
                             return false;
                         })
@@ -3810,24 +3684,6 @@
                             if (vm.uploadingKey === key) {
                                 vm.uploadingKey = '';
                             }
-                        });
-                },
-
-                // 呼叫後端 API；成功回傳資料，失敗（含 state=false）會 reject
-                postApi(action, body, keepalive = false) {
-                    return fetch("https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=" + action, {
-                        method: "POST",
-                        // 與 jQuery 預設相同的 Content-Type，屬於簡單請求，不需要 CORS 預檢
-                        headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
-                        body: body,
-                        keepalive: keepalive,
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (!data.state) {
-                                throw new Error(data.message || (action + " 失敗"));
-                            }
-                            return data;
                         });
                 },
 
@@ -3892,7 +3748,7 @@
                             // 渲染帳號資料
                             $.ajax({
                                 type: "POST",
-                                url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=deleteBoard",
+                                url: apiUrl("deleteBoard"),
                                 // url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=advanceDeleteBoard",
                                 data: JSON.stringify(vm.withAuth(JSONdata)),
                                 dataType: "json",
@@ -3921,7 +3777,7 @@
                         JSONdata["uid01"] = vm.getCookie("Uid01");
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuid",
+                            url: apiUrl("checkuid"),
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: vm.showdata_checkuid,
@@ -3951,7 +3807,7 @@
                         JSONdata["mid"] = vm.getCookie("Mid");
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkmid",
+                            url: apiUrl("checkmid"),
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: vm.showdata_checkuid,
@@ -4002,7 +3858,7 @@
                         JSONdata["boardId"] = vm.boardId;
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=get_nodes",
+                            url: apiUrl("get_nodes"),
                             data: JSON.stringify(vm.withAuth(JSONdata)),
                             dataType: "json",
                             success: vm.showNodes,
@@ -4024,7 +3880,7 @@
                     const vm = this;
                     if (data.data) {
                         vm.nodes = [];
-                        for (i = 0; i < data.data.length; i++) {
+                        for (let i = 0; i < data.data.length; i++) {
                             var newData = [];
                             if (data.data[i].Type == 'chart') {
                                 newData.push({
@@ -4104,7 +3960,7 @@
                         JSONdata["boardId"] = vm.boardId;
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=get_Connections",
+                            url: apiUrl("get_Connections"),
                             data: JSON.stringify(vm.withAuth(JSONdata)),
                             dataType: "json",
                             success: vm.showConnections,
@@ -4123,7 +3979,7 @@
                     const vm = this;
                     if (data.data) {
                         vm.connections = [];
-                        for (i = 0; i < data.data.length; i++) {
+                        for (let i = 0; i < data.data.length; i++) {
                             var newData = [];
                             newData.push({
                                 "connectionsId": data.data[i].connectionsId,
@@ -4149,7 +4005,7 @@
                         JSONdata["boardId"] = vm.boardId;
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=get_groups",
+                            url: apiUrl("get_groups"),
                             data: JSON.stringify(vm.withAuth(JSONdata)),
                             dataType: "json",
                             success: vm.showGroup,
@@ -4257,13 +4113,8 @@
                     document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
                 },
 
-                // 附上登入 token，後端用它確認身分（不再相信 userId）
-                withAuth(payload) {
-                    return Object.assign({}, payload, {
-                        uid01: this.getCookie("Uid01"),
-                        mid: this.getCookie("Mid"),
-                    });
-                },
+                // 附上登入 token（js/stickycalc/api.js）
+                withAuth,
 
                 getCookie(cname) {
                     let name = cname + "=";
@@ -4281,11 +4132,14 @@
                 },
             },
             components: {
-                'svg-icon': SvgIcon,
                 'svg-main': SvgMain,
+                'onboarding-hint': OnboardingHint,
+                'toolbar-palette': ToolbarPalette,
             },
 
         });
+        // 全域註冊：子元件（例如 toolbar-palette）也能使用 <svg-icon>
+        app.component('svg-icon', SvgIcon);
         app.mount('#app');
 
 
