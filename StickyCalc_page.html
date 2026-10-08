@@ -2443,7 +2443,7 @@
 
                 startDragArrow(conn, event) {
                     this.draggingArrow = conn;
-                    this.dragArrowStartY = event.offsetY;
+                    this.dragArrowStartY = event.clientY;
                     document.addEventListener('mousemove', this.dragArrow);
                     document.addEventListener('mouseup', this.endDragArrow, { once: true });
                 },
@@ -2451,9 +2451,10 @@
                 dragArrow(event) {
                     if (!this.draggingArrow) return;
 
-                    const dy = (event.offsetY - this.dragArrowStartY) / this.scale; // 考慮縮放
+                    // 用 clientY（相對視窗）：offsetY 是相對滑鼠底下的元素，滑過不同元素時會跳動
+                    const dy = (event.clientY - this.dragArrowStartY) / this.scale; // 考慮縮放
                     this.draggingArrow.yOffset = (this.draggingArrow.yOffset || 0) + dy;
-                    this.dragArrowStartY = event.offsetY;
+                    this.dragArrowStartY = event.clientY;
                 },
 
                 endDragArrow() {
@@ -2760,22 +2761,34 @@
                 // 調整便利貼大小
                 resizeChart(event) {
                     if (!this.resizingNode) return;
-                    const dx = event.clientX - this.resizeStartX;
-                    const dy = event.clientY - this.resizeStartY;
+                    // 螢幕上的移動距離換算成畫板座標（畫面縮放時大小才會跟著滑鼠）
+                    const dx = (event.clientX - this.resizeStartX) / this.scale;
+                    const dy = (event.clientY - this.resizeStartY) / this.scale;
                     this.resizingNode.chartWidth = Math.max(300, this.resizingNode.chartWidth + dx);
                     this.resizingNode.chartHeight = Math.max(200, this.resizingNode.chartHeight + dy);
                     this.resizeStartX = event.clientX;
                     this.resizeStartY = event.clientY;
-                    this.$nextTick(() => {
-                        // setTimeout(() => this.renderChart(this.resizingNode), 50);
-                        this.renderChart(this.resizingNode);
+
+                    // 重建圖表很耗效能：一個畫面幀最多重畫一次（原本每個滑鼠事件都重建）
+                    if (this.resizeFrame) return;
+                    const node = this.resizingNode;
+                    this.resizeFrame = requestAnimationFrame(() => {
+                        this.resizeFrame = null;
+                        this.renderChart(node);
                     });
                 },
 
                 stopResize() {
+                    const node = this.resizingNode;
                     this.resizingNode = null;
                     document.removeEventListener('mousemove', this.resizeChart);
                     document.removeEventListener('mouseup', this.stopResize);
+                    if (node) {
+                        // 放開時用最後的大小再畫一次
+                        cancelAnimationFrame(this.resizeFrame);
+                        this.resizeFrame = null;
+                        this.$nextTick(() => this.renderChart(node));
+                    }
                     this.saveState();
                 },
 
@@ -3251,8 +3264,13 @@
 
                 // 鍵盤事件區塊
                 handleKeyDown(event) {
+                    // 在輸入框裡打字時，快捷鍵交給瀏覽器（Ctrl+Z 復原文字、Delete 刪字）
+                    const target = event.target;
+                    const isTyping = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
-                    if (event.ctrlKey && event.key === 'g') {
+                    // Ctrl+G 建立群組；擋掉瀏覽器預設的「尋找下一個」
+                    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'g' && !isTyping) {
+                        event.preventDefault();
                         this.createGroup();
                     }
 
@@ -3286,8 +3304,6 @@
 
                     // DELETE 按鍵：刪除所有已選取的便利貼與連線
                     // 在輸入框內按 Delete 是刪文字，不刪便利貼
-                    const target = event.target;
-                    const isTyping = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
                     if (event.key === 'Delete' && !isTyping) {
                         this.deleteBtn();
                     }

@@ -274,7 +274,13 @@
     <script src="js/vue.global.js"></script>
 
     <!-- --------------程 式 區-------------- -->
-    <script>
+    <script type="module">
+        import { apiUrl } from './js/stickycalc/api.js';
+
+        // 目前要更新／刪除的會員 ID 與 Email 欄位是否有效（module 是嚴格模式，變數要先宣告）
+        let uid = null;
+        let flag_email = false;
+
         // 登入布林
         var flag_username_login = false;
         var flag_password_login = false;
@@ -295,7 +301,7 @@
                 JSONdata["uid01"] = getCookie("Uid01");
                 $.ajax({
                     type: "POST",
-                    url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuid",
+                    url: apiUrl("checkuid"),
                     data: JSON.stringify(JSONdata),
                     dataType: "json",
                     success: showdata_checkuid,
@@ -336,7 +342,7 @@
 
                     $.ajax({
                         type: "POST",
-                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login",
+                        url: apiUrl("login"),
                         data: JSON.stringify(JSONdata01),
                         dataType: "json",
                         success: showdata_login,
@@ -434,7 +440,7 @@
                 // 渲染帳號資料（後端會用 token 驗證管理者身分）
                 $.ajax({
                     type: "POST",
-                    url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=getalldata",
+                    url: apiUrl("getalldata"),
                     data: JSON.stringify({ uid01: getCookie("Uid01") }),
                     dataType: "json",
                     async: false,
@@ -513,7 +519,7 @@
 
                             $.ajax({
                                 type: "POST",
-                                url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=delete",
+                                url: apiUrl("delete"),
                                 data: JSON.stringify(JSONdata02),
                                 dataType: "json",
                                 async: false,
@@ -553,7 +559,7 @@
 
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=update",
+                            url: apiUrl("update"),
                             data: JSON.stringify(JSONdata01),
                             dataType: "json",
                             async: false,

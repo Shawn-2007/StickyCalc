@@ -344,7 +344,9 @@
     <script src="js/vue.global.js"></script>
 
     <!-- --------------程 式 區-------------- -->
-    <script>
+    <script type="module">
+        import { apiUrl, withAuth } from './js/stickycalc/api.js';
+
         // 登入布林
         var flag_username_login = false;
         var flag_password_login = false;
@@ -403,7 +405,7 @@
                         JSONdata["uid01"] = vm.getCookie("Uid01");
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuid",
+                            url: apiUrl("checkuid"),
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: vm.showdata_checkuid,
@@ -435,7 +437,7 @@
                         JSONdata["mid"] = vm.getCookie("Mid");
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkmid",
+                            url: apiUrl("checkmid"),
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: vm.showdata_checkuid,
@@ -466,7 +468,7 @@
                     // 渲染帳號資料
                     $.ajax({
                         type: "POST",
-                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=deleteBoard",
+                        url: apiUrl("deleteBoard"),
                         // url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=advanceDeleteBoard",
                         data: JSON.stringify(this.withAuth(JSONdata)),
                         dataType: "json",
@@ -499,7 +501,7 @@
                         // 渲染帳號資料
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=getAllUserBoard",
+                            url: apiUrl("getAllUserBoard"),
                             data: JSON.stringify(vm.withAuth(JSONdata)),
                             dataType: "json",
                             async: false,
@@ -545,103 +547,6 @@
                     }
                 },
 
-                showdata(data) {
-                    const vm = this
-                    vm.boards = data;
-                    console.log("列表資訊" + data.data);
-                    if (data.state) {
-
-                        $("#mydata #inBoard_btn").click(function () {
-
-                            bid = $(this).data("boardid");
-                            localStorage.setItem('boardId', bid)
-                            bname = $(this).data("boardname");
-                            localStorage.setItem('boardName', bname)
-                            location.href = "StickyCalc_page.html";
-                        })
-
-
-                        $("#mydata #delete_btn").click(function () {
-                            uid = $(this).data("id");
-                            Swal.fire({
-                                // title: "確認刪除 " + $(this).data("username") + " ?",
-                                title: "確認刪除 " + " ?",
-                                text: "確認刪除這筆資料",
-                                icon: "warning",
-                                showCancelButton: true,
-                                confirmButtonColor: "#3085d6",
-                                cancelButtonColor: "#d33",
-                                confirmButtonText: "確定"
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    //符合規定，傳遞至後端API執行更新行為
-                                    //{"id" : "26", "price" : "90", "remark" : "高品質鮮乳"}
-                                    var JSONdata02 = {};
-                                    JSONdata02["id"] = uid;
-                                    console.log(JSONdata02);
-
-                                    $.ajax({
-                                        type: "DELETE",
-                                        url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=delete",
-                                        data: JSON.stringify(JSONdata02),
-                                        dataType: "json",
-                                        async: false,
-                                        success: showdata_delete,
-                                        error: function () {
-                                            alert(); //練習階段，一切皆用sweetalert
-                                        }
-                                    });
-                                    // Swal.fire({
-                                    //     title: "刪除成功!",
-                                    //     text: "此筆資料已被刪除",
-                                    //     icon: "success"
-                                    // });
-                                }
-                            });
-                        })
-
-                        $("#email").bind("input propertychange", function () {
-                            if ($(this).val().length > 0 && $(this).val().length < 33) {
-                                $(this).removeClass("is-invalid");
-                                $(this).addClass("is-valid");
-                                flag_email = true;
-                            } else {
-                                $(this).removeClass("is-valid");
-                                $(this).addClass("is-invalid");
-                                flag_email = false;
-                            }
-                        })
-
-                        $("#updateModal_ok_btn").click(function () {
-                            if (flag_email) {
-
-                                var JSONdata01 = {};
-                                JSONdata01["id"] = uid;
-                                JSONdata01["email"] = $("#email").val();
-                                console.log(JSONdata01);
-
-                                $.ajax({
-                                    type: "POST",
-                                    url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=update",
-                                    data: JSON.stringify(JSONdata01),
-                                    dataType: "json",
-                                    async: false,
-                                    success: showdata_update,
-                                    error: function () {
-                                        alert(); //練習階段，一切皆用sweetalert
-                                    }
-                                });
-                            } else {
-                                alert("欄位錯誤");
-                            }
-
-                        })
-
-
-                    } else {
-                        // alert(data.message);//練習階段，一切皆用sweetalert
-                    }
-                },
                 openBoard(boardId, boardName) {
                     // bid = $(this).data("boardid");
                     localStorage.setItem('boardId', boardId)
@@ -667,7 +572,7 @@
                         if (this.isMobile) {
                             $.ajax({
                                 type: "POST",
-                                url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login_mobile",
+                                url: apiUrl("login_mobile"),
                                 data: JSON.stringify(JSONdata01),
                                 dataType: "json",
                                 success: this.showdata_login,
@@ -682,7 +587,7 @@
                         } else {
                             $.ajax({
                                 type: "POST",
-                                url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login",
+                                url: apiUrl("login"),
                                 data: JSON.stringify(JSONdata01),
                                 dataType: "json",
                                 success: this.showdata_login,
@@ -755,13 +660,8 @@
                     let expires = "expires=" + d.toUTCString();
                     document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
                 },
-                // 附上登入 token，後端用它確認身分（不再相信 userId）
-                withAuth(payload) {
-                    return Object.assign({}, payload, {
-                        uid01: this.getCookie("Uid01"),
-                        mid: this.getCookie("Mid"),
-                    });
-                },
+                // 附上登入 token（js/stickycalc/api.js）
+                withAuth,
                 getCookie(cname) {
                     let name = cname + "=";
                     let decodedCookie = decodeURIComponent(document.cookie);
@@ -882,65 +782,6 @@
         //         });
         //     }
         // }
-
-        function showdata_checkuid(data) {
-            if (data.state) {
-                $("#username_showtext").removeClass("d-none");
-
-                $("#username_text").text(data.data.Username);
-
-                $("#login_btn").addClass("d-none");
-                $("#logout_btn").removeClass("d-none");
-                $("#backstage").removeClass("d-none");
-                var JSONdata = {};
-                // JSONdata['"userId"'] = data.data.Username;
-                JSONdata['"userId"'] = "testUserId0001";
-                console.log(JSONdata)
-                // 渲染帳號資料
-                $.ajax({
-                    type: "GET",
-                    url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=getAllUserBoard",
-                    data: JSON.stringify(JSONdata),
-                    dataType: "json",
-                    async: false,
-                    success: showdata,
-                    error: function () {
-                        alert("錯誤唷"); //練習階段，一切皆用sweetalert
-                    }
-                });
-            }
-        }
-
-
-
-
-        function showdata_delete(data) {
-            console.log(data);
-
-            if (data.state) {
-                alert(data.message);//練習階段，一切皆用sweetalert
-                location.href = "StickyCalc_manage.html";
-
-
-            } else {
-                alert(data.message);//練習階段，一切皆用sweetalert
-            }
-        }
-
-        function showdata_update(data) {
-            // console.log(data);
-            if (data.state) {
-                alert(data.message);//練習階段，一切皆用sweetalert
-                location.href = "StickyCalc_manage.html";
-
-            } else {
-                alert(data.message);//練習階段，一切皆用sweetalert
-            }
-        }
-
-
-
-
 
         function setCookie(cname, cvalue, exdays) {
             const d = new Date();

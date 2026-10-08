@@ -328,7 +328,9 @@
 
 
     <!-- --------------程 式 區-------------- -->
-    <script>
+    <script type="module">
+        import { apiUrl } from './js/stickycalc/api.js';
+
         // 登入布林
         var flag_username_login = false;
         var flag_password_login = false;
@@ -385,7 +387,7 @@
 
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuni",
+                            url: apiUrl("checkuni"),
                             data: JSON.stringify(JSONdata01),
                             dataType: "json",
                             success: function (deta) {
@@ -455,7 +457,7 @@
                         JSONdata["uid01"] = getCookie("Uid01");
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkuid",
+                            url: apiUrl("checkuid"),
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: this.showdata_checkuid,
@@ -478,7 +480,7 @@
                         JSONdata["mid"] = getCookie("Mid");
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=checkmid",
+                            url: apiUrl("checkmid"),
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: this.showdata_checkmid,
@@ -535,7 +537,7 @@
                         JSONdata["email"] = vm.email_vue;
                         $.ajax({
                             type: "POST",
-                            url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=register",
+                            url: apiUrl("register"),
                             data: JSON.stringify(JSONdata),
                             dataType: "json",
                             success: showdata_reg,
@@ -567,7 +569,7 @@
                         if (this.isMobile) {
                             $.ajax({
                                 type: "POST",
-                                url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login_mobile",
+                                url: apiUrl("login_mobile"),
                                 data: JSON.stringify(JSONdata01),
                                 dataType: "json",
                                 success: this.showdata_login,
@@ -582,7 +584,7 @@
                         } else {
                             $.ajax({
                                 type: "POST",
-                                url: "https://api.shawn4x4.com/phpApi/member_control_api_v1.php?action=login",
+                                url: apiUrl("login"),
                                 data: JSON.stringify(JSONdata01),
                                 dataType: "json",
                                 success: this.showdata_login,
