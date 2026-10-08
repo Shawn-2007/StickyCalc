@@ -1262,6 +1262,7 @@
                     pinch: null, // 雙指縮放中的起始狀態（距離、縮放、中心點下方的畫板座標）
                     pinchedThisGesture: false, // 這次觸控有雙指縮放過，手指放開時不當成點擊
                     longPressThreshold: 500, // 長按多久開啟選單（毫秒）
+                    longPressOpenedAt: 0, // 最近一次由長按開啟選單的時間
                     isDragging: false,
 
                     isDark: false, //黑暗模式
@@ -1748,6 +1749,7 @@
                         // 長按開啟空白處選單（選單只接受右鍵，所以模擬成右鍵事件）
                         const { clientX, clientY } = event;
                         this.longPressTimer = setTimeout(() => {
+                            this.longPressOpenedAt = Date.now();
                             this.handleSvgContextMenu({ button: 2, clientX, clientY });
                         }, this.longPressThreshold);
                     }
@@ -3137,6 +3139,9 @@
 
                 // 空白處右鍵選單
                 handleSvgContextMenu(event) {
+                    // iOS 長按時，除了我們自己的長按計時器，系統還會再送一個 contextmenu 事件（座標常是 0,0），
+                    // 會把剛開好的選單搬到左上角：長按開啟後 1 秒內忽略系統送來的
+                    if (event.type === 'contextmenu' && Date.now() - this.longPressOpenedAt < 1000) return;
                     const node = this.nodes.find(n => n.selected === true);
                     if (event.button === 2) {
                         this.contextMenu.visible = true;
