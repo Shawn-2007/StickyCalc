@@ -580,7 +580,7 @@
                                         }}</span>
 
                                     <!-- 二連以上顯示此段，顯示總值或0 -->
-                                    <span v-else class="note-text">{{ typeof node.label === 'number' ? formatNumber(node.label) : node.label }}</span>
+                                    <span v-else class="note-text">{{ typeof labelOf(node) === 'number' ? formatNumber(labelOf(node)) : labelOf(node) }}</span>
                                 </div>
                             </foreignObject>
                             <!-- 一條連入時：左下角顯示這張自己的數值（右上角是累計） -->
@@ -819,7 +819,7 @@
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
     <!-- 引入 ApexCharts -->
-    <script src="https://unpkg.com/apexcharts@latest/dist/apexcharts.min.js"></script>
+    <script src="https://unpkg.com/apexcharts@7.8.0/dist/apexcharts.min.js"></script>
 
     <script src="js/vue.global.js"></script>
     <script type="module">
@@ -2712,11 +2712,12 @@
                 },
                 // time
                 regularSplitTime(node) {
-                    if (!node || !node.label) return [];
+                    const label = node ? this.labelOf(node) : '';
+                    if (typeof label !== 'string' || !label) return [];
 
                     // 正則拆出日期 + 時間字串（格式：yyyy/mm/dd hh:mm:ss AM/PM）
                     const regex = /(\d{4}\/\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}:\d{2}\s+[AP]M)/g;
-                    return node.label.match(regex) || [];
+                    return label.match(regex) || [];
                 },
                 // 換算時間(我自己要用的)
                 convertToISOWithMoment(dateStr) {
@@ -2727,14 +2728,16 @@
                  * 按空格分割，並濾除空字串
                  * */
                 regularSplitString(node) {
-                    // 確保 node.label 是字符串，若不是則返回預設值
-                    const label = typeof node.label === 'string' ? node.label : '';
+                    // 確保 label 是字符串，若不是則返回預設值
+                    const raw = this.labelOf(node);
+                    const label = typeof raw === 'string' ? raw : '';
                     return label.split(/\s+/).filter(Boolean);
                 },
                 // 正則:分割數字
                 regularSplitNumbers(node) {
-                    // 確保 node.label 是字符串，若不是則返回 null
-                    const label = typeof node.label === 'string' ? node.label : '';
+                    // 確保 label 是字符串，若不是則返回 null
+                    const raw = this.labelOf(node);
+                    const label = typeof raw === 'string' ? raw : '';
                     return label.match(/-?\d*\.?\d+/g); // 返回匹配的數字數組，或 null
                 },
 
@@ -2933,6 +2936,23 @@
                 },
 
                 /* ========便利貼文字部分========= */
+
+                // 便利貼「實際代表」的內容（不改動 node.label，使用者的文字會一直保留）
+                // 2 條連入：運算結果（數字）；3 條以上：連入便利貼的文字串起來；其他：自己的文字
+                labelOf(node) {
+                    const inputs = node.connectionsIn || [];
+                    if (inputs.length === 2) {
+                        return node.total;
+                    }
+                    if (inputs.length >= 3) {
+                        return inputs.map(id => {
+                            const label = this.labelOf(this.getNodeById(id));
+                            return typeof label === 'string' ? label : '';
+                        }).join(' ');
+                    }
+                    return node.label;
+                },
+
                 updateTotal(node) {
                     let values = 0;
 
@@ -2942,7 +2962,6 @@
                         const a = this.getNodeById(node.connectionsIn[0]).total || 0;
                         const b = node.count || 0;
                         values = a + b;
-                        node.label = node.label; // 保留原有 label
                         values = Math.round(values * 100) / 100;
                         node.total = values;
                     } else if (node.connectionsIn.length === 2) {
@@ -2957,20 +2976,12 @@
                             default: values = 0;
                         }
                         values = Math.round(values * 100) / 100;
-                        node.label = values;
                         node.total = values;
                     } else if (node.connectionsIn.length >= 3) {
                         values = 0;
-                        // 收集所有連入便利貼的 label
-                        const labels = [];
                         for (let i = 0; i < node.connectionsIn.length; i++) {
-                            const connectedNode = this.getNodeById(node.connectionsIn[i]);
-                            const label = typeof connectedNode.label == 'string' ? connectedNode.label : '';
-                            labels.push(label);
-                            values += connectedNode.total || 0;
+                            values += this.getNodeById(node.connectionsIn[i]).total || 0;
                         }
-                        // 拼接 label，用空格分隔
-                        node.label = labels.join(' ');
                         values = Math.round(values * 100) / 100;
                         node.total = values;
 
