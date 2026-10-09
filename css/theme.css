@@ -6,8 +6,9 @@
    載入順序：bootstrap.min.css → my.css → theme.css
    只「換皮」不改結構：覆蓋 Bootstrap 5.2 的 CSS 變數與少量元件樣式。
    想調整整體風格時，先改最上面的 --sc-* 色票即可。
-   目前套用於：index / StickyCalc_board / StickyCalc_manage
-   （編輯頁 StickyCalc_page 尚未套用，避免影響便利貼內文排版）
+   套用於：index / StickyCalc_board / StickyCalc_manage / StickyCalc_page
+   編輯頁只換外圍介面（工具列、選單、提示），畫布裡的便利貼字體維持原樣，
+   見最下方「編輯頁」區塊。
    ========================================================= */
 
 :root {
@@ -105,17 +106,18 @@
 .btn {
     --bs-btn-font-family: var(--sc-font-body);
     --bs-btn-font-weight: 600;
-    --bs-btn-border-width: 1.5px;
     --bs-btn-border-radius: 8px;
     --bs-btn-focus-box-shadow: 0 0 0 .25rem rgba(245, 197, 66, .45);
     transition: transform .08s ease, box-shadow .08s ease, background-color .15s, border-color .15s;
 }
 
 /* 有顏色的按鈕都帶一條「紙板底邊」，按下去會往下壓 */
+/* 邊框加粗只給有顏色的按鈕；編輯頁裡 30x30 的圖示按鈕（btn-sm）維持原尺寸 */
 .btn-primary,
 .btn-warning,
 .btn-secondary,
 .btn-danger {
+    --bs-btn-border-width: 1.5px;
     box-shadow: 0 3px 0 var(--sc-btn-edge, rgba(59, 52, 44, .25));
 }
 
@@ -566,6 +568,122 @@ a.sticky-note::after {
     transform: translateX(-50%) rotate(3deg);
     background: rgba(246, 181, 192, .7);
     pointer-events: none;
+}
+
+/* ---------- 編輯頁（StickyCalc_page） ---------- */
+/* 頁面內的 <style> 和元件動態插入的樣式都比 theme.css 晚載入，所以這區的選擇器前面都加 body 提高權重 */
+
+/* 畫布裡維持 Bootstrap 原本的字體：便利貼尺寸固定、超出會被裁掉，換字體會改變換行位置 */
+#mindmapSvg {
+    /* 上面 :root 改過的 Bootstrap 變數，在畫布裡還原成預設值 */
+    --bs-body-color: #212529;
+    --bs-border-color: #dee2e6;
+    --bs-border-radius: .375rem;
+    color: #212529;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* 畫布底色改成米白紙（黑暗模式不動） */
+body .mind-map-container:not(.mind-map-container-dark) {
+    background: var(--sc-paper);
+}
+
+/* 工具列：一張米白紙卡。外框用 box-shadow 畫，不佔空間，工具列內的排版不會被擠動 */
+body .toolbar {
+    background-color: var(--sc-card);
+    box-shadow: 0 0 0 1.5px var(--sc-line-strong), var(--sc-shadow);
+}
+
+body .toolbar-left {
+    border-bottom-right-radius: 12px;
+}
+
+body .toolbar-right {
+    border-bottom-left-radius: 12px;
+}
+
+body .toolbar-vertical {
+    border-right: none;
+    border-radius: 0 12px 12px 0;
+}
+
+body .toolbar-button:hover:not(:disabled) {
+    background-color: #FFF1C2;
+}
+
+/* 貼板名稱用粉圓體 */
+body .toolbar-left .form-check-label {
+    font-family: var(--sc-font-hand);
+    color: var(--sc-ink);
+}
+
+body .toolbar .form-control {
+    border-color: var(--sc-line-strong);
+}
+
+body .toolbar .form-control:focus {
+    border-color: var(--sc-yellow-edge);
+    box-shadow: 0 0 0 .2rem rgba(245, 197, 66, .35);
+}
+
+body .save-status {
+    color: var(--sc-ink-2);
+}
+
+body .save-status-error {
+    color: var(--sc-coral-deep);
+}
+
+/* 右鍵選單 */
+body .context-menu {
+    background: var(--sc-card);
+    color: var(--sc-ink);
+    border: 1.5px solid var(--sc-line-strong);
+    border-radius: 10px;
+    box-shadow: var(--sc-shadow-lg);
+    padding: 6px;
+}
+
+body .context-menu button {
+    border-radius: 6px;
+}
+
+body .context-menu button:hover,
+body .context-menu001 button:hover {
+    background: #FFF1C2;
+}
+
+/* 工具列展開的顏色 / 線條選項（js/stickycalc/components/ToolbarPalette.js） */
+body .toolbar-palette-options {
+    background-color: var(--sc-card);
+    border-radius: 10px;
+    box-shadow: 0 0 0 1.5px var(--sc-line-strong), var(--sc-shadow-lg);
+}
+
+body .toolbar-palette-trigger.is-open,
+body .toolbar-palette-option:hover {
+    background-color: #FFF1C2;
+}
+
+/* 新手提示卡（js/stickycalc/components/OnboardingHint.js），黑暗模式維持原樣 */
+body .onboarding-hint:not(.is-dark) {
+    background: rgba(255, 253, 248, .97);
+    color: var(--sc-ink);
+    border: 1.5px solid var(--sc-line-strong);
+    border-radius: 10px;
+    box-shadow: var(--sc-shadow-lg);
+}
+
+body .onboarding-hint h6 {
+    font-family: var(--sc-font-hand);
+    font-weight: 400;
+    font-size: 1.1rem;
+}
+
+body .onboarding-hint-reopen:not(.is-dark) {
+    background: var(--sc-card);
+    color: var(--sc-ink-2);
+    box-shadow: 0 0 0 1.5px var(--sc-line-strong), var(--sc-shadow);
 }
 
 @media (prefers-reduced-motion: reduce) {

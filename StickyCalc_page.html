@@ -8,6 +8,7 @@
     <title>StickyCalc 便利貼計算板</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/my.css">
+    <link rel="stylesheet" href="css/theme.css">
     <style>
         .leftMenu a {
             text-decoration: none;
@@ -1263,6 +1264,7 @@
                     pinchedThisGesture: false, // 這次觸控有雙指縮放過，手指放開時不當成點擊
                     longPressThreshold: 500, // 長按多久開啟選單（毫秒）
                     longPressOpenedAt: 0, // 最近一次由長按開啟選單的時間
+                    lastTouchDown: { x: 0, y: 0, time: 0 }, // 手指最後一次按在空白處的位置
                     isDragging: false,
 
                     isDark: false, //黑暗模式
@@ -1746,6 +1748,7 @@
 
                     if (event.pointerType === 'touch' && this.getTouches().length === 1) {
                         this.lastTouchTime = Date.now();
+                        this.lastTouchDown = { x: event.clientX, y: event.clientY, time: Date.now() };
                         // 長按開啟空白處選單（選單只接受右鍵，所以模擬成右鍵事件）
                         const { clientX, clientY } = event;
                         this.longPressTimer = setTimeout(() => {
@@ -3139,19 +3142,31 @@
 
                 // 空白處右鍵選單
                 handleSvgContextMenu(event) {
-                    // iOS 長按時，除了我們自己的長按計時器，系統還會再送一個 contextmenu 事件（座標常是 0,0），
-                    // 會把剛開好的選單搬到左上角：長按開啟後 1 秒內忽略系統送來的
-                    if (event.type === 'contextmenu' && Date.now() - this.longPressOpenedAt < 1000) return;
-                    const node = this.nodes.find(n => n.selected === true);
-                    if (event.button === 2) {
-                        this.contextMenu.visible = true;
-                        this.contextMenu.x = event.clientX;
-                        this.contextMenu.y = event.clientY;
-                        this.contextMenu.type = 'blank';
-                        this.contextMenu.node = node ? node : null;
-                        this.contextMenu.connection = null;
-                        this.connectionStartNode = null;
+                    const isSystemEvent = event.type === 'contextmenu';
+                    // iOS 長按時，除了我們自己的長按計時器，系統還會再送一個 contextmenu 事件：
+                    // 長按開啟後 1 秒內忽略它，避免把剛開好的選單搬走
+                    if (isSystemEvent && Date.now() - this.longPressOpenedAt < 1000) return;
+                    // 滑鼠是右鍵（button 2）；iOS 長按送來的 contextmenu 的 button 不一定是 2
+                    if (event.button !== 2 && !isSystemEvent) return;
+
+                    // iOS 長按時常會把觸控接管走（pointercancel，長按計時器被清掉），選單只剩這個系統事件，
+                    // 而它的座標常是 0,0（選單就跑到左上角）：座標不可信時，改用手指剛按下的位置
+                    let x = event.clientX;
+                    let y = event.clientY;
+                    const untrusted = !Number.isFinite(x) || !Number.isFinite(y) || (x === 0 && y === 0);
+                    if (isSystemEvent && untrusted && Date.now() - this.lastTouchDown.time < 3000) {
+                        x = this.lastTouchDown.x;
+                        y = this.lastTouchDown.y;
                     }
+
+                    const node = this.nodes.find(n => n.selected === true);
+                    this.contextMenu.visible = true;
+                    this.contextMenu.x = x;
+                    this.contextMenu.y = y;
+                    this.contextMenu.type = 'blank';
+                    this.contextMenu.node = node ? node : null;
+                    this.contextMenu.connection = null;
+                    this.connectionStartNode = null;
                 },
 
 
