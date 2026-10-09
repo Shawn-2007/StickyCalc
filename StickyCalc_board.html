@@ -8,6 +8,7 @@
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/my.css">
+    <link rel="stylesheet" href="css/theme.css">
     <style>
         .leftMenu a {
             text-decoration: none;
@@ -237,26 +238,27 @@
                 <!-- ------------- 列表 ---------------- -->
                 <div class="col-sm-8 col-9">
                     <!-- <h1>檔案列表</h1> -->
-                    <div class="row mt-3 mb-3">
-                        <div class="col-sm-1">
+                    <!-- 欄寬與下方 board-row 相同，標題才會對齊 -->
+                    <div class="row mt-3 mb-2 board-list-head">
+                        <div class="col-1">
 
                         </div>
-                        <div class="col-sm-3 col-4 h4">
+                        <div class="col-4 h4">
                             檔案名稱
                         </div>
-                        <div class="col-sm-3 col-4 h4">
+                        <div class="col-3 h4">
                             修改時間
                         </div>
-                        <div class="col-sm-3 col-4 h4">
+                        <div class="col-3 h4">
                             創建時間
                         </div>
 
-                        <div class="col-sm-1">
+                        <div class="col-1">
 
 
                         </div>
                     </div>
-                    <div v-for="item in boardData" :key="item.BoardId" class="row mt-3">
+                    <div v-for="item in boardData" :key="item.BoardId" class="row mt-2 board-row">
                         <div class="col-1">
                             <svg xmlns="http://www.w3.org/2000/svg" width="33" height="28" viewBox="0 0 33 28"
                                 fill="none">

@@ -1,0 +1,579 @@
+@import url('https://fonts.googleapis.com/css2?family=Huninn&display=swap');
+
+/* =========================================================
+   StickyCalc 主題：便利貼溫暖手作風
+   ---------------------------------------------------------
+   載入順序：bootstrap.min.css → my.css → theme.css
+   只「換皮」不改結構：覆蓋 Bootstrap 5.2 的 CSS 變數與少量元件樣式。
+   想調整整體風格時，先改最上面的 --sc-* 色票即可。
+   目前套用於：index / StickyCalc_board / StickyCalc_manage
+   （編輯頁 StickyCalc_page 尚未套用，避免影響便利貼內文排版）
+   ========================================================= */
+
+:root {
+    /* 紙張與墨色 */
+    --sc-paper: #FBF8F1;        /* 頁面底色：米白紙 */
+    --sc-paper-2: #F4EEE2;      /* 側欄、次要區塊 */
+    --sc-card: #FFFDF8;         /* 卡片、輸入框、對話框 */
+    --sc-ink: #3B342C;          /* 主要文字：暖墨色 */
+    --sc-ink-2: #6B6157;        /* 次要文字 */
+    --sc-line: #E6DCCB;         /* 淡線、虛線 */
+    --sc-line-strong: #CDBFA8;  /* 邊框 */
+
+    /* 便利貼色（與編輯頁的便利貼呼應） */
+    --sc-yellow: #FFE082;
+    --sc-yellow-deep: #F5C542;  /* 主要按鈕 */
+    --sc-yellow-edge: #D9A520;  /* 主要按鈕的底邊 / 焦點 */
+    --sc-sage: #B9D48F;
+    --sc-sky: #A9CFE0;
+    --sc-pink: #F6B5C0;
+    --sc-coral-deep: #B5473A;   /* 危險操作 */
+    --sc-sage-deep: #5E8A4A;    /* 驗證通過 */
+    --sc-hilite: rgba(255, 213, 79, .55); /* 螢光筆 */
+
+    /* 字體：內文用 Noto Sans TC，標題 / 品牌用粉圓體（只有一種字重，不要加粗） */
+    --sc-font-body: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    --sc-font-hand: "Huninn", var(--sc-font-body);
+
+    /* 紙張陰影：硬邊、往右下偏，像紙貼在桌上 */
+    --sc-shadow: 2px 3px 0 rgba(59, 52, 44, .10);
+    --sc-shadow-lg: 4px 6px 0 rgba(59, 52, 44, .12);
+
+    /* 交給 Bootstrap 的全域變數 */
+    --bs-body-font-family: var(--sc-font-body);
+    --bs-body-color: var(--sc-ink);
+    --bs-body-bg: var(--sc-paper);
+    --bs-border-color: var(--sc-line);
+    --bs-border-radius: 8px;
+    --bs-link-color: #A15C1E;
+    --bs-link-hover-color: #7C4413;
+}
+
+/* ---------- 導覽列 ---------- */
+.navbar {
+    --bs-navbar-color: var(--sc-ink-2);
+    --bs-navbar-hover-color: var(--sc-ink);
+    --bs-navbar-active-color: var(--sc-ink);
+    --bs-navbar-brand-color: var(--sc-ink);
+    --bs-navbar-brand-hover-color: var(--sc-ink);
+    background-color: var(--sc-paper);
+    border-bottom: 2px dashed var(--sc-line);
+}
+
+.navbar.shadow-sm {
+    box-shadow: none !important;
+}
+
+.navbar-brand {
+    font-family: var(--sc-font-hand);
+    font-size: 1.6rem;
+}
+
+/* 導覽連結：滑過時像被螢光筆畫過 */
+.navbar .nav-link {
+    padding-left: .25rem !important;
+    padding-right: .25rem !important;
+    margin: 0 .5rem;
+    font-weight: 500;
+    background-image: linear-gradient(transparent 58%, var(--sc-hilite) 58%);
+    background-repeat: no-repeat;
+    background-size: 0% 100%;
+    transition: background-size .25s ease, color .15s;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+    background-size: 100% 100%;
+}
+
+/* 右上角的會員資訊：縮小、改成安靜的灰墨色（原本是大號紅綠字） */
+#username_showtext {
+    font-size: .95rem;
+    font-weight: 500;
+    color: var(--sc-ink-2) !important;
+    margin-right: .75rem;
+    vertical-align: middle;
+}
+
+#username_showtext #username_text {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--sc-ink) !important;
+}
+
+/* ---------- 按鈕 ---------- */
+.btn {
+    --bs-btn-font-family: var(--sc-font-body);
+    --bs-btn-font-weight: 600;
+    --bs-btn-border-width: 1.5px;
+    --bs-btn-border-radius: 8px;
+    --bs-btn-focus-box-shadow: 0 0 0 .25rem rgba(245, 197, 66, .45);
+    transition: transform .08s ease, box-shadow .08s ease, background-color .15s, border-color .15s;
+}
+
+/* 有顏色的按鈕都帶一條「紙板底邊」，按下去會往下壓 */
+.btn-primary,
+.btn-warning,
+.btn-secondary,
+.btn-danger {
+    box-shadow: 0 3px 0 var(--sc-btn-edge, rgba(59, 52, 44, .25));
+}
+
+.btn-primary:active,
+.btn-warning:active,
+.btn-secondary:active,
+.btn-danger:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--sc-btn-edge, rgba(59, 52, 44, .25));
+}
+
+/* 主要動作：便利貼黃 + 深墨字（白字在黃底上看不清楚） */
+.btn-primary,
+.btn-warning {
+    --sc-btn-edge: var(--sc-yellow-edge);
+    --bs-btn-color: var(--sc-ink);
+    --bs-btn-bg: var(--sc-yellow-deep);
+    --bs-btn-border-color: var(--sc-yellow-edge);
+    --bs-btn-hover-color: var(--sc-ink);
+    --bs-btn-hover-bg: #EDB92F;
+    --bs-btn-hover-border-color: var(--sc-yellow-edge);
+    --bs-btn-active-color: var(--sc-ink);
+    --bs-btn-active-bg: #EDB92F;
+    --bs-btn-active-border-color: var(--sc-yellow-edge);
+    --bs-btn-disabled-color: var(--sc-ink-2);
+    --bs-btn-disabled-bg: var(--sc-yellow);
+    --bs-btn-disabled-border-color: var(--sc-yellow);
+}
+
+.btn-warning.text-white {
+    color: var(--sc-ink) !important;
+}
+
+/* 次要動作（取消）：一張米白紙 */
+.btn-secondary {
+    --sc-btn-edge: var(--sc-line-strong);
+    --bs-btn-color: var(--sc-ink);
+    --bs-btn-bg: var(--sc-card);
+    --bs-btn-border-color: var(--sc-line-strong);
+    --bs-btn-hover-color: var(--sc-ink);
+    --bs-btn-hover-bg: var(--sc-paper-2);
+    --bs-btn-hover-border-color: var(--sc-line-strong);
+    --bs-btn-active-color: var(--sc-ink);
+    --bs-btn-active-bg: var(--sc-paper-2);
+    --bs-btn-active-border-color: var(--sc-line-strong);
+}
+
+/* 危險動作（刪除）：平常是紅框，滑過才填滿 */
+.btn-danger {
+    --sc-btn-edge: rgba(181, 71, 58, .35);
+    --bs-btn-color: var(--sc-coral-deep);
+    --bs-btn-bg: var(--sc-card);
+    --bs-btn-border-color: var(--sc-coral-deep);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--sc-coral-deep);
+    --bs-btn-hover-border-color: var(--sc-coral-deep);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #9C3B30;
+    --bs-btn-active-border-color: #9C3B30;
+}
+
+/* 登出不是主要動作，改成安靜的文字按鈕 */
+#logout_btn {
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: var(--sc-line-strong);
+    --bs-btn-hover-bg: var(--sc-paper-2);
+    --bs-btn-padding-y: .25rem;
+    --bs-btn-padding-x: .75rem;
+    --bs-btn-font-size: .9rem;
+    box-shadow: none;
+}
+
+/* ---------- 下拉選單 ---------- */
+.dropdown-menu {
+    --bs-dropdown-bg: var(--sc-card);
+    --bs-dropdown-color: var(--sc-ink);
+    --bs-dropdown-border-color: var(--sc-line-strong);
+    --bs-dropdown-border-width: 1.5px;
+    --bs-dropdown-border-radius: 10px;
+    --bs-dropdown-padding-y: .35rem;
+    --bs-dropdown-link-color: var(--sc-ink);
+    --bs-dropdown-link-hover-color: var(--sc-ink);
+    --bs-dropdown-link-hover-bg: #FFF1C2;
+    --bs-dropdown-link-active-color: var(--sc-ink);
+    --bs-dropdown-link-active-bg: var(--sc-yellow);
+    --bs-dropdown-divider-bg: var(--sc-line);
+    box-shadow: var(--sc-shadow-lg);
+}
+
+.dropdown-item {
+    width: calc(100% - .7rem);
+    margin: 0 .35rem;
+    border-radius: 6px;
+}
+
+/* ---------- 對話框：像一張貼了紙膠帶的便利貼 ---------- */
+.modal {
+    --bs-modal-bg: var(--sc-card);
+    --bs-modal-color: var(--sc-ink);
+    --bs-modal-border-color: var(--sc-line-strong);
+    --bs-modal-border-width: 1.5px;
+    --bs-modal-border-radius: 10px;
+    --bs-modal-inner-border-radius: 9px;
+    --bs-modal-header-border-color: transparent;
+    --bs-modal-footer-border-color: var(--sc-line);
+}
+
+.modal-backdrop {
+    --bs-backdrop-bg: #3B342C;
+    --bs-backdrop-opacity: .35;
+}
+
+.modal-content {
+    box-shadow: var(--sc-shadow-lg);
+}
+
+/* 頂端的紙膠帶 */
+.modal-content::before {
+    content: "";
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 96px;
+    height: 24px;
+    transform: translateX(-50%) rotate(-2deg);
+    background: rgba(169, 207, 224, .65);
+    box-shadow: 0 1px 1px rgba(59, 52, 44, .08);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 標頭 = 便利貼上方的色條 */
+.modal-header,
+.modal-header.bg-warning {
+    background-color: var(--sc-yellow) !important;
+}
+
+.modal-title {
+    font-family: var(--sc-font-hand);
+    font-weight: 400 !important;
+}
+
+.modal-title.display-5 {
+    font-size: 1.75rem;
+}
+
+.modal-body .display-6 {
+    font-family: var(--sc-font-hand);
+    font-weight: 400 !important;
+    font-size: 1.5rem;
+}
+
+.modal-footer {
+    border-top-style: dashed;
+}
+
+/* 輸入框只在對話框內換樣式（編輯頁便利貼裡的 textarea 不受影響） */
+.modal .form-label {
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--sc-ink-2);
+}
+
+.modal .form-control {
+    background-color: var(--sc-card);
+    color: var(--sc-ink);
+    border: 1.5px solid var(--sc-line-strong);
+    border-radius: 8px;
+    padding: .55rem .8rem;
+}
+
+.modal .form-control:focus {
+    border-color: var(--sc-yellow-edge);
+    box-shadow: 0 0 0 .25rem rgba(245, 197, 66, .35);
+}
+
+.modal .form-control:disabled {
+    background-color: var(--sc-paper-2);
+}
+
+/* 驗證圖示換成主題色（Bootstrap 預設是刺眼的紅 / 綠） */
+.modal .form-control.is-invalid {
+    border-color: #D98A7E;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23C9705F'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23C9705F' stroke='none'/%3e%3c/svg%3e");
+}
+
+.modal .form-control.is-valid {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%235E8A4A' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+}
+
+.modal .form-control.is-invalid:focus {
+    box-shadow: 0 0 0 .25rem rgba(217, 138, 126, .3);
+}
+
+.modal .form-control.is-valid {
+    border-color: var(--sc-sage-deep);
+}
+
+.modal .form-control.is-valid:focus {
+    box-shadow: 0 0 0 .25rem rgba(94, 138, 74, .25);
+}
+
+.invalid-feedback {
+    color: var(--sc-coral-deep);
+}
+
+.valid-feedback {
+    color: var(--sc-sage-deep);
+}
+
+/* ---------- SweetAlert2 提示框（各頁的 Swal.fire） ---------- */
+/* SweetAlert2 會在執行時把自己的 CSS 插到 <head> 最後面，所以這裡都用兩個 class 以上的選擇器來蓋過它 */
+.swal2-container.swal2-backdrop-show {
+    background: rgba(59, 52, 44, .35);
+}
+
+.swal2-container .swal2-popup {
+    background: var(--sc-card);
+    color: var(--sc-ink);
+    font-family: var(--sc-font-body);
+    border: 1.5px solid var(--sc-line-strong);
+    border-radius: 10px;
+    box-shadow: var(--sc-shadow-lg);
+}
+
+.swal2-popup .swal2-title {
+    font-family: var(--sc-font-hand);
+    font-weight: 400;
+    color: var(--sc-ink);
+}
+
+.swal2-popup .swal2-html-container {
+    color: var(--sc-ink-2);
+}
+
+.swal2-actions .swal2-styled {
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1.5px solid transparent;
+    transition: transform .08s ease, box-shadow .08s ease;
+}
+
+.swal2-actions .swal2-styled:active {
+    transform: translateY(2px);
+}
+
+.swal2-actions .swal2-styled.swal2-confirm {
+    background-color: var(--sc-yellow-deep);
+    border-color: var(--sc-yellow-edge);
+    color: var(--sc-ink);
+    box-shadow: 0 3px 0 var(--sc-yellow-edge);
+}
+
+.swal2-actions .swal2-styled.swal2-cancel {
+    background-color: var(--sc-card);
+    border-color: var(--sc-line-strong);
+    color: var(--sc-ink);
+    box-shadow: 0 3px 0 var(--sc-line-strong);
+}
+
+.swal2-actions .swal2-styled.swal2-deny {
+    background-color: var(--sc-card);
+    border-color: var(--sc-coral-deep);
+    color: var(--sc-coral-deep);
+    box-shadow: 0 3px 0 rgba(181, 71, 58, .35);
+}
+
+.swal2-actions .swal2-styled:focus {
+    box-shadow: 0 0 0 .25rem rgba(245, 197, 66, .45);
+}
+
+/* 圖示改成便利貼色系 */
+.swal2-icon.swal2-info {
+    border-color: var(--sc-sky);
+    color: #5E95AD;
+}
+
+.swal2-icon.swal2-question {
+    border-color: var(--sc-sky);
+    color: #5E95AD;
+}
+
+.swal2-icon.swal2-warning {
+    border-color: var(--sc-yellow-deep);
+    color: #C99419;
+}
+
+.swal2-icon.swal2-error {
+    border-color: #E3A094;
+    color: var(--sc-coral-deep);
+}
+
+.swal2-icon.swal2-error [class^=swal2-x-mark-line] {
+    background-color: #D2725F;
+}
+
+.swal2-icon.swal2-success {
+    border-color: var(--sc-sage);
+    color: var(--sc-sage-deep);
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+    border-color: rgba(143, 176, 122, .4);
+}
+
+.swal2-icon.swal2-success [class^=swal2-success-line] {
+    background-color: #7FA36A;
+}
+
+/* ---------- 左側選單（貼板列表 / 管理台）：一排便利貼標籤 ---------- */
+body .leftMenu {
+    background: var(--sc-paper-2);
+    box-shadow: none;
+    border-right: 2px dashed var(--sc-line);
+    padding: 0 .9rem;
+}
+
+body .leftMenu a.form-control {
+    font-family: var(--sc-font-hand);
+    font-size: 1.05rem;
+    text-align: left;
+    color: var(--sc-ink);
+    background-color: var(--sc-card);
+    border: 1.5px solid var(--sc-line);
+    border-left: 6px solid var(--sc-yellow);
+    border-radius: 6px;
+    padding: .6rem .9rem;
+    box-shadow: var(--sc-shadow);
+    transition: transform .12s ease, background-color .15s;
+}
+
+body .leftMenu a.form-control:hover {
+    transform: translateX(3px);
+    background-color: #FFF8DC;
+}
+
+/* 每張標籤一種便利貼色 */
+body .leftMenu > div:nth-child(2) a.form-control { border-left-color: var(--sc-sage); }
+body .leftMenu > div:nth-child(3) a.form-control { border-left-color: var(--sc-sky); }
+body .leftMenu > div:nth-child(4) a.form-control { border-left-color: var(--sc-pink); }
+
+/* ---------- 貼板列表 ---------- */
+.board-list-head {
+    margin-left: 0;
+    margin-right: 0;
+    color: var(--sc-ink-2);
+    font-size: .9rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+}
+
+.board-list-head .h4 {
+    font-size: inherit;
+    margin: 0;
+}
+
+.board-row {
+    align-items: center;
+    margin-left: 0;
+    margin-right: 0;
+    padding: .55rem 0;
+    background-color: var(--sc-card);
+    border: 1.5px solid var(--sc-line);
+    border-radius: 8px;
+    box-shadow: var(--sc-shadow);
+    transition: border-color .15s, transform .12s ease;
+}
+
+.board-row:hover {
+    border-color: var(--sc-yellow-edge);
+    transform: translateY(-1px);
+}
+
+.board-row .h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.board-row .col-3 {
+    color: var(--sc-ink-2);
+    font-size: .9rem;
+}
+
+.board-row svg rect {
+    stroke: var(--sc-ink-2);
+}
+
+/* 手機上欄位太窄，圖示會壓到檔名：拿掉圖示欄，把空間讓給檔名 */
+@media (max-width: 576px) {
+    .board-row > .col-1:first-child,
+    .board-list-head > .col-1:first-child {
+        display: none;
+    }
+
+    .board-row > .col-4,
+    .board-list-head > .col-4 {
+        flex: 0 0 auto;
+        width: 41.666667%;
+    }
+
+    .board-row .h4 {
+        font-size: 1rem;
+    }
+
+    .board-row .btn-link {
+        padding: .25rem 0;
+    }
+}
+
+/* ---------- 管理台會員列表 ---------- */
+#mydata td {
+    padding: .6rem .75rem;
+    border-bottom: 1.5px dashed var(--sc-line);
+    vertical-align: middle;
+}
+
+/* ---------- 首頁：「貼上你的第一張」 ---------- */
+/* 用獨立的 rotate / scale 屬性，才不會蓋掉 HTML 上原本的 transform 置中 */
+a.sticky-note {
+    rotate: -2deg;
+    background-color: #FFF6C8;
+    box-shadow: var(--sc-shadow-lg);
+    font-family: var(--sc-font-hand);
+    font-size: 1.15rem;
+    color: var(--sc-ink);
+    transition: rotate .2s ease, scale .2s ease;
+}
+
+a.sticky-note::before {
+    background-color: var(--sc-yellow);
+}
+
+a.sticky-note:hover {
+    rotate: 0deg;
+    scale: 1.04;
+    color: var(--sc-ink);
+}
+
+/* 便利貼頂端的紙膠帶 */
+a.sticky-note::after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    width: 70px;
+    height: 20px;
+    transform: translateX(-50%) rotate(3deg);
+    background: rgba(246, 181, 192, .7);
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .navbar .nav-link,
+    body .leftMenu a.form-control,
+    .board-row,
+    a.sticky-note {
+        transition: none;
+    }
+}
